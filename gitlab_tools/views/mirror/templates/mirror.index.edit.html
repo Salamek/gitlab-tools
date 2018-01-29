@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block body %}
+{% from "_formhelpers.html" import render_field, render_checkbox %}
+<div class="row">
+    <div class="col-xs-12 col-sm-8 col-md-8 col-sm-offset-2 col-md-offset-2">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ _("Edit mirror %(project_name)s", project_name=mirror_detail.project_name) }}</h3>
+            </div>
+            <div class="panel-body">
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    There was some errors when proccesing a form.
+                    {% for field, errors in form.errors.items() %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <form method="post" role="form" action="{{url_for('mirror.index.edit_mirror', mirror_id=mirror_detail.id)}}">
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        {{render_field(form.vcs, 'form-group', _('vcs'))}}
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        {{render_field(form.direction, 'form-group', _('direction'))}}
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        {{render_field(form.project_name, 'form-group', _('project_name'))}}
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        {{render_field(form.project_mirror, 'form-group', _('project_mirror'))}}
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        {{render_field(form.note, 'form-group', _('Note'))}}
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            <input type="submit" value="{{_('Save')}}" class="btn btn-info btn-block">
+                        </div>
+                    </div>
+                    {{ form.id() }}
+                    {{ form.csrf_token }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

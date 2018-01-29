@@ -1,0 +1,13 @@
+[Unit]
+Description=GitLab Tools list Web Service
+Requires=network.target
+
+[Service]
+User=gitlab-tools
+Type=simple
+Restart=on-failure
+RemainAfterExit=yes
+ExecStart=/usr/bin/gitlab-tools server --config_prod --log_dir /var/log
+
+[Install]
+WantedBy=multi-user.target

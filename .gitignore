@@ -1,0 +1,9 @@
+bower_components
+*.pyc
+/gitlab-tools/static/img/thumbnails/*
+!/gitlab-tools/static/img/thumbnails/README.md
+.idea/*
+__pycache__/
+
+/gitlab-tools/static/pdf/*
+!/gitlab-tools/static/pdf/README.md

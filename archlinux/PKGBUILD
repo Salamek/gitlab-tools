@@ -1,0 +1,53 @@
+pkgname=gitlab-tools
+pkgver=1.0.0
+pkgdesc="GitLab Tools"
+pkgrel=1
+arch=('any')
+backup=('etc/gitlab-tools/config.yml')
+license=('GPL-3.0')
+url='https://github.com/Salamek/gitlab-tools'
+install=gitlab-tools.install
+makedepends=('python-setuptools' 'bower')
+depends=(
+    'python'
+    'systemd'
+    'redis'
+    'python-flask'
+    'python-psycopg2'
+    'python-babel'
+    'python-yaml'
+    'python-flask-login'
+    'python-flask-migrate'
+    'python-flask-wtf'
+    'python-raven'
+    'python-lxml'
+    'python-docopt'
+    'python-flask-babel'
+    'python-flask-navigation'
+    'python-celery'
+    'python-flask-celery-helper'
+    'python-flask-redis-helper'
+    'python-flask-caching'
+    'python-gitlab'
+    'git'
+)
+
+prepare() {
+  mkdir -p "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../etc" "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../gitlab-tools" "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../tests" "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../setup.py" "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../requirements.txt" "${srcdir}/${pkgname}"
+  cp -R "${srcdir}/../../README.md" "${srcdir}/${pkgname}"
+}
+
+build() {
+  cd "${srcdir}/${pkgname}/gitlab-tools/static"
+  bower install
+}
+
+package() {
+  cd "${srcdir}/${pkgname}"
+  python setup.py install --root="$pkgdir/" --optimize=1
+}

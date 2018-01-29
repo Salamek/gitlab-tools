@@ -1,0 +1,42 @@
+
+html, body
+{
+    height: 100%;
+}
+
+.container
+{
+    width: 90%;
+}
+
+.table > tbody > tr > td {
+     vertical-align: middle;
+}
+
+.navbar-default
+{
+    border-radius: 0px;
+    margin-bottom: 0px;
+}
+
+.alert
+{
+    border-radius: 0px;
+    margin-bottom: 0px;
+}
+
+.footer ul
+{
+    list-style-type: none;
+}
+
+/*data option width is not working, dont know dont care*/
+@media (min-width: 768px)
+{
+    .modal-dialog {
+        width: 1024px;
+    }
+}
+
+
+.top-buffer { margin-top:20px; }

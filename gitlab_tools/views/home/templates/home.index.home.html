@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% from 'macros.html' import render_pagination %}
+{% block body %}
+
+<h1>{{ _('GitLab Tools') }}</h1>
+
+<h2>{{_('Mirrors : %(mirrors)s', mirrors=mirrors)}}</h2>
+
+{% endblock %}

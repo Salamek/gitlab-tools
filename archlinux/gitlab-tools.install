@@ -1,0 +1,45 @@
+## arg 1:  the new package version
+pre_install() {
+        :
+}
+
+## arg 1:  the new package version
+post_install() {
+        useradd -m gitlab-tools
+        systemctl enable redis
+        systemctl restart redis
+        gitlab-tools post_install --config_prod
+        systemctl daemon-reload
+        systemctl start gitlab-tools
+        systemctl enable gitlab-tools
+        systemctl start gitlab-tools_celeryworker
+        systemctl enable gitlab-tools_celeryworker
+        systemctl start gitlab-tools_celerybeat
+        systemctl enable gitlab-tools_celerybeat
+}
+
+## arg 1:  the new package version
+## arg 2:  the old package version
+pre_upgrade() {
+        :
+}
+
+## arg 1:  the new package version
+## arg 2:  the old package version
+post_upgrade() {
+        gitlab-tools migrations upgrade
+        systemctl daemon-reload
+        systemctl restart gitlab-tools
+        systemctl restart gitlab-tools_celeryworker
+        systemctl restart gitlab-tools_celerybeat
+}
+
+## arg 1:  the old package version
+pre_remove() {
+        :
+}
+
+## arg 1:  the old package version
+post_remove() {
+        :
+}

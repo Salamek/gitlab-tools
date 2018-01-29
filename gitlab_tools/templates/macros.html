@@ -1,0 +1,44 @@
+{% macro render_pagination(pagination) %}
+<nav aria-label="{{ _('Page navigation') }}">
+    <ul class="pagination">
+        {% if pagination.has_prev %}
+            <li>
+                <a href="{{ url_for_other_page(pagination.page - 1) }}" aria-label="{{ _('Previous') }}">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="disabled">
+                <span aria-hidden="true">&laquo;</span>
+            </li>
+        {% endif %}
+
+
+        {%- for page in pagination.iter_pages() %}
+            {% if page %}
+                {% if page != pagination.page %}
+                    <li>
+                {% else %}
+                    <li class="active">
+                {% endif %}
+                    <a href="{{ url_for_other_page(page) }}">{{ page }}</a>
+                </li>
+            {% else %}
+                <li class="disabled"><span aria-hidden="true">...</span></li>
+            {% endif %}
+        {%- endfor %}
+
+        {% if pagination.has_next %}
+            <li>
+                <a href="{{ url_for_other_page(pagination.page + 1) }}" aria-label="{{ _('Next') }}">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        {% else %}
+            <li class="disabled">
+                <span aria-hidden="true">&raquo;</span>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endmacro %}

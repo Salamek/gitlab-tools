@@ -1,0 +1,14 @@
+{% macro render_field(field, class, title) %}
+<div class="{{class}}{{ ' has-error' if field.errors else '' }}">
+  <label class="sr-only" for="{{field.id}}">{{title}}</label>
+  {{field(class_="form-control input-sm", **{'placeholder': title, 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-content': '<br>'.join(field.errors)})}}
+</div>
+{% endmacro %}
+{% macro render_checkbox(field, title, class) %}
+<div class="checkbox {{class}}{{ ' has-error' if field.errors else '' }}">
+  <label data-toggle="popover" data-trigger="hover" data-placement="left" data-content="{{field.errors|join('<br>')}}">
+    {{field()}}
+    {{title}}
+  </label>
+</div>
+{% endmacro %}

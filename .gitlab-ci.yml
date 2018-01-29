@@ -1,0 +1,122 @@
+stages:
+  - test
+  - package
+  - packagetest
+  - deploy
+
+test:debian:
+  stage: test
+  script:
+    - apt-get update -qy
+    - apt-get install -y python3-dev python3-pip
+    - pip3 install -r requirements.txt
+    - python3 setup.py test
+  tags:
+    - debian
+
+test:archlinux:
+  stage: test
+  script:
+    - pacman -Sy python-pip --noconfirm #gcc
+    - pip install -r requirements.txt
+    - python setup.py test
+  tags:
+    - archlinux
+
+package:debian:
+  stage: package
+  script:
+    - apt-get update -qy
+    - apt-get install -y curl gnupg
+    - curl -sL https://deb.nodesource.com/setup_8.x | bash -
+    - curl -sL https://apt.salamek.cz/apt/conf/salamek.gpg.key | apt-key add -
+    - echo "deb     https://apt.salamek.cz/apt all main" | tee /etc/apt/sources.list.d/salamek.cz.list
+    - apt-get update -qy
+    - apt-get install -y python3-flask-redis-helper python3-flask-celery-helper python3-flask-caching python3-dev python-pip redis-server python3-pip python3-stdeb python3-celery nodejs git python3-markupsafe python3-psycopg2 python3-dateutil python3-docopt python3-yaml python3-wtforms python3-raven python3-flask-migrate python3-flask-babel python3-flask-navigation python3-flask-login
+    - npm install -g bower
+    - rm -rf "./deb_dist"
+    - cd gitlab-tools/static
+    - bower install --allow-root
+    - cd -
+    - python3 setup.py --command-packages=stdeb.command bdist_deb
+  tags:
+    - debian
+
+  artifacts:
+    paths:
+      - deb_dist/*.deb
+    expire_in: 1d
+
+package:archlinux:
+  stage: package
+  script:
+    - echo "[salamek]" >> /etc/pacman.conf
+    - echo "Server = https://arch.salamek.cz/any" >> /etc/pacman.conf
+    - echo "SigLevel = Optional" >> /etc/pacman.conf
+    - pacman -Sy python-pip gcc nodejs sudo git redis openssh bower python-flask-caching python-flask-celery-helper python-flask-redis-helper python-celery python-flask python-babel python-yaml python-flask-login python-flask-migrate python-flask-wtf python-raven python-docopt python-eventlet python-psycopg2 python-flask-babel python-flask-navigation fakeroot systemd --noconfirm
+    - useradd -m -G users -s /bin/bash package
+    - cd archlinux
+    - sudo -H -u package makepkg -f
+  tags:
+    - archlinux
+
+  artifacts:
+    paths:
+      - archlinux/gitlab-tools*
+    expire_in: 1d
+
+packagetest:debian:
+  stage: packagetest
+  script:
+    - apt-get update -qy
+    - apt-get install -y curl gnupg apt-transport-https
+    - curl -sL https://apt.salamek.cz/apt/conf/salamek.gpg.key | apt-key add -
+    - echo "deb     https://apt.salamek.cz/apt all main" | tee /etc/apt/sources.list.d/salamek.cz.list
+    - apt-get update -qy
+    - cd deb_dist
+    - apt install ./*.deb -qy
+  tags:
+    - virtualbox-debian
+  dependencies:
+    - package:debian
+  only:
+    - tags
+
+packagetest:archlinux:
+  stage: packagetest
+  script:
+    - echo "[salamek]" >> /etc/pacman.conf
+    - echo "Server = https://arch.salamek.cz/any" >> /etc/pacman.conf
+    - echo "SigLevel = Optional" >> /etc/pacman.conf
+    - pacman -Sy
+    - cd archlinux
+    - pacman -U gitlab-tools*.pkg.tar.xz --noconfirm
+  tags:
+    - virtualbox-archlinux
+  dependencies:
+    - package:archlinux
+  only:
+    - tags
+
+repoupdate:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - scp archlinux/gitlab-tools*.pkg.tar.xz www-data@salamek.cz:/var/www/arch.salamek.cz/www/any
+    - scp deb_dist/*.deb www-data@salamek.cz:/var/www/apt.salamek.cz/cache
+    - ssh www-data@salamek.cz '/var/www/arch.salamek.cz/update_repo.sh'
+    - ssh www-data@salamek.cz '/var/www/apt.salamek.cz/update_repo.sh'
+  dependencies:
+    - package:archlinux
+    - package:debian
+  tags:
+    - docker
+  only:
+    - tags

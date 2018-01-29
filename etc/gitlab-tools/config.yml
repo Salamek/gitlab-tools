@@ -1,0 +1,4 @@
+PORT: 80
+HOST: 0.0.0.0
+SECRET_KEY: # Change to something secure
+SQLALCHEMY_DATABASE_URI: # Change to your server configuration

@@ -1,0 +1,17 @@
+flask-login
+Flask-Navigation
+Flask-Babel
+Flask-Celery-Helper
+Flask-Redis-Helper
+Flask-Caching
+celery
+redis
+WTForms
+flask_migrate
+raven
+psycopg2
+requests
+docopt
+pyyaml
+celery
+python-gitlab

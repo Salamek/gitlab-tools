@@ -1,0 +1,1 @@
+flake8 gitlab-tools tests --max-line-length=160 --builtins=_

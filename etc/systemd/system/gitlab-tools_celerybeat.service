@@ -1,0 +1,13 @@
+[Unit]
+Description=GitLab Tools Service Celery beat
+Requires=network.target
+
+[Service]
+User=gitlab-tools
+Type=simple
+Restart=on-failure
+RemainAfterExit=yes
+ExecStart=/usr/bin/gitlab-tools celerybeat --config_prod
+
+[Install]
+WantedBy=multi-user.target

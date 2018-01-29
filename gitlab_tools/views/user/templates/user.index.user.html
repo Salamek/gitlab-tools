@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block body %}
+{% from 'macros.html' import render_pagination %}
+
+<h1>{{ _('Users') }}</h1>
+
+<a class="btn btn-success" href="{{url_for('user.index.new_user')}}"><i class="fa fa-plus" aria-hidden="true"></i> {{ _('Add') }}</a>
+
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>{{ _('Username') }}</th>
+        <th>{{ _('Roles') }}</th>
+        <th>{{ _('Updated') }}</th>
+        <th>{{ _('Created') }}</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in pagination.items %}
+    <tr>
+        <th scope="row">{{item.id}}</th>
+        <td>{{item.username}}</td>
+        <td>{{item.roles|join(', ')}}</td>
+        <td>{{item.updated|format_datetime}}</td>
+        <td>{{item.created|format_datetime}}</td>
+        <td>
+            <a class="btn btn-xs btn-primary" href="{{url_for('user.index.edit_user', user_id=item.id)}}"><i class="fa fa-pencil" aria-hidden="true"></i> {{ _('Edit') }}</a>
+            <a class="btn btn-xs btn-danger confirm" data-confirm-message="{{_('Are you sure you want to delete this user ?')}}" href="{{url_for('user.index.delete_user', user_id=item.id)}}"><i class="fa fa-trash" aria-hidden="true"></i> {{ _('Delete') }}</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="text-center">
+{{render_pagination(pagination)}}
+</div>
+{% endblock %}

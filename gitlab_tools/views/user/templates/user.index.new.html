@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block body %}
+{% from "_formhelpers.html" import render_field %}
+<div class="row">
+    <div class="col-xs-12 col-sm-8 col-md-4 col-sm-offset-2 col-md-offset-4">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ _("New user") }}</h3>
+            </div>
+            <div class="panel-body">
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    There was some errors when proccesing a form.
+                    {% for field, errors in form.errors.items() %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <form method="post" role="form" action="{{url_for('user.index.new_user')}}">
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        {{render_field(form.username, 'form-group', _('Username'))}}
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        {{render_field(form.password, 'form-group', _('Password'))}}
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        {{render_field(form.password_again, 'form-group', _('Password again'))}}
+                    </div>
+                    <div class="col-xs-12 col-sm-12 col-md-12">
+                        {{render_field(form.roles, 'form-group', _('Layout'))}}
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            <input type="submit" value="{{_('Save')}}" class="btn btn-info btn-block">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
