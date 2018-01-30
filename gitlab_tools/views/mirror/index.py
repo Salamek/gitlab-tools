@@ -27,7 +27,20 @@ def get_mirror(page: int):
 @mirror_index.route('/new', methods=['GET', 'POST'])
 @login_required
 def new_mirror():
-    form = NewForm(flask.request.form)
+    form = NewForm(
+        flask.request.form,
+        is_no_create=False,
+        is_force_create=False,
+        is_no_remote=False,
+        is_issues_enabled=False,
+        is_wall_enabled=False,
+        is_wiki_enabled=False,
+        is_snippets_enabled=False,
+        is_merge_requests_enabled=False,
+        is_public=False,
+        is_force_update=False,
+        is_prune_mirrors=False
+    )
     if flask.request.method == 'POST' and form.validate():
         mirror_new = Mirror()
         mirror_new.project_name = form.project_name.data
@@ -35,8 +48,18 @@ def new_mirror():
         mirror_new.vcs = form.vcs.data
         mirror_new.direction = form.direction.data
         mirror_new.note = form.note.data
+        mirror_new.is_no_create = form.is_no_create.data
+        mirror_new.is_force_create = form.is_force_create.data
+        mirror_new.is_no_remote = form.is_no_remote.data
+        mirror_new.is_issues_enabled = form.is_issues_enabled.data
+        mirror_new.is_wall_enabled = form.is_wall_enabled.data
+        mirror_new.is_wiki_enabled = form.is_wiki_enabled.data
+        mirror_new.is_snippets_enabled = form.is_snippets_enabled.data
+        mirror_new.is_merge_requests_enabled = form.is_merge_requests_enabled.data
+        mirror_new.is_public = form.is_public.data
+        mirror_new.is_force_update = form.is_force_update.data
+        mirror_new.is_prune_mirrors = form.is_prune_mirrors.data
         mirror_new.hook_token = random_password()
-        #mirror_new.last_sync = None
         db.session.add(mirror_new)
         db.session.commit()
 
@@ -59,6 +82,17 @@ def edit_mirror(mirror_id: int):
         project_mirror=mirror_detail.project_mirror,
         direction=mirror_detail.direction,
         note=mirror_detail.note,
+        is_no_create=mirror_detail.is_no_create,
+        is_force_create=mirror_detail.is_force_create,
+        is_no_remote=mirror_detail.is_no_remote,
+        is_issues_enabled=mirror_detail.is_issues_enabled,
+        is_wall_enabled=mirror_detail.is_wall_enabled,
+        is_wiki_enabled=mirror_detail.is_wiki_enabled,
+        is_snippets_enabled=mirror_detail.is_snippets_enabled,
+        is_merge_requests_enabled=mirror_detail.is_merge_requests_enabled,
+        is_public=mirror_detail.is_public,
+        is_force_update=mirror_detail.is_force_update,
+        is_prune_mirrors=mirror_detail.is_prune_mirrors
     )
     if flask.request.method == 'POST' and form.validate():
         mirror_detail.project_name = form.project_name.data
@@ -66,6 +100,17 @@ def edit_mirror(mirror_id: int):
         mirror_detail.vcs = form.vcs.data
         mirror_detail.direction = form.direction.data
         mirror_detail.note = form.note.data
+        mirror_detail.is_no_create = form.is_no_create.data
+        mirror_detail.is_force_create = form.is_force_create.data
+        mirror_detail.is_no_remote = form.is_no_remote.data
+        mirror_detail.is_issues_enabled = form.is_issues_enabled.data
+        mirror_detail.is_wall_enabled = form.is_wall_enabled.data
+        mirror_detail.is_wiki_enabled = form.is_wiki_enabled.data
+        mirror_detail.is_snippets_enabled = form.is_snippets_enabled.data
+        mirror_detail.is_merge_requests_enabled = form.is_merge_requests_enabled.data
+        mirror_detail.is_public = form.is_public.data
+        mirror_detail.is_force_update = form.is_force_update.data
+        mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
 
         db.session.add(mirror_detail)
         db.session.commit()

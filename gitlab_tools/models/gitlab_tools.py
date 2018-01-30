@@ -91,6 +91,17 @@ class Mirror(BaseTable):
     last_sync = db.Column(db.DateTime, nullable=True)
     note = db.Column(db.String(255))
     hook_token = db.Column(db.String(255))
+    is_no_create = db.Column(db.Boolean)
+    is_force_create = db.Column(db.Boolean)
+    is_no_remote = db.Column(db.Boolean)
+    is_issues_enabled = db.Column(db.Boolean)
+    is_wall_enabled = db.Column(db.Boolean)
+    is_wiki_enabled = db.Column(db.Boolean)
+    is_snippets_enabled = db.Column(db.Boolean)
+    is_merge_requests_enabled = db.Column(db.Boolean)
+    is_public = db.Column(db.Boolean)
+    is_force_update = db.Column(db.Boolean)
+    is_prune_mirrors = db.Column(db.Boolean)
 
     groups = relationship(
         "Group",

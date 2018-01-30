@@ -16,20 +16,99 @@
                 </div>
                 {% endif %}
                 <form method="post" role="form" action="{{url_for('mirror.index.edit_mirror', mirror_id=mirror_detail.id)}}">
-                    <div class="col-xs-12 col-sm-12 col-md-12">
-                        {{render_field(form.vcs, 'form-group', _('VCS'))}}
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            {{render_field(form.vcs, 'form-group', _('VCS'))}}
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            {{render_field(form.direction, 'form-group', _('Direction'))}}
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            {{render_field(form.project_name, 'form-group', _('Project name'))}}
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            {{render_field(form.project_mirror, 'form-group', _('Project mirror'))}}
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            {{render_field(form.note, 'form-group', _('Note'))}}
+                        </div>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-12">
-                        {{render_field(form.direction, 'form-group', _('Direction'))}}
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_no_create(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_no_create.errors)})}}
+                            Do not resolve remote to GitLab
+                        </label>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-12">
-                        {{render_field(form.project_name, 'form-group', _('Project name'))}}
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_force_create(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_force_create.errors)})}}
+                            Create project in GitLab even if it already exists.
+                        </label>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-12">
-                        {{render_field(form.project_mirror, 'form-group', _('Project mirror'))}}
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_no_remote(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_no_remote.errors)})}}
+                            This is a local only mirror.
+                        </label>
                     </div>
-                    <div class="col-xs-12 col-sm-12 col-md-12">
-                        {{render_field(form.note, 'form-group', _('Note'))}}
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_issues_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_issues_enabled.errors)})}}
+                            Issues enabled
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_wall_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_wall_enabled.errors)})}}
+                            Wall enabled
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_wiki_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_wiki_enabled.errors)})}}
+                            Wiki enabled
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_snippets_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_snippets_enabled.errors)})}}
+                            Snippets enabled
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_merge_requests_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_merge_requests_enabled.errors)})}}
+                            Merge requests enabled
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_public(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_public.errors)})}}
+                            Create as public repository
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_force_update(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_force_update.errors)})}}
+                            Enable force fetching and pushing.
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_prune_mirrors(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_prune_mirrors.errors)})}}
+                            Enable pruning mirror.
+                        </label>
                     </div>
                     <div class="row">
                         <div class="col-xs-12 col-sm-12 col-md-12">

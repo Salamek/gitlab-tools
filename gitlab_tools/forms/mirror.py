@@ -1,5 +1,5 @@
 from flask_babel import gettext
-from wtforms import Form, StringField, validators, HiddenField, TextAreaField, SelectField
+from wtforms import Form, StringField, validators, HiddenField, TextAreaField, SelectField, BooleanField
 
 from gitlab_tools.enums.VcsEnum import VcsEnum
 from gitlab_tools.enums.DirectionEnum import DirectionEnum
@@ -14,6 +14,7 @@ class NewForm(Form):
         (VcsEnum.GIT, 'Git'),
         (VcsEnum.BAZAAR, 'Bazaar'),
         (VcsEnum.SVN, 'SVN'),
+        (VcsEnum.MERCURIAL, 'Mercurial'),
     ))
     direction = SelectField(None, [validators.DataRequired()], coerce=int, choices=(
         (DirectionEnum.PULL, 'Pull to GitLab'),
@@ -22,6 +23,18 @@ class NewForm(Form):
     project_name = StringField(None, [validators.Length(min=1, max=255)])
     project_mirror = StringField(None, [validators.Length(min=1, max=255)])
     note = TextAreaField(None, [validators.Optional()])
+
+    is_no_create = BooleanField()
+    is_force_create = BooleanField()
+    is_no_remote = BooleanField()
+    is_issues_enabled = BooleanField()
+    is_wall_enabled = BooleanField()
+    is_wiki_enabled = BooleanField()
+    is_snippets_enabled = BooleanField()
+    is_merge_requests_enabled = BooleanField()
+    is_public = BooleanField()
+    is_force_update = BooleanField()
+    is_prune_mirrors = BooleanField()
 
     def validate(self) -> bool:
         rv = Form.validate(self)
