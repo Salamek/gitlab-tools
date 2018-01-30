@@ -7,15 +7,12 @@ To be imported by the application.current_app() factory.
 
 import os
 from logging import getLogger
-
+from flask_login import current_user
 from celery.signals import worker_process_init
 from flask import current_app, render_template, request, g
 from flask_babel import format_datetime, format_date
-from flask_login import current_user
 from gitlab_tools.extensions import navigation, login_manager, babel, db
-from gitlab_tools.models.gitlab_tools import Role
 from gitlab_tools.tools.formaters import format_bytes, fix_url, format_boolean
-from gitlab_tools.tools.Acl import Acl
 from markupsafe import Markup
 
 from gitlab_tools.models.gitlab_tools import User
@@ -76,12 +73,10 @@ def get_timezone():
 
 @current_app.before_request
 def before_request():
-    menu_items = [
-        navigation.Item('Home', 'home.index.get_home'),
-    ]
+    menu_items = []
 
-    if current_user.is_authenticated and Acl.validate([Role.ADMIN], current_user):
-        menu_items.append(navigation.Item('Users', 'user.index.get_user'))
+    if current_user.is_authenticated:
+        menu_items.append(navigation.Item('Home', 'home.index.get_home'))
         menu_items.append(navigation.Item('Mirror', 'mirror.index.get_mirror'))
 
     navigation.Bar('top', menu_items)

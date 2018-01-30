@@ -4,8 +4,7 @@
 import flask
 from flask_login import current_user, login_required
 
-from gitlab_tools.models.gitlab_tools import db, Role, Mirror
-from gitlab_tools.tools.Acl import Acl
+from gitlab_tools.models.gitlab_tools import db, Mirror
 from gitlab_tools.forms.mirror import EditForm, NewForm
 from gitlab_tools.blueprints import mirror_index
 
@@ -18,7 +17,6 @@ PER_PAGE = 20
 @mirror_index.route('/', methods=['GET'], defaults={'page': 1})
 @mirror_index.route('/page/<int:page>', methods=['GET'])
 @login_required
-@Acl.validate_path([Role.ADMIN], current_user)
 def get_mirror(page: int):
     pagination = Mirror.query.filter().order_by(Mirror.created.desc()).paginate(page, PER_PAGE)
     return flask.render_template('mirror.index.mirror.html', pagination=pagination)
@@ -26,7 +24,6 @@ def get_mirror(page: int):
 
 @mirror_index.route('/new', methods=['GET', 'POST'])
 @login_required
-@Acl.validate_path([Role.ADMIN], current_user)
 def new_mirror():
     form = NewForm(flask.request.form)
     if flask.request.method == 'POST' and form.validate():
@@ -41,7 +38,6 @@ def new_mirror():
 
 
 @mirror_index.route('/edit/<int:mirror_id>', methods=['GET', 'POST'])
-@Acl.validate_path([Role.ADMIN], current_user)
 @login_required
 def edit_mirror(mirror_id: int):
     mirror_detail = Mirror.query.filter_by(id=mirror_id).first_or_404()
@@ -63,7 +59,6 @@ def edit_mirror(mirror_id: int):
 
 @mirror_index.route('/delete/<int:mirror_id>', methods=['GET'])
 @login_required
-@Acl.validate_path([Role.ADMIN], current_user)
 def delete_mirror(mirror_id: int):
     mirror_detail = Mirror.query.filter_by(id=mirror_id).first_or_404()
     db.session.delete(mirror_detail)

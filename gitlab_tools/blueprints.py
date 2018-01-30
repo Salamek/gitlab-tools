@@ -32,13 +32,11 @@ sign_index = _factory('sign.index', '/sign')
 api_index = _factory('api.index', '/api')
 
 mirror_index = _factory('mirror.index', '/mirror')
-user_index = _factory('user.index', '/user')
 
 
 all_blueprints = (
     home_index,
     sign_index,
     api_index,
-    mirror_index,
-    user_index
+    mirror_index
 )
