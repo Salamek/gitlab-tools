@@ -1,5 +1,8 @@
+import gitlab
+import flask
 from flask_babel import gettext
-from wtforms import Form, StringField, validators, HiddenField, TextAreaField, SelectField, BooleanField
+from flask_login import current_user
+from wtforms import Form, StringField, validators, HiddenField, TextAreaField, SelectField, BooleanField, SelectMultipleField
 
 from gitlab_tools.enums.VcsEnum import VcsEnum
 from gitlab_tools.enums.DirectionEnum import DirectionEnum
@@ -23,6 +26,7 @@ class NewForm(Form):
     project_name = StringField(None, [validators.Length(min=1, max=255)])
     project_mirror = StringField(None, [validators.Length(min=1, max=255)])
     note = TextAreaField(None, [validators.Optional()])
+    groups = SelectMultipleField(None, [validators.DataRequired()], coerce=int)
 
     is_no_create = BooleanField()
     is_force_create = BooleanField()
@@ -35,6 +39,22 @@ class NewForm(Form):
     is_public = BooleanField()
     is_force_update = BooleanField()
     is_prune_mirrors = BooleanField()
+
+    def __init__(self, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+
+        gl = gitlab.Gitlab(
+            flask.current_app.config['GITLAB_URL'],
+            oauth_token=current_user.access_token,
+            api_version=flask.current_app.config['GITLAB_API_VERSION']
+        )
+
+        gl.auth()
+
+        choices = []
+        for group in gl.groups.list():
+            choices.append((group.id, '{} ({})'.format(group.name, group.full_path)))
+        self.groups.choices = choices
 
     def validate(self) -> bool:
         rv = Form.validate(self)

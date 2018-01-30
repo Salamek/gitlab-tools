@@ -19,6 +19,7 @@ LOG = getLogger(__name__)
 def sync_mirror(task_id: str, mirror_id: int) -> None:
     mirror = Mirror.query.filter(id=mirror_id).first()
 
+    # 0. Check if group/s exists if not create
     # 1. check if mirror exists in group/s if not create
     # 2. Create/pull local repository
     # 3. Add gitlab remote

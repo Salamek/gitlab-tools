@@ -85,6 +85,7 @@ class Mirror(BaseTable):
     __tablename__ = 'mirror'
     id = db.Column(db.Integer, primary_key=True)
     vcs = db.Column(db.Integer)
+    gitlab_id = db.Column(db.Integer)
     direction = db.Column(db.Integer)
     project_name = db.Column(db.String(255))
     project_mirror = db.Column(db.String(255))
@@ -116,7 +117,6 @@ class Group(BaseTable):
 
     id = db.Column(db.Integer, primary_key=True)
     gitlab_id = db.Column(db.Integer, unique=True)
-    name = db.Column(db.Text)
 
     mirrors = relationship(
         "Mirror",
