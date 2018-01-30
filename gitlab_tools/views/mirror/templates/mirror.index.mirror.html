@@ -15,6 +15,7 @@
         <th>{{ _('Project name') }}</th>
         <th>{{ _('Mirror') }}</th>
         <th>{{ _('Note') }}</th>
+        <th>{{ _('Web trigger') }}</th>
         <th>{{ _('Updated') }}</th>
         <th>{{ _('Created') }}</th>
         <th></th>
@@ -27,15 +28,15 @@
         <td>{{item.direction}}</td>
         <td>{{item.vcs}}</td>
         <td>{{item.project_name}}</td>
-        <td>{{item.mirror}}</td>
+        <td>{{item.project_mirror}}</td>
         <td>{{item.note}}</td>
+        <td>{{url_for('api.index.sync_mirror', mirror_id=item.id, token=item.hook_token, _external=True)}}</td>
         <td>{{item.updated|format_datetime}}</td>
         <td>{{item.created|format_datetime}}</td>
         <td>
-            <a class="btn btn-xs btn-primary" href="{{url_for('mirror.index.edit_mirror', mirror_id=item.id)}}"><i class="fa fa-pencil" aria-hidden="true"></i> {{ _('Edit') }}</a>
-            {% if not item.data %}
-                <a class="btn btn-xs btn-danger confirm" data-confirm-message="{{_('Are you sure you want to delete this mirror ?')}}" href="{{url_for('mirror.index.delete_mirror', mirror_id=item.id)}}"><i class="fa fa-trash" aria-hidden="true"></i> {{ _('Delete') }}</a>
-            {% endif %}
+            <a class="btn btn-xs btn-default" href="{{url_for('mirror.index.sync_mirror', mirror_id=item.id)}}"><i class="fa fa-map-signs" aria-hidden="true"></i> {{ _('Trigger sync') }}</a>
+            <a class="btn btn-xs btn-primary" href="{{url_for('mirror.index.edit_mirror', mirror_id=item.id)}}" title="{{ _('Edit') }}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+            <a class="btn btn-xs btn-danger confirm" data-confirm-message="{{_('Are you sure you want to delete this mirror ?')}}" href="{{url_for('mirror.index.delete_mirror', mirror_id=item.id)}}" title="{{ _('Delete') }}"><i class="fa fa-trash" aria-hidden="true"></i></a>
         </td>
     </tr>
     {% endfor %}

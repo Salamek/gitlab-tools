@@ -17,16 +17,16 @@
                 {% endif %}
                 <form method="post" role="form" action="{{url_for('mirror.index.edit_mirror', mirror_id=mirror_detail.id)}}">
                     <div class="col-xs-12 col-sm-12 col-md-12">
-                        {{render_field(form.vcs, 'form-group', _('vcs'))}}
+                        {{render_field(form.vcs, 'form-group', _('VCS'))}}
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-12">
-                        {{render_field(form.direction, 'form-group', _('direction'))}}
+                        {{render_field(form.direction, 'form-group', _('Direction'))}}
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-12">
-                        {{render_field(form.project_name, 'form-group', _('project_name'))}}
+                        {{render_field(form.project_name, 'form-group', _('Project name'))}}
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-12">
-                        {{render_field(form.project_mirror, 'form-group', _('project_mirror'))}}
+                        {{render_field(form.project_mirror, 'form-group', _('Project mirror'))}}
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-12">
                         {{render_field(form.note, 'form-group', _('Note'))}}

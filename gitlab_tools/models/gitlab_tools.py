@@ -82,21 +82,15 @@ class User(BaseTable):
 
 
 class Mirror(BaseTable):
-    VCS_GIT = 1
-    VCS_BAZAAR = 2
-    VCS_SVN = 3
-
-    DIRECTION_PUSH = 1
-    DIRECTION_PULL = 2
-
     __tablename__ = 'mirror'
     id = db.Column(db.Integer, primary_key=True)
     vcs = db.Column(db.Integer)
     direction = db.Column(db.Integer)
     project_name = db.Column(db.String(255))
-    project_mirror = db.Column(db.DateTime)
-    last_sync = db.Column(db.DateTime)
+    project_mirror = db.Column(db.String(255))
+    last_sync = db.Column(db.DateTime, nullable=True)
     note = db.Column(db.String(255))
+    hook_token = db.Column(db.String(255))
 
     groups = relationship(
         "Group",
@@ -110,6 +104,7 @@ class Group(BaseTable):
     __tablename__ = 'group'
 
     id = db.Column(db.Integer, primary_key=True)
+    gitlab_id = db.Column(db.Integer, unique=True)
     name = db.Column(db.Text)
 
     mirrors = relationship(
