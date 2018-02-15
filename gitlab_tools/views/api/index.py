@@ -24,5 +24,8 @@ def sync_mirror(mirror_id: int):
     if found_mirror.hook_token != hook_token:
         return jsonify({'message': 'Provided token was incorrect'}), 400
 
+    if not found_mirror.gitlab_id:
+        return jsonify({'message': 'Mirror is not created, cannot be synced'}), 400
+
     task = sync_mirror.delay(found_mirror.id)
     return jsonify({'message': 'Sync task started', 'uuid': task.id}), 200

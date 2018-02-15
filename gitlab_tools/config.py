@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from celery.schedules import crontab
+import os
 
 
 class HardCoded(object):
@@ -55,6 +56,8 @@ class Config(CacheConfig):
     CACHE_REDIS_URL = 'redis://127.0.0.1/0'
     PORT = 5000
     HOST = '0.0.0.0'
+    GITLAB_API_VERSION = 4
+    REPOSITORY_STORAGE = os.path.join(os.path.expanduser('~'), 'repositories')
 
 
 class Testing(Config):
@@ -73,3 +76,7 @@ class Production(Config):
     SQLALCHEMY_DATABASE_URI = None
     PORT = None  # To be overwritten by a YAML file.
     HOST = None  # To be overwritten by a YAML file.
+    GITLAB_URL = None  # To be overwritten by a YAML file.
+    GITLAB_APP_ID = None  # To be overwritten by a YAML file.
+    GITLAB_APP_SECRET = None  # To be overwritten by a YAML file.
+

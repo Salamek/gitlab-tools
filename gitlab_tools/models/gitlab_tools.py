@@ -14,14 +14,6 @@ class BaseTable(db.Model):
     created = db.Column(db.DateTime, default=func.now())
 
 
-mirror_group_association_table = db.Table(
-    'mirror_group_association',
-    BaseTable.metadata,
-    db.Column('mirror_id', db.Integer, db.ForeignKey('mirror.id')),
-    db.Column('group_id', db.Integer, db.ForeignKey('group.id'))
-)
-
-
 class OAuth2State(BaseTable):
     __tablename__ = 'o_auth2_state'
     id = db.Column(db.Integer, primary_key=True)
@@ -37,6 +29,7 @@ class User(BaseTable):
     access_token = db.Column(db.String(255), unique=True, nullable=True)
     refresh_token = db.Column(db.String(255), unique=True, nullable=True)
     expires = db.Column(db.DateTime, default=func.now())
+    mirrors = relationship("Mirror", order_by="Mirror.id", backref="user", lazy='dynamic')
 
     def is_active(self):
         return True
@@ -84,6 +77,8 @@ class User(BaseTable):
 class Mirror(BaseTable):
     __tablename__ = 'mirror'
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'), index=True)
     vcs = db.Column(db.Integer)
     gitlab_id = db.Column(db.Integer)
     direction = db.Column(db.Integer)
@@ -104,22 +99,12 @@ class Mirror(BaseTable):
     is_force_update = db.Column(db.Boolean)
     is_prune_mirrors = db.Column(db.Boolean)
 
-    groups = relationship(
-        "Group",
-        order_by="Group.updated.desc()",
-        lazy="dynamic",
-        secondary=mirror_group_association_table,
-        back_populates="mirrors")
-
 
 class Group(BaseTable):
     __tablename__ = 'group'
 
     id = db.Column(db.Integer, primary_key=True)
     gitlab_id = db.Column(db.Integer, unique=True)
+    name = db.Column(db.String(255))
+    mirrors = relationship("Mirror", order_by="Mirror.id", backref="group", lazy='dynamic')
 
-    mirrors = relationship(
-        "Mirror",
-        lazy="dynamic",
-        secondary=mirror_group_association_table,
-        back_populates="groups")

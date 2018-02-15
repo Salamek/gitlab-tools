@@ -3,7 +3,6 @@
 
 import flask
 from flask_login import current_user, login_required
-from typing import List
 from gitlab_tools.models.gitlab_tools import db, Mirror, Group
 from gitlab_tools.forms.mirror import EditForm, NewForm
 from gitlab_tools.tools.helpers import random_password
@@ -16,19 +15,15 @@ __date__ = "$26.7.2017 19:33:05$"
 PER_PAGE = 20
 
 
-def process_groups(groups: List[int]) -> List[Group]:
-    return_groups = []
-    for group in groups:
-        found_group = Group.query.filter_by(gitlab_id=group).first()
-        if not found_group:
-            found_group = Group()
-            found_group.gitlab_id = group
-            db.session.add(found_group)
-            db.session.commit()
+def process_group(group: int) -> Group:
+    found_group = Group.query.filter_by(gitlab_id=group).first()
+    if not found_group:
+        found_group = Group()
+        found_group.gitlab_id = group
+        db.session.add(found_group)
+        db.session.commit()
 
-        return_groups.append(found_group)
-
-    return return_groups
+    return found_group
 
 
 @mirror_index.route('/', methods=['GET'], defaults={'page': 1})
@@ -75,9 +70,11 @@ def new_mirror():
         mirror_new.is_force_update = form.is_force_update.data
         mirror_new.is_prune_mirrors = form.is_prune_mirrors.data
         mirror_new.hook_token = random_password()
-        mirror_new.groups = process_groups(form.groups.data)
+        mirror_new.group = process_group(form.group.data)
         db.session.add(mirror_new)
         db.session.commit()
+
+        sync_mirror.delay(mirror_new.id)
 
         flask.flash('New mirror item was added successfully.', 'success')
         return flask.redirect(flask.url_for('mirror.index.get_mirror'))
@@ -108,7 +105,7 @@ def edit_mirror(mirror_id: int):
         is_public=mirror_detail.is_public,
         is_force_update=mirror_detail.is_force_update,
         is_prune_mirrors=mirror_detail.is_prune_mirrors,
-        groups=[group.gitlab_id for group in mirror_detail.groups]
+        group=mirror_detail.group.id
     )
     if flask.request.method == 'POST' and form.validate():
         mirror_detail.project_name = form.project_name.data
@@ -127,10 +124,12 @@ def edit_mirror(mirror_id: int):
         mirror_detail.is_public = form.is_public.data
         mirror_detail.is_force_update = form.is_force_update.data
         mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
-        mirror_detail.groups = process_groups(form.groups.data)
+        mirror_detail.group = process_group(form.group.data)
 
         db.session.add(mirror_detail)
         db.session.commit()
+
+        sync_mirror.delay(mirror_detail.id)
 
         flask.flash('Mirror was saved successfully.', 'success')
         return flask.redirect(flask.url_for('mirror.index.get_mirror'))
@@ -142,10 +141,14 @@ def edit_mirror(mirror_id: int):
 @login_required
 def sync_mirror(mirror_id: int):
     # Check if mirror exists or throw 404
-    Mirror.query.filter_by(id=mirror_id).first_or_404()
+    found_mirror = Mirror.query.filter_by(id=mirror_id).first_or_404()
+    if not found_mirror.gitlab_id:
+        flask.flash('Mirror is not created, cannot be synced', 'danger')
+        return flask.redirect(flask.url_for('mirror.index.get_mirror'))
     task = sync_mirror.delay(mirror_id)
 
     flask.flash('Sync has been started with UUID: {}'.format(task.id), 'success')
+    return flask.redirect(flask.url_for('mirror.index.get_mirror'))
 
 
 @mirror_index.route('/delete/<int:mirror_id>', methods=['GET'])
