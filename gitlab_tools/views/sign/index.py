@@ -10,6 +10,7 @@ import requests
 from flask_login import login_user, logout_user, login_required
 
 from gitlab_tools.blueprints import sign_index
+from gitlab_tools.tasks.gitlab_tools import create_rsa_pair
 from gitlab_tools.tools.helpers import random_password
 from gitlab_tools.extensions import db
 from gitlab_tools.models.gitlab_tools import User, OAuth2State
@@ -90,6 +91,7 @@ def do_login():
         if not found_user:
             found_user = User()
             found_user.gitlab_id = logged_user.id
+            found_user.is_rsa_pair_set = False
         found_user.name = logged_user.name
         found_user.avatar_url = logged_user.avatar_url
         found_user.access_token = response_data['access_token']
@@ -98,6 +100,10 @@ def do_login():
 
         db.session.add(found_user)
         db.session.commit()
+
+        if not found_user.is_rsa_pair_set:
+            create_rsa_pair.delay(found_user.id)
+
         login_user(found_user, remember=True)
         flask.flash('You has been logged in successfully', 'success')
         return flask.redirect(flask.url_for('home.index.get_home'))

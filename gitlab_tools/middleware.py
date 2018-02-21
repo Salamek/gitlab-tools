@@ -12,7 +12,7 @@ from celery.signals import worker_process_init
 from flask import current_app, render_template, request, g
 from flask_babel import format_datetime, format_date
 from gitlab_tools.extensions import navigation, login_manager, babel, db
-from gitlab_tools.tools.formaters import format_bytes, fix_url, format_boolean
+from gitlab_tools.tools.formaters import format_bytes, fix_url, format_boolean, format_vcs
 from markupsafe import Markup
 
 from gitlab_tools.models.gitlab_tools import User
@@ -100,6 +100,11 @@ def format_date_filter(date_time) -> str:
 @current_app.template_filter('fix_url')
 def fix_url_filter(url: str) -> str:
     return fix_url(url)
+
+
+@current_app.template_filter('format_vcs')
+def format_vcs_filter(vcs_enum: int) -> str:
+    return format_vcs(vcs_enum)
 
 
 @current_app.template_filter('format_boolean')

@@ -1,3 +1,4 @@
+from gitlab_tools.enums.VcsEnum import VcsEnum
 
 def format_bytes(num: int, suffix: str='B') -> str:
     """
@@ -34,3 +35,17 @@ def format_boolean(bool_to_format: bool) -> str:
         return '<div class="label label-success">Yes</div>'
     else:
         return '<div class="label label-danger">No</div>'
+
+
+def format_vcs(vcs_id: int) -> str:
+    """
+    Formats vcs enum to string representation
+    :param vcs_id: VcsEnum
+    :return: 
+    """
+    return {
+        VcsEnum.GIT: 'Git',
+        VcsEnum.SVN: 'SVN',
+        VcsEnum.MERCURIAL: 'Mercurial',
+        VcsEnum.BAZAAR: 'Bazaar',
+    }.get(vcs_id, '?')

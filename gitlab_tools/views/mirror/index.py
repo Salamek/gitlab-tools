@@ -7,7 +7,7 @@ from gitlab_tools.models.gitlab_tools import db, Mirror, Group
 from gitlab_tools.forms.mirror import EditForm, NewForm
 from gitlab_tools.tools.helpers import random_password
 from gitlab_tools.blueprints import mirror_index
-from gitlab_tools.tasks.gitlab_tools import sync_mirror
+from gitlab_tools.tasks.gitlab_tools import sync_mirror, delete_mirror, add_mirror
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
@@ -30,7 +30,7 @@ def process_group(group: int) -> Group:
 @mirror_index.route('/page/<int:page>', methods=['GET'])
 @login_required
 def get_mirror(page: int):
-    pagination = Mirror.query.filter().order_by(Mirror.created.desc()).paginate(page, PER_PAGE)
+    pagination = Mirror.query.filter_by(is_deleted=False).order_by(Mirror.created.desc()).paginate(page, PER_PAGE)
     return flask.render_template('mirror.index.mirror.html', pagination=pagination)
 
 
@@ -71,10 +71,12 @@ def new_mirror():
         mirror_new.is_prune_mirrors = form.is_prune_mirrors.data
         mirror_new.hook_token = random_password()
         mirror_new.group = process_group(form.group.data)
+        mirror_new.is_deleted = False
+        mirror_new.user = current_user
         db.session.add(mirror_new)
         db.session.commit()
 
-        sync_mirror.delay(mirror_new.id)
+        add_mirror.delay(mirror_new.id)
 
         flask.flash('New mirror item was added successfully.', 'success')
         return flask.redirect(flask.url_for('mirror.index.get_mirror'))
@@ -85,6 +87,7 @@ def new_mirror():
 @mirror_index.route('/edit/<int:mirror_id>', methods=['GET', 'POST'])
 @login_required
 def edit_mirror(mirror_id: int):
+    # We dont have any edit functionality for mirrors, so just create new one and delete old one
     mirror_detail = Mirror.query.filter_by(id=mirror_id).first_or_404()
     form = EditForm(
         flask.request.form,
@@ -108,28 +111,40 @@ def edit_mirror(mirror_id: int):
         group=mirror_detail.group.id
     )
     if flask.request.method == 'POST' and form.validate():
-        mirror_detail.project_name = form.project_name.data
-        mirror_detail.project_mirror = form.project_mirror.data
-        mirror_detail.vcs = form.vcs.data
-        mirror_detail.direction = form.direction.data
-        mirror_detail.note = form.note.data
-        mirror_detail.is_no_create = form.is_no_create.data
-        mirror_detail.is_force_create = form.is_force_create.data
-        mirror_detail.is_no_remote = form.is_no_remote.data
-        mirror_detail.is_issues_enabled = form.is_issues_enabled.data
-        mirror_detail.is_wall_enabled = form.is_wall_enabled.data
-        mirror_detail.is_wiki_enabled = form.is_wiki_enabled.data
-        mirror_detail.is_snippets_enabled = form.is_snippets_enabled.data
-        mirror_detail.is_merge_requests_enabled = form.is_merge_requests_enabled.data
-        mirror_detail.is_public = form.is_public.data
-        mirror_detail.is_force_update = form.is_force_update.data
-        mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
-        mirror_detail.group = process_group(form.group.data)
+        # Add new mirror with new config
+        new_mirror_detail = Mirror()
+        new_mirror_detail.project_name = form.project_name.data
+        new_mirror_detail.project_mirror = form.project_mirror.data
+        new_mirror_detail.vcs = form.vcs.data
+        new_mirror_detail.direction = form.direction.data
+        new_mirror_detail.note = form.note.data
+        new_mirror_detail.is_no_create = form.is_no_create.data
+        new_mirror_detail.is_force_create = form.is_force_create.data
+        new_mirror_detail.is_no_remote = form.is_no_remote.data
+        new_mirror_detail.is_issues_enabled = form.is_issues_enabled.data
+        new_mirror_detail.is_wall_enabled = form.is_wall_enabled.data
+        new_mirror_detail.is_wiki_enabled = form.is_wiki_enabled.data
+        new_mirror_detail.is_snippets_enabled = form.is_snippets_enabled.data
+        new_mirror_detail.is_merge_requests_enabled = form.is_merge_requests_enabled.data
+        new_mirror_detail.is_public = form.is_public.data
+        new_mirror_detail.is_force_update = form.is_force_update.data
+        new_mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
+        new_mirror_detail.group = process_group(form.group.data)
+        new_mirror_detail.is_deleted = False
+        new_mirror_detail.user = current_user
 
+        db.session.add(new_mirror_detail)
+
+        # delete old mirror
+        mirror_detail.is_deleted = True
         db.session.add(mirror_detail)
         db.session.commit()
 
-        sync_mirror.delay(mirror_detail.id)
+        # Create new mirror repo
+        add_mirror.delay(new_mirror_detail.id)
+
+        # Shedule old mirror real deletion
+        delete_mirror.delay(mirror_detail.id)
 
         flask.flash('Mirror was saved successfully.', 'success')
         return flask.redirect(flask.url_for('mirror.index.get_mirror'))
@@ -139,7 +154,7 @@ def edit_mirror(mirror_id: int):
 
 @mirror_index.route('/sync/<int:mirror_id>', methods=['GET'])
 @login_required
-def sync_mirror(mirror_id: int):
+def schedule_sync_mirror(mirror_id: int):
     # Check if mirror exists or throw 404
     found_mirror = Mirror.query.filter_by(id=mirror_id).first_or_404()
     if not found_mirror.gitlab_id:
@@ -153,10 +168,19 @@ def sync_mirror(mirror_id: int):
 
 @mirror_index.route('/delete/<int:mirror_id>', methods=['GET'])
 @login_required
-def delete_mirror(mirror_id: int):
+def schedule_delete_mirror(mirror_id: int):
     mirror_detail = Mirror.query.filter_by(id=mirror_id).first_or_404()
-    db.session.delete(mirror_detail)
+    mirror_detail.is_deleted = True
+    db.session.add(mirror_detail)
     db.session.commit()
+
+    delete_mirror.delay(mirror_detail.id)
+
     flask.flash('Mirror was deleted successfully.', 'success')
 
     return flask.redirect(flask.url_for('mirror.index.get_mirror'))
+
+
+@mirror_index.route('/test', methods=['GET'])
+def test():
+    add_mirror.delay(1)

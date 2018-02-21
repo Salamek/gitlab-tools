@@ -34,7 +34,7 @@ class CeleryConfig(HardCoded):
     CELERY_DEFAULT_QUEUE = 'gitlab_tools'
 
     CELERYBEAT_SCHEDULE = {
-        'gitlab-tools-every-hour': dict(task='gitlab_tools.crawl_gitlab-tools', schedule=crontab(minute='0')),
+        #'gitlab-tools-every-hour': dict(task='gitlab_tools.crawl_gitlab-tools', schedule=crontab(minute='0')),
     }
 
 
@@ -57,7 +57,9 @@ class Config(CacheConfig):
     PORT = 5000
     HOST = '0.0.0.0'
     GITLAB_API_VERSION = 4
-    REPOSITORY_STORAGE = os.path.join(os.path.expanduser('~'), 'repositories')
+    HOME = os.path.expanduser('~')
+    REPOSITORY_STORAGE = os.path.join(HOME, 'repositories')
+    SSH_STORAGE = os.path.join(HOME, '.ssh')
 
 
 class Testing(Config):

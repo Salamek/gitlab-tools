@@ -4,6 +4,14 @@
 
 <h1>{{ _('GitLab Tools') }}</h1>
 
+<h2>{{_('Your public key')}}</h2>
+
+<div class="jumbotron">
+  <code>
+      {{public_key}}
+  </code>
+</div>
+
 <h2>{{_('Mirrors : %(mirrors)s', mirrors=mirrors)}}</h2>
 
 {% endblock %}

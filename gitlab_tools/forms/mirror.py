@@ -5,7 +5,7 @@ from flask_login import current_user
 from wtforms import Form, StringField, validators, HiddenField, TextAreaField, SelectField, BooleanField
 
 from gitlab_tools.enums.VcsEnum import VcsEnum
-from gitlab_tools.enums.DirectionEnum import DirectionEnum
+from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
 from gitlab_tools.models.gitlab_tools import Mirror
 
 __author__ = "Adam Schubert"
@@ -19,9 +19,9 @@ class NewForm(Form):
         (VcsEnum.SVN, 'SVN'),
         (VcsEnum.MERCURIAL, 'Mercurial'),
     ))
-    direction = SelectField(None, [validators.DataRequired()], coerce=int, choices=(
-        (DirectionEnum.PULL, 'Pull to GitLab'),
-        (DirectionEnum.PULL, 'Push from GitLab')
+    vcs_protocol = SelectField(None, [validators.DataRequired()], coerce=int, choices=(
+        (ProtocolEnum.SSH, 'SSH'),
+        (ProtocolEnum.HTTPS, 'https')
     ))
     project_name = StringField(None, [validators.Length(min=1, max=255)])
     project_mirror = StringField(None, [validators.Length(min=1, max=255)])

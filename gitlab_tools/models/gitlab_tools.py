@@ -24,6 +24,7 @@ class User(BaseTable):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     gitlab_id = db.Column(db.Integer, unique=True, nullable=False)
+    is_rsa_pair_set = db.Column(db.Boolean)
     name = db.Column(db.String(255))
     avatar_url = db.Column(db.String(255))
     access_token = db.Column(db.String(255), unique=True, nullable=True)
@@ -79,9 +80,10 @@ class Mirror(BaseTable):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), index=True)
+    fingerprint = db.Column(db.Text)
+    vcs_protocol = db.Column(db.Integer)
     vcs = db.Column(db.Integer)
     gitlab_id = db.Column(db.Integer)
-    direction = db.Column(db.Integer)
     project_name = db.Column(db.String(255))
     project_mirror = db.Column(db.String(255))
     last_sync = db.Column(db.DateTime, nullable=True)
@@ -98,6 +100,7 @@ class Mirror(BaseTable):
     is_public = db.Column(db.Boolean)
     is_force_update = db.Column(db.Boolean)
     is_prune_mirrors = db.Column(db.Boolean)
+    is_deleted = db.Column(db.Boolean)
 
 
 class Group(BaseTable):
