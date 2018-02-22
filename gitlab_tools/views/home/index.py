@@ -3,6 +3,7 @@ import os
 
 from flask_login import current_user, login_required
 from gitlab_tools.models.gitlab_tools import Mirror
+from gitlab_tools.tools.helpers import get_ssh_storage
 from gitlab_tools.blueprints import home_index
 
 __author__ = "Adam Schubert"
@@ -14,7 +15,7 @@ __date__ = "$26.7.2017 19:33:05$"
 def get_home():
     mirrors = Mirror.query.count()
     public_key_path = os.path.join(
-        flask.current_app.config['SSH_STORAGE'],
+        get_ssh_storage(flask.current_app.config['USER']),
         'id_rsa_{}.pub'.format(current_user.id)
     )
     if os.path.isfile(public_key_path):

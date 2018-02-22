@@ -5,6 +5,9 @@ import sys
 import os
 import pwd
 import grp
+import urllib.parse
+from gitlab_tools.enums.VcsEnum import VcsEnum
+from typing import Union
 
 
 def random_password() -> str:
@@ -36,6 +39,15 @@ def get_ssh_storage(user_name: str) -> str:
     return os.path.join(get_home_dir(user_name), '.ssh')
 
 
+def get_repository_storage(user_name: str) -> str:
+    """
+    Gets user repository storage
+    :param user_name: user name
+    :return: path to repository storage
+    """
+    return os.path.join(get_home_dir(user_name), 'repositories')
+
+
 def get_user_group_id(user_name: str) -> int:
     """
     Returns Default user group id
@@ -61,3 +73,33 @@ def get_user_id(user_name: str) -> int:
     :return: User ID
     """
     return pwd.getpwnam(user_name).pw_uid
+
+
+def detect_vcs_type(vcs_url: str) -> Union[int, None]:
+    """
+    Detects VCS type by its URL protocol
+    :param vcs_url: URL to detect
+    :return: VcsEnum int
+    """
+    parsed_url = urllib.parse.urlparse(vcs_url)
+    if 'bzr' in parsed_url.scheme:
+        return VcsEnum.BAZAAR
+
+    if 'hg' in parsed_url.scheme:
+        return VcsEnum.MERCURIAL
+
+    if 'svn' in parsed_url.scheme:
+        return VcsEnum.SVN
+
+    # We got here... so it must be Git Right ? Lets validate that also...
+    if 'ssh' in parsed_url.scheme:
+        return VcsEnum.GIT
+
+    if 'https' in parsed_url.scheme:
+        return VcsEnum.GIT
+
+    if 'git' in parsed_url.scheme:
+        return VcsEnum.GIT
+
+    return None
+

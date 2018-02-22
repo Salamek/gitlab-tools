@@ -81,7 +81,6 @@ class Mirror(BaseTable):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), index=True)
     fingerprint = db.Column(db.Text)
-    vcs_protocol = db.Column(db.Integer)
     vcs = db.Column(db.Integer)
     gitlab_id = db.Column(db.Integer)
     project_name = db.Column(db.String(255))

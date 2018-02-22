@@ -5,7 +5,7 @@ import flask
 from flask_login import current_user, login_required
 from gitlab_tools.models.gitlab_tools import db, Mirror, Group
 from gitlab_tools.forms.mirror import EditForm, NewForm
-from gitlab_tools.tools.helpers import random_password
+from gitlab_tools.tools.helpers import random_password, detect_vcs_type
 from gitlab_tools.blueprints import mirror_index
 from gitlab_tools.tasks.gitlab_tools import sync_mirror, delete_mirror, add_mirror
 
@@ -55,8 +55,7 @@ def new_mirror():
         mirror_new = Mirror()
         mirror_new.project_name = form.project_name.data
         mirror_new.project_mirror = form.project_mirror.data
-        mirror_new.vcs = form.vcs.data
-        mirror_new.direction = form.direction.data
+        mirror_new.vcs = detect_vcs_type(form.project_mirror.data)
         mirror_new.note = form.note.data
         mirror_new.is_no_create = form.is_no_create.data
         mirror_new.is_force_create = form.is_force_create.data
@@ -95,7 +94,6 @@ def edit_mirror(mirror_id: int):
         vcs=mirror_detail.vcs,
         project_name=mirror_detail.project_name,
         project_mirror=mirror_detail.project_mirror,
-        direction=mirror_detail.direction,
         note=mirror_detail.note,
         is_no_create=mirror_detail.is_no_create,
         is_force_create=mirror_detail.is_force_create,
@@ -108,15 +106,14 @@ def edit_mirror(mirror_id: int):
         is_public=mirror_detail.is_public,
         is_force_update=mirror_detail.is_force_update,
         is_prune_mirrors=mirror_detail.is_prune_mirrors,
-        group=mirror_detail.group.id
+        group=mirror_detail.group.gitlab_id
     )
     if flask.request.method == 'POST' and form.validate():
         # Add new mirror with new config
         new_mirror_detail = Mirror()
         new_mirror_detail.project_name = form.project_name.data
         new_mirror_detail.project_mirror = form.project_mirror.data
-        new_mirror_detail.vcs = form.vcs.data
-        new_mirror_detail.direction = form.direction.data
+        new_mirror_detail.vcs = detect_vcs_type(form.project_mirror.data)
         new_mirror_detail.note = form.note.data
         new_mirror_detail.is_no_create = form.is_no_create.data
         new_mirror_detail.is_force_create = form.is_force_create.data

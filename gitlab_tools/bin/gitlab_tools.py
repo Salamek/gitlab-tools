@@ -74,7 +74,7 @@ from celery.bin.celery import main as celery_main
 from gitlab_tools.extensions import db
 from gitlab_tools.application import create_app, get_config
 from gitlab_tools.config import Config
-from gitlab_tools.tools.helpers import random_password, get_home_dir, get_user_group_id, get_user_id
+from gitlab_tools.tools.helpers import random_password, get_home_dir, get_user_group_id, get_user_id, get_repository_storage, get_ssh_storage
 
 OPTIONS = docopt(__doc__)
 
@@ -459,6 +459,22 @@ def setup() -> None:
             stamp()
 
             print('Database has been created')
+
+    # Check if repository storage directory exists
+    repository_storage_path = get_repository_storage(app.config['USER'])
+    if not os.path.isdir(repository_storage_path):
+        print('Creating {}'.format(repository_storage_path))
+        os.mkdir(repository_storage_path)
+
+    os.chown(repository_storage_path, get_user_id(app.config['USER']), get_user_group_id(app.config['USER']))
+
+    # Check if ssh storage directory exists
+    ssh_storage_path = get_ssh_storage(app.config['USER'])
+    if not os.path.isdir(ssh_storage_path):
+        print('Creating {}'.format(ssh_storage_path))
+        os.mkdir(ssh_storage_path)
+
+    os.chown(ssh_storage_path, get_user_id(app.config['USER']), get_user_group_id(app.config['USER']))
 
     restart_services = input('Restart services to load new configuration ? (y/n) [n]: ') or 'n'
     if restart_services == 'y':

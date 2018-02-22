@@ -10,6 +10,7 @@ from flask_celery import single_instance
 from sqlalchemy import or_
 from gitlab_tools.models.gitlab_tools import Mirror, User
 from gitlab_tools.enums.VcsEnum import VcsEnum
+from gitlab_tools.tools.helpers import get_ssh_storage, get_repository_storage
 from logging import getLogger
 from gitlab_tools.extensions import celery, db
 
@@ -18,7 +19,7 @@ LOG = getLogger(__name__)
 
 
 def get_group_path(mirror: Mirror):
-    repository_storage_path = flask.current_app.config['REPOSITORY_STORAGE']
+    repository_storage_path = get_repository_storage(flask.current_app.config['USER'])
     return os.path.join(repository_storage_path, str(mirror.group.id))
 
 
@@ -108,7 +109,7 @@ def add_mirror(mirror_id: int) -> None:
                 'wiki_enabled': mirror.is_wiki_enabled,
                 'snippets_enabled': mirror.is_snippets_enabled,
                 'public': mirror.is_public,
-                'namespace_id': mirror.group.id
+                'namespace_id': mirror.group.gitlab_id
             })
 
         mirror_remote = project.ssh_url_to_repo
@@ -122,10 +123,6 @@ def add_mirror(mirror_id: int) -> None:
         mirror_remote = None
 
     # 2. Create/pull local repository
-
-    # Check if repository storage directory exists
-    if not os.path.isdir(flask.current_app.config['REPOSITORY_STORAGE']):
-        os.mkdir(flask.current_app.config['REPOSITORY_STORAGE'])
 
     repository_storage_group_path = get_group_path(mirror)
 
@@ -214,7 +211,7 @@ def add_mirror(mirror_id: int) -> None:
         elif mirror.vcs == VcsEnum.BAZAAR:
             commands.append((
                 repository_storage_group_path,
-                ['git', 'clone', '--mirror', 'bzr::{}'.format(mirror.project_mirror), mirror.project_name],
+                ['git', 'clone', '--mirror', mirror.project_mirror, mirror.project_name],
             ))
 
             commands.append((
@@ -228,7 +225,7 @@ def add_mirror(mirror_id: int) -> None:
         elif mirror.vcs == VcsEnum.MERCURIAL:
             commands.append((
                 repository_storage_group_path,
-                ['git', 'clone', '--mirror', 'hg::{}'.format(mirror.project_mirror), mirror.project_name],
+                ['git', 'clone', '--mirror', mirror.project_mirror, mirror.project_name],
             ))
             commands.append((
                 project_path,
@@ -359,8 +356,8 @@ def delete_mirror(mirror_id: int) -> None:
 @celery.task(bind=True)
 @single_instance(include_args=True)
 def create_rsa_pair(user_id: int) -> None:
-    ssh_storage = flask.current_app.config['SSH_STORAGE']
-    user = User.query.find_by(id=user_id, is_rsa_pair_set=False).first()
+    ssh_storage = get_ssh_storage(flask.current_app.config['USER'])
+    user = User.query.filter_by(id=user_id, is_rsa_pair_set=False).first()
     if user:
         # check if priv and pub keys exists
         private_key_path = os.path.join(ssh_storage, 'id_rsa_{}'.format(user.id))
@@ -368,12 +365,12 @@ def create_rsa_pair(user_id: int) -> None:
 
         if not os.path.isfile(private_key_path) or not os.path.isfile(public_key_path):
 
-            key = RSA.generate(2048)
-            with open(private_key_path, 'w') as content_file:
+            key = RSA.generate(4096)
+            with open(private_key_path, 'wb') as content_file:
                 os.chmod(private_key_path, 0o0600)
                 content_file.write(key.exportKey('PEM'))
             pubkey = key.publickey()
-            with open(public_key_path, 'w') as content_file:
+            with open(public_key_path, 'wb') as content_file:
                 content_file.write(pubkey.exportKey('OpenSSH'))
 
             user.is_rsa_pair_set = True

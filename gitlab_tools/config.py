@@ -59,8 +59,6 @@ class Config(CacheConfig):
     HOST = '0.0.0.0'
     GITLAB_API_VERSION = 4
     USER = getpass.getuser()
-    # !FIXME REPOSITORY_STORAGE = os.path.join(HOME, 'repositories')
-    # !FIXME SSH_STORAGE = os.path.join(HOME, '.ssh')
 
 
 class Testing(Config):
