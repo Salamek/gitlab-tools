@@ -7,6 +7,7 @@ import pwd
 import grp
 import urllib.parse
 from gitlab_tools.enums.VcsEnum import VcsEnum
+from gitlab_tools.models.gitlab_tools import User
 from typing import Union
 
 
@@ -102,4 +103,26 @@ def detect_vcs_type(vcs_url: str) -> Union[int, None]:
         return VcsEnum.GIT
 
     return None
+
+
+def get_user_public_key_path(user: User, user_name: str) -> str:
+    """
+    Returns path for user public key
+    :param user: gitlab tools user
+    :param user_name: system user name
+    :return: 
+    """
+    ssh_storage = get_ssh_storage(user_name)
+    return os.path.join(ssh_storage, 'id_rsa_{}.pub'.format(user.id))
+
+
+def get_user_private_key_path(user: User, user_name: str) -> str:
+    """
+    Returns path for user private key
+    :param user: gitlab tools user
+    :param user_name: system user name
+    :return: 
+    """
+    ssh_storage = get_ssh_storage(user_name)
+    return os.path.join(ssh_storage, 'id_rsa_{}'.format(user.id))
 

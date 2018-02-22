@@ -110,38 +110,27 @@ def edit_mirror(mirror_id: int):
     )
     if flask.request.method == 'POST' and form.validate():
         # Add new mirror with new config
-        new_mirror_detail = Mirror()
-        new_mirror_detail.project_name = form.project_name.data
-        new_mirror_detail.project_mirror = form.project_mirror.data
-        new_mirror_detail.vcs = detect_vcs_type(form.project_mirror.data)
-        new_mirror_detail.note = form.note.data
-        new_mirror_detail.is_no_create = form.is_no_create.data
-        new_mirror_detail.is_force_create = form.is_force_create.data
-        new_mirror_detail.is_no_remote = form.is_no_remote.data
-        new_mirror_detail.is_issues_enabled = form.is_issues_enabled.data
-        new_mirror_detail.is_wall_enabled = form.is_wall_enabled.data
-        new_mirror_detail.is_wiki_enabled = form.is_wiki_enabled.data
-        new_mirror_detail.is_snippets_enabled = form.is_snippets_enabled.data
-        new_mirror_detail.is_merge_requests_enabled = form.is_merge_requests_enabled.data
-        new_mirror_detail.is_public = form.is_public.data
-        new_mirror_detail.is_force_update = form.is_force_update.data
-        new_mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
-        new_mirror_detail.group = process_group(form.group.data)
-        new_mirror_detail.is_deleted = False
-        new_mirror_detail.user = current_user
-
-        db.session.add(new_mirror_detail)
-
-        # delete old mirror
-        mirror_detail.is_deleted = True
-        db.session.add(mirror_detail)
-        db.session.commit()
+        mirror_detail.project_name = form.project_name.data
+        mirror_detail.project_mirror = form.project_mirror.data
+        mirror_detail.vcs = detect_vcs_type(form.project_mirror.data)
+        mirror_detail.note = form.note.data
+        mirror_detail.is_no_create = form.is_no_create.data
+        mirror_detail.is_force_create = form.is_force_create.data
+        mirror_detail.is_no_remote = form.is_no_remote.data
+        mirror_detail.is_issues_enabled = form.is_issues_enabled.data
+        mirror_detail.is_wall_enabled = form.is_wall_enabled.data
+        mirror_detail.is_wiki_enabled = form.is_wiki_enabled.data
+        mirror_detail.is_snippets_enabled = form.is_snippets_enabled.data
+        mirror_detail.is_merge_requests_enabled = form.is_merge_requests_enabled.data
+        mirror_detail.is_public = form.is_public.data
+        mirror_detail.is_force_update = form.is_force_update.data
+        mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
+        mirror_detail.group = process_group(form.group.data)
+        mirror_detail.is_deleted = False
+        mirror_detail.user = current_user
 
         # Create new mirror repo
-        add_mirror.delay(new_mirror_detail.id)
-
-        # Shedule old mirror real deletion
-        delete_mirror.delay(mirror_detail.id)
+        add_mirror.delay(mirror_detail.id)
 
         flask.flash('Mirror was saved successfully.', 'success')
         return flask.redirect(flask.url_for('mirror.index.get_mirror'))

@@ -17,21 +17,7 @@
                 {% endif %}
                 <form method="post" role="form" action="{{url_for('mirror.index.new_mirror')}}">
                     <div class="row">
-                        <div class="col-xs-12 col-sm-12 col-md-12">
-                            <div class="alert alert-info">
-                                Project mirror is using standard <a href="https://en.wikipedia.org/wiki/URL">URL syntax</a> to specify protocol and mirrored repository VCS type:
-                                <ul>
-                                    <li><code>git://</code> - Git</li>
-                                    <li><code>https://</code> - Git over SSL</li>
-                                    <li><code>ssh://</code> - Git over SSH</li>
-                                    <li><code>bzr::bzr://</code> - Bazaar</li>
-                                    <li><code>svn+https://</code> - SVN over SSL</li>
-                                    <li><code>svn+ssh://</code> - SVN over SSH</li>
-                                    <li><code>hg::https://</code> - Mercurial</li>
-                                </ul>
-                                Other combinations may work
-                            </div>
-                        </div>
+                        {% include 'url_info.html' %}
                         <div class="col-xs-12 col-sm-12 col-md-12">
                             {{render_field(form.project_mirror, 'form-group', _('Project mirror'))}}
                         </div>

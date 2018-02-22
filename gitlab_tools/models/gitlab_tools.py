@@ -24,6 +24,7 @@ class User(BaseTable):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     gitlab_id = db.Column(db.Integer, unique=True, nullable=False)
+    gitlab_deploy_key_id = db.Column(db.Integer, unique=True, nullable=False)
     is_rsa_pair_set = db.Column(db.Boolean)
     name = db.Column(db.String(255))
     avatar_url = db.Column(db.String(255))

@@ -10,7 +10,7 @@ from flask_celery import single_instance
 from sqlalchemy import or_
 from gitlab_tools.models.gitlab_tools import Mirror, User
 from gitlab_tools.enums.VcsEnum import VcsEnum
-from gitlab_tools.tools.helpers import get_ssh_storage, get_repository_storage
+from gitlab_tools.tools.helpers import get_ssh_storage, get_repository_storage, get_user_public_key_path, get_user_private_key_path
 from logging import getLogger
 from gitlab_tools.extensions import celery, db
 
@@ -55,7 +55,7 @@ def git_add_remote(commands, project_path, mirror_remote):
         ['git', 'fetch'],
     ))
 
-    # !FIXME HTTP REMOTE
+    # !FIXME HTTP REMOTE, We use credentials in URL, is this needed ?
     if False:
         commands.append((
             project_path,
@@ -93,11 +93,25 @@ def add_mirror(mirror_id: int) -> None:
         if mirror.gitlab_id:
             project = gl.projects.get(mirror.gitlab_id)
 
-            # @TODO Project exists, lets check if it is in correct group ?
+            # @TODO Project exists, lets check if it is in correct group ? This may not be needed if project.namespace_id bellow works
         else:
             project = None
 
-        if not project:
+        if project:
+            # Update project
+            project.name = mirror.project_name
+            project.description = 'Mirror of {}.'.format(
+                mirror.project_mirror
+            )
+            project.issues_enabled = mirror.is_issues_enabled
+            project.wall_enabled = mirror.is_wall_enabled
+            project.merge_requests_enabled = mirror.is_merge_requests_enabled
+            project.wiki_enabled = mirror.is_wiki_enabled
+            project.snippets_enabled = mirror.is_snippets_enabled
+            project.public = mirror.is_public
+            project.namespace_id = mirror.group.gitlab_id  # !FIXME is this enough to move it to different group ?
+            project.save()
+        else:
             project = gl.projects.create({
                 'name': mirror.project_name,
                 'description': 'Mirror of {}.'.format(
@@ -111,6 +125,21 @@ def add_mirror(mirror_id: int) -> None:
                 'public': mirror.is_public,
                 'namespace_id': mirror.group.gitlab_id
             })
+
+        # Check deploy key for this project
+        if mirror.user.gitlab_deploy_key_id:
+            # This mirror user have a deploy key ID, so just enable it if disabled
+            if not project.keys.get(mirror.user.gitlab_deploy_key_id):
+                project.keys.enable(mirror.user.gitlab_deploy_key_id)
+        else:
+            # No deploy key ID found, that means we need to add that key
+            key = project.keys.create({
+                'title': 'Gitlab tools deploy key for user {}'.format(mirror.user.name),
+                'key': open(get_user_public_key_path(mirror.user, flask.current_app.config['USER'])).read()
+                'can_push': True # We need write access
+            })
+
+            mirror.user.gitlab_deploy_key_id = key.id
 
         mirror_remote = project.ssh_url_to_repo
 
@@ -356,12 +385,11 @@ def delete_mirror(mirror_id: int) -> None:
 @celery.task(bind=True)
 @single_instance(include_args=True)
 def create_rsa_pair(user_id: int) -> None:
-    ssh_storage = get_ssh_storage(flask.current_app.config['USER'])
     user = User.query.filter_by(id=user_id, is_rsa_pair_set=False).first()
     if user:
         # check if priv and pub keys exists
-        private_key_path = os.path.join(ssh_storage, 'id_rsa_{}'.format(user.id))
-        public_key_path = os.path.join(ssh_storage, 'id_rsa_{}.pub'.format(user.id))
+        private_key_path = get_user_private_key_path(user, flask.current_app.config['USER'])
+        public_key_path = get_user_public_key_path(user, flask.current_app.config['USER'])
 
         if not os.path.isfile(private_key_path) or not os.path.isfile(public_key_path):
 
