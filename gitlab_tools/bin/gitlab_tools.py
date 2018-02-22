@@ -28,7 +28,7 @@ Usage:
     gitlab-tools list_routes
     gitlab-tools shell [--config_prod]
     gitlab-tools create_all [--config_prod]
-    gitlab-tools post_install [--config_prod]
+    gitlab-tools post_install [--config_prod] [--user=USER]
     gitlab-tools migrations (upgrade|current|migrate|history|heads|show|stamp|downgrade|init|revision|merge|branches|edit) [--config_prod]
     gitlab-tools migrations stamp <revision> [--config_prod] [-h] [-d DIRECTORY] [--sql] [--tag TAG]
     gitlab-tools celerydev [-l DIR] [--config_prod]
@@ -74,7 +74,7 @@ from celery.bin.celery import main as celery_main
 from gitlab_tools.extensions import db
 from gitlab_tools.application import create_app, get_config
 from gitlab_tools.config import Config
-from gitlab_tools.tools.helpers import random_password
+from gitlab_tools.tools.helpers import random_password, get_home_dir, get_user_group_id, get_user_id
 
 OPTIONS = docopt(__doc__)
 
@@ -266,10 +266,15 @@ def post_install() -> None:
             if isinstance(loaded_data, dict):
                 configuration.update(loaded_data)
 
+    if not configuration.get('USER') and OPTIONS['--user']:
+        app.config['USER'] = configuration['USER'] = OPTIONS['--user']
+
     # Generate database and config if nothing is specified
     if 'SQLALCHEMY_DATABASE_URI' not in configuration or not configuration['SQLALCHEMY_DATABASE_URI']:
 
-        configuration['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////home/gitlab-tools/gitlab-tools.db'
+        database_path = 'sqlite:///{}/gitlab-tools.db'.format(get_home_dir(app.config['USER']))
+
+        configuration['SQLALCHEMY_DATABASE_URI'] = database_path
 
         # We need to set DB config to make stamp work
         app.config['SQLALCHEMY_DATABASE_URI'] = configuration['SQLALCHEMY_DATABASE_URI']
@@ -318,14 +323,16 @@ def setup() -> None:
     def database_sqlite():
         print('SQLite configuration:')
 
+        home_dir = get_home_dir(configuration['USER'])
+        database_path_default = os.path.join(home_dir, 'gitlab-tools.db')
         connection_info = urllib.parse.urlparse(
-            configuration.get('SQLALCHEMY_DATABASE_URI', 'sqlite:////home/gitlab-tools/gitlab-tools.db')
+            configuration.get('SQLALCHEMY_DATABASE_URI', 'sqlite:///{}'.format(database_path_default))
         )
 
         if connection_info.scheme == 'sqlite':
-            database_path = connection_info.path
+            database_path = os.path.join('/', connection_info.path.lstrip('/'))
         else:
-            database_path = '/home/gitlab-tools/gitlab-tools.db'
+            database_path = database_path_default
 
         database_location = input('Location [{}]: '.format(database_path)) or database_path
 
@@ -375,6 +382,10 @@ def setup() -> None:
     def ignore():
         pass
 
+    print('Default application user (must exists):')
+    default_user = configuration.get('USER', app.config.get('USER'))
+    app.config['USER'] = configuration['USER'] = input('[{}]: '.format(default_user)) or default_user
+
     database_types = {
         0: {'name': 'Ignore', 'default': True, 'call': ignore},
         1: {'name': 'SQLite', 'default': False, 'call': database_sqlite},
@@ -406,6 +417,14 @@ def setup() -> None:
     configuration['HOST'] = input('Host [{}]: '.format(webserver_host)) or webserver_host
     configuration['PORT'] = input('Port [{}]: '.format(webserver_port)) or webserver_port
 
+    print('Gitlab configuration:')
+    default_gitlab_url = configuration.get('GITLAB_URL')
+    default_gitlab_app_id = configuration.get('GITLAB_APP_ID')
+    default_gitlab_app_secret = configuration.get('GITLAB_APP_SECRET')
+    configuration['GITLAB_URL'] = input('Gitlab URL [{}]:'.format(default_gitlab_url)) or default_gitlab_url
+    configuration['GITLAB_APP_ID'] = input('Gitlab APP ID [{}]:'.format(default_gitlab_app_id)) or default_gitlab_app_id
+    configuration['GITLAB_APP_SECRET'] = input('Gitlab APP SECRET [{}]:'.format(default_gitlab_app_secret)) or default_gitlab_app_secret
+
     print('Save new configuration ?')
 
     for item in configuration:
@@ -426,6 +445,15 @@ def setup() -> None:
 
             # Create tables
             db.create_all()
+
+            # Since we are running this script as root,
+            # make sure that SQlite database (if used) is writable by application user
+            database_configuration_info = urllib.parse.urlparse(
+                configuration.get('SQLALCHEMY_DATABASE_URI')
+            )
+
+            if database_configuration_info.scheme == 'sqlite':
+                os.chown(database_configuration_info.path, get_user_id(app.config['USER']), get_user_group_id(app.config['USER']))
 
             # Stamp database to lates migration
             stamp()
