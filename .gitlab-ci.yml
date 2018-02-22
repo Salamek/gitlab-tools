@@ -32,7 +32,7 @@ package:debian:
     - curl -sL https://apt.salamek.cz/apt/conf/salamek.gpg.key | apt-key add -
     - echo "deb     https://apt.salamek.cz/apt all main" | tee /etc/apt/sources.list.d/salamek.cz.list
     - apt-get update -qy
-    - apt-get install -y python3-flask-redis-helper python3-flask-celery-helper python3-flask-caching python3-dev python-pip redis-server python3-pip python3-stdeb python3-celery nodejs git python3-markupsafe python3-psycopg2 python3-dateutil python3-docopt python3-yaml python3-wtforms python3-raven python3-flask-migrate python3-flask-babel python3-flask-navigation python3-flask-login
+    - apt-get install -y python3-flask-redis-helper python3-git python3-flask-celery-helper python3-flask-caching python3-dev python-pip redis-server python3-pip python3-stdeb python3-celery nodejs git python3-markupsafe python3-psycopg2 python3-dateutil python3-docopt python3-yaml python3-wtforms python3-raven python3-flask-migrate python3-flask-babel python3-flask-navigation python3-flask-login
     - npm install -g bower
     - rm -rf "./deb_dist"
     - cd gitlab-tools/static
@@ -53,7 +53,7 @@ package:archlinux:
     - echo "[salamek]" >> /etc/pacman.conf
     - echo "Server = https://arch.salamek.cz/any" >> /etc/pacman.conf
     - echo "SigLevel = Optional" >> /etc/pacman.conf
-    - pacman -Sy python-pip gcc nodejs sudo git redis openssh bower python-flask-caching python-flask-celery-helper python-flask-redis-helper python-celery python-flask python-babel python-yaml python-flask-login python-flask-migrate python-flask-wtf python-raven python-docopt python-eventlet python-psycopg2 python-flask-babel python-flask-navigation fakeroot systemd --noconfirm
+    - pacman -Sy python-pip gcc nodejs sudo git redis openssh bower python-git python-flask-caching python-flask-celery-helper python-flask-redis-helper python-celery python-flask python-babel python-yaml python-flask-login python-flask-migrate python-flask-wtf python-raven python-docopt python-eventlet python-psycopg2 python-flask-babel python-flask-navigation fakeroot systemd --noconfirm
     - useradd -m -G users -s /bin/bash package
     - cd archlinux
     - sudo -H -u package makepkg -f

@@ -7,7 +7,7 @@ from Crypto.PublicKey import RSA
 import requests
 import shutil
 from flask_celery import single_instance
-from sqlalchemy import or_
+from git import Repo
 from gitlab_tools.models.gitlab_tools import Mirror, User
 from gitlab_tools.enums.VcsEnum import VcsEnum
 from gitlab_tools.tools.helpers import get_ssh_storage, get_repository_storage, get_user_public_key_path, get_user_private_key_path
@@ -26,46 +26,6 @@ def get_group_path(mirror: Mirror):
 def get_repository_path(mirror: Mirror):
     # Check if project clone exists
     return os.path.join(get_group_path(mirror), str(mirror.id))
-
-
-def git_add_remote(commands, project_path, mirror_remote):
-    LOG.info('Adding GitLab remote to project.')
-    commands.append((
-        project_path,
-        ['git', 'remote', 'add', 'gitlab', mirror_remote],
-    ))
-    commands.append((
-        project_path,
-        ['git', 'config', '--add', 'remote.gitlab.push', '+refs/heads/*:refs/heads/*'],
-    ))
-    commands.append((
-        project_path,
-        ['git', 'config', '--add', 'remote.gitlab.push', '+refs/tags/*:refs/tags/*'],
-    ))
-
-    # !FIXME ???
-    commands.append((
-        project_path,
-        ['git', 'config', 'remote.gitlab.mirror', 'true'],
-    ))
-
-    LOG.info('Checking the mirror into GitLab.')
-    commands.append((
-        project_path,
-        ['git', 'fetch'],
-    ))
-
-    # !FIXME HTTP REMOTE, We use credentials in URL, is this needed ?
-    if False:
-        commands.append((
-            project_path,
-            ['git', 'config', 'credential.helper', 'store'],
-        ))
-
-    commands.append((
-        project_path,
-        ['git', 'push', 'gitlab'],
-    ))
 
 
 @celery.task(bind=True)
@@ -135,7 +95,7 @@ def add_mirror(mirror_id: int) -> None:
             # No deploy key ID found, that means we need to add that key
             key = project.keys.create({
                 'title': 'Gitlab tools deploy key for user {}'.format(mirror.user.name),
-                'key': open(get_user_public_key_path(mirror.user, flask.current_app.config['USER'])).read()
+                'key': open(get_user_public_key_path(mirror.user, flask.current_app.config['USER'])).read(),
                 'can_push': True # We need write access
             })
 
@@ -161,114 +121,64 @@ def add_mirror(mirror_id: int) -> None:
 
     # Check if project clone exists
     project_path = get_repository_path(mirror)
-    if not os.path.isdir(project_path):
+    if os.path.isdir(project_path):
+        repo = Repo(project_path)
+        repo.remotes.origin.set_url(mirror.project_mirror)
+        if not mirror.is_no_remote:
+            repo.remotes.gitlab.set_url(mirror_remote)
+    else:
         # Project not found, we can clone
         LOG.info('Creating mirror for {}'.format(mirror.project_mirror))
 
         # 3. Pull
         # 4. Push
 
-        commands = []
-        if mirror.vcs == VcsEnum.GIT:
-
-            commands.append((
-                repository_storage_group_path,
-                ['git', 'clone', '--mirror', mirror.project_mirror, project_path]
-            ))
-
-            if not mirror.is_no_remote:
-                git_add_remote(commands, project_path, mirror_remote)
-
-        elif mirror.vcs == VcsEnum.SVN:
-            commands.append((
-                repository_storage_group_path,
-                ['git', 'svn', 'clone',  mirror.project_mirror, mirror.project_name],
-            ))
-
-            if not mirror.is_no_remote:
-                LOG.info('Adding GitLab remote to project.')
-                commands.append((
-                    project_path,
-                    ['git', 'remote', 'add', 'gitlab', mirror_remote],
-                ))
-                commands.append((
-                    project_path,
-                    ['git', 'config', '--add', 'remote.gitlab.push', '+refs/heads/*:refs/heads/*'],
-                ))
-                commands.append((
-                    project_path,
-                    ['git', 'config', '--add', 'remote.gitlab.push', '+refs/remotes/*:refs/tags/*'],
-                ))
-
-                # !FIXME ???
-                commands.append((
-                    project_path,
-                    ['git', 'config', 'remote.gitlab.mirror', 'true'],
-                ))
-
-                commands.append((
-                    project_path,
-                    ['git', 'reset', '--hard'],
-                ))
-
-                commands.append((
-                    project_path,
-                    ['git', 'svn', 'fetch'],
-                ))
-
-                commands.append((
-                    project_path,
-                    ['git', 'config', '--bool', 'core.bare', 'true'],
-                ))
-
-                if False:  # !FIXME HTTP REMOTE
-                    commands.append((
-                        project_path,
-                        ['git', 'config', 'credential.helper', 'store'],
-                    ))
-
-                commands.append((
-                    project_path,
-                    ['git', 'push', 'gitlab'],
-                ))
-
-                commands.append((
-                    project_path,
-                    ['git', 'config', '--bool', 'core.bare', 'false'],
-                ))
-
-        elif mirror.vcs == VcsEnum.BAZAAR:
-            commands.append((
-                repository_storage_group_path,
-                ['git', 'clone', '--mirror', mirror.project_mirror, mirror.project_name],
-            ))
-
-            commands.append((
-                project_path,
-                ['git', 'gc', '--aggressive'],
-            ))
-
-            if not mirror.is_no_remote:
-                git_add_remote(commands, project_path, mirror_remote)
-
-        elif mirror.vcs == VcsEnum.MERCURIAL:
-            commands.append((
-                repository_storage_group_path,
-                ['git', 'clone', '--mirror', mirror.project_mirror, mirror.project_name],
-            ))
-            commands.append((
-                project_path,
-                ['git', 'gc', '--aggressive'],
-            ))
-
-            if not mirror.is_no_remote:
-                git_add_remote(commands, project_path, mirror_remote)
-
-        for cwd, command in commands:
+        if mirror.vcs == VcsEnum.SVN:
             subprocess.Popen(
-                command,
-                cwd=cwd
+                ['git', 'svn', 'clone', mirror.project_mirror, mirror.project_name],
+                cwd=repository_storage_group_path
             ).communicate()
+            repo = Repo(project_path)
+        else:
+            repo = Repo.clone_from(mirror.project_mirror, project_path, mirror='pull')
+
+            if mirror.vcs in [VcsEnum.BAZAAR, VcsEnum.MERCURIAL]:
+                subprocess.Popen(
+                    ['git', 'gc', '--aggressive'],
+                    cwd=project_path
+                )
+
+        if not mirror.is_no_remote:
+            LOG.info('Adding GitLab remote to project.')
+
+            gitlab_remote = repo.create_remote('gitlab', mirror_remote, mirror='push')
+
+            LOG.info('Checking the mirror into GitLab.')
+            if mirror.vcs == VcsEnum.SVN:
+                repo.reset(hard=True)  # 'git', 'reset', '--hard'
+
+                subprocess.Popen(
+                    ['git', 'svn', 'fetch'],
+                    cwd=project_path
+                ).communicate()
+                """
+                subprocess.Popen(
+                    ['git', 'config', '--bool', 'core.bare', 'true'],
+                    cwd=project_path
+                )
+                """
+            else:
+                repo.remotes.origin.fetch()
+
+            gitlab_remote.push()
+
+            """
+            if mirror.vcs == VcsEnum.SVN:
+                subprocess.Popen(
+                    ['git', 'config', '--bool', 'core.bare', 'false'],
+                    cwd=project_path
+                )
+            """
 
         LOG.info('All done!')
 
@@ -294,76 +204,46 @@ def sync_mirror(mirror_id: int) -> None:
     if not os.path.isdir(project_path):
         raise Exception('Repository storage {} not found, creation failed ?'.format(project_path))
 
-    commands = []
+    repo = Repo(project_path)
     # Special code for SVN repo mirror
     if mirror.vcs == VcsEnum.SVN:
+        """
         commands.append((
             project_path,
             ['git', 'config', '--bool', 'core.bare', 'false'],
         ))
+        """
+        repo.reset(hard=True)  # 'git', 'reset', '--hard'
 
-        commands.append((
-            project_path,
-            ['git', 'reset', '--hard'],
-        ))
-
-        commands.append((
-            project_path,
+        subprocess.Popen(
             ['git', 'svn', 'fetch'],
-        ))
+            cwd=project_path
+        ).communicate()
 
-        commands.append((
-            project_path,
+        subprocess.Popen(
             ['git', 'svn', 'rebase'],
-        ))
+            cwd=project_path
+        ).communicate()
 
         if not mirror.is_no_remote:
+            """
             commands.append((
                 project_path,
                 ['git', 'config', '--bool', 'core.bare', 'true'],
             ))
-
-            commands.append((
-                project_path,
-                ['git', 'push', 'gitlab'],
-            ))
-
+            """
+            repo.remotes.gitlab.push()
+            """
             commands.append((
                 project_path,
                 ['git', 'config', '--bool', 'core.bare', 'false'],
             ))
+            """
 
     else:
         # Everything else
-        cmd = ['git', 'fetch']
-        if mirror.is_force_update:
-            cmd.append('--force')
-        if mirror.is_prune_mirrors:
-            cmd.append('--prune')
-
-        cmd.append('origin')
-        commands.append((
-            project_path,
-            cmd
-        ))
-
-        cmd = ['git', 'push']
-        if mirror.is_force_update:
-            cmd.append('--force')
-        if mirror.is_prune_mirrors:
-            cmd.append('--prune')
-
-        cmd.append('gitlab')
-        commands.append((
-            project_path,
-            cmd
-        ))
-
-    for cwd, command in commands:
-        subprocess.Popen(
-            command,
-            cwd=cwd
-        ).communicate()
+        repo.remotes.origin.fetch(force=mirror.is_force_update, prune=mirror.is_prune_mirrors)
+        repo.remotes.gitlab.push(force=mirror.is_force_update, prune=mirror.is_prune_mirrors)
 
     LOG.info('Mirror sync done')
 

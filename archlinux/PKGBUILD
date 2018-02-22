@@ -29,6 +29,7 @@ depends=(
     'python-flask-redis-helper'
     'python-flask-caching'
     'python-gitlab'
+    'python-git'
     'git'
 )
 

@@ -16,3 +16,4 @@ pyyaml
 pycrypto
 celery
 python-gitlab
+gitpython
