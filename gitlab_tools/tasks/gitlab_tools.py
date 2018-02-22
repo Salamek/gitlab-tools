@@ -140,7 +140,7 @@ def add_mirror(mirror_id: int) -> None:
             ).communicate()
             repo = Repo(project_path)
         else:
-            repo = Repo.clone_from(mirror.project_mirror, project_path, mirror='pull')
+            repo = Repo.clone_from(mirror.project_mirror, project_path, mirror=True)
 
             if mirror.vcs in [VcsEnum.BAZAAR, VcsEnum.MERCURIAL]:
                 subprocess.Popen(
@@ -170,7 +170,7 @@ def add_mirror(mirror_id: int) -> None:
             else:
                 repo.remotes.origin.fetch()
 
-            gitlab_remote.push()
+            gitlab_remote.push(mirror=True)
 
             """
             if mirror.vcs == VcsEnum.SVN:

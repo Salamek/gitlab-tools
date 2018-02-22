@@ -96,10 +96,13 @@ def detect_vcs_type(vcs_url: str) -> Union[int, None]:
     if 'ssh' in parsed_url.scheme:
         return VcsEnum.GIT
 
-    if 'https' in parsed_url.scheme:
+    if 'http' in parsed_url.scheme:
         return VcsEnum.GIT
 
     if 'git' in parsed_url.scheme:
+        return VcsEnum.GIT
+
+    if not parsed_url.scheme:
         return VcsEnum.GIT
 
     return None

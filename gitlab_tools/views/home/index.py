@@ -14,7 +14,7 @@ __date__ = "$26.7.2017 19:33:05$"
 @login_required
 def get_home():
     mirrors = Mirror.query.count()
-    public_key_path = get_user_public_key_path(current_user, flask.current_app.config['USER']),
+    public_key_path = get_user_public_key_path(current_user, flask.current_app.config['USER'])
     if os.path.isfile(public_key_path):
         with open(public_key_path, 'r') as f:
             public_key = f.read()

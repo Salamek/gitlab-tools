@@ -10,7 +10,6 @@
     <thead>
     <tr>
         <th>#</th>
-        <th>{{ _('Direction') }}</th>
         <th>{{ _('VCS') }}</th>
         <th>{{ _('Project name') }}</th>
         <th>{{ _('Mirror') }}</th>
@@ -25,7 +24,6 @@
     {% for item in pagination.items %}
     <tr>
         <th scope="row">{{item.id}}</th>
-        <td>{{item.direction}}</td>
         <td>{{item.vcs|format_vcs}}</td>
         <td>{{item.project_name}}</td>
         <td>{{item.project_mirror}}</td>

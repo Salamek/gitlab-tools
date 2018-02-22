@@ -30,7 +30,7 @@ def process_group(group: int) -> Group:
 @mirror_index.route('/page/<int:page>', methods=['GET'])
 @login_required
 def get_mirror(page: int):
-    pagination = Mirror.query.filter_by(is_deleted=False).order_by(Mirror.created.desc()).paginate(page, PER_PAGE)
+    pagination = Mirror.query.filter_by(is_deleted=False, user=current_user).order_by(Mirror.created.desc()).paginate(page, PER_PAGE)
     return flask.render_template('mirror.index.mirror.html', pagination=pagination)
 
 
@@ -87,7 +87,7 @@ def new_mirror():
 @login_required
 def edit_mirror(mirror_id: int):
     # We dont have any edit functionality for mirrors, so just create new one and delete old one
-    mirror_detail = Mirror.query.filter_by(id=mirror_id).first_or_404()
+    mirror_detail = Mirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     form = EditForm(
         flask.request.form,
         id=mirror_detail.id,
@@ -129,6 +129,9 @@ def edit_mirror(mirror_id: int):
         mirror_detail.is_deleted = False
         mirror_detail.user = current_user
 
+        db.session.add(mirror_detail)
+        db.session.commit()
+
         # Create new mirror repo
         add_mirror.delay(mirror_detail.id)
 
@@ -142,7 +145,7 @@ def edit_mirror(mirror_id: int):
 @login_required
 def schedule_sync_mirror(mirror_id: int):
     # Check if mirror exists or throw 404
-    found_mirror = Mirror.query.filter_by(id=mirror_id).first_or_404()
+    found_mirror = Mirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     if not found_mirror.gitlab_id:
         flask.flash('Mirror is not created, cannot be synced', 'danger')
         return flask.redirect(flask.url_for('mirror.index.get_mirror'))
@@ -155,7 +158,7 @@ def schedule_sync_mirror(mirror_id: int):
 @mirror_index.route('/delete/<int:mirror_id>', methods=['GET'])
 @login_required
 def schedule_delete_mirror(mirror_id: int):
-    mirror_detail = Mirror.query.filter_by(id=mirror_id).first_or_404()
+    mirror_detail = Mirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     mirror_detail.is_deleted = True
     db.session.add(mirror_detail)
     db.session.commit()
@@ -165,8 +168,3 @@ def schedule_delete_mirror(mirror_id: int):
     flask.flash('Mirror was deleted successfully.', 'success')
 
     return flask.redirect(flask.url_for('mirror.index.get_mirror'))
-
-
-@mirror_index.route('/test', methods=['GET'])
-def test():
-    add_mirror.delay(1)
