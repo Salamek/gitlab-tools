@@ -74,7 +74,8 @@ from celery.bin.celery import main as celery_main
 from gitlab_tools.extensions import db
 from gitlab_tools.application import create_app, get_config
 from gitlab_tools.config import Config
-from gitlab_tools.tools.helpers import random_password, get_home_dir, get_user_group_id, get_user_id, get_repository_storage, get_ssh_storage
+from gitlab_tools.tools.helpers import get_home_dir, get_user_group_id, get_user_id, get_repository_storage, get_ssh_storage
+from gitlab_tools.tools.crypto import random_password
 
 OPTIONS = docopt(__doc__)
 

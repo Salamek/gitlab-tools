@@ -1,4 +1,5 @@
 
 class ProtocolEnum(object):
     SSH = 1
-    HTTPS = 2
+    HTTP = 2
+    HTTPS = 3

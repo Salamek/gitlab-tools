@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block body %}
+{% from "_formhelpers.html" import render_field %}
+<div class="row">
+    <div class="col-xs-12 col-sm-8 col-md-8 col-sm-offset-2 col-md-offset-2">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ _("New fingerprint") }}</h3>
+            </div>
+            <div class="panel-body">
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    There was some errors when proccesing a form.
+                    {% for field, errors in form.errors.items() %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <form method="post" role="form" action="{{url_for('fingerprint.index.new_fingerprint')}}">
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            <div class="form-group{{ ' has-error' if form.hostname.errors else '' }}">
+                              <label class="sr-only" for="{{form.hostname.id}}">{{_('Domain')}}</label>
+                              {{form.hostname(class_="form-control input-sm check-signature", **{'placeholder': title, 'data-toggle':"popover", 'data-trigger':"focus ", 'data-fingerprint-url': url_for('fingerprint.index.check_hostname_fingerprint'), 'data-fingerprint-add-url': url_for('fingerprint.index.add_hostname_fingerprint'), 'data-fingerprint-redirect-url': url_for('fingerprint.index.get_fingerprint'), 'data-placement': "bottom", 'data-content': '<br>'.join(form.hostname.errors)})}}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            <input type="submit" value="{{_('Save')}}" class="btn btn-info btn-block">
+                        </div>
+                    </div>
+                    {{ form.csrf_token }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -11,7 +11,7 @@ from flask_login import login_user, logout_user, login_required
 
 from gitlab_tools.blueprints import sign_index
 from gitlab_tools.tasks.gitlab_tools import create_rsa_pair
-from gitlab_tools.tools.helpers import random_password
+from gitlab_tools.tools.crypto import random_password
 from gitlab_tools.extensions import db
 from gitlab_tools.models.gitlab_tools import User, OAuth2State
 

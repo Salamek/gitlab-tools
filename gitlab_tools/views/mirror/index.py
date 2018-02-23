@@ -5,7 +5,8 @@ import flask
 from flask_login import current_user, login_required
 from gitlab_tools.models.gitlab_tools import db, Mirror, Group
 from gitlab_tools.forms.mirror import EditForm, NewForm
-from gitlab_tools.tools.helpers import random_password, detect_vcs_type
+from gitlab_tools.tools.helpers import detect_vcs_type
+from gitlab_tools.tools.crypto import random_password
 from gitlab_tools.blueprints import mirror_index
 from gitlab_tools.tasks.gitlab_tools import sync_mirror, delete_mirror, add_mirror
 

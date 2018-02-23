@@ -27,6 +27,75 @@ $(function () {
         });
     });
 
+    $('.check-signature').each(function(){
+        var $input = $(this);
+        var $form = $input.closest('form');
+        var url = $input.data('fingerprint-url');
+        var add_url = $input.data('fingerprint-add-url');
+        var redirect_url = $input.data('fingerprint-redirect-url');
+        $form.submit(function(e){
+            e.preventDefault();
+
+            var data = $input.val();
+            if (!data)
+            {
+                alert('No data');
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                dataType: 'json',
+                contentType: 'application/json',
+                url: url,
+                data: JSON.stringify({
+                    'url': $input.val()
+                }),
+                success: function(data){
+                    if (data.found)
+                    {
+                        window.location = redirect_url;
+                    }
+                    else
+                    {
+                        prompt_result = prompt(
+                        "The authenticity of host "+ data.hostname +" can't be established.\n" +
+                        "RSA key fingerprint is MD5:" + data.rsa_md5_fingerprint + ".\n" +
+                        "RSA key fingerprint is SHA256:" + data.rsa_sha256_fingerprint + ".\n" +
+                        "Are you sure you want to continue connecting (yes/no)?"
+                        );
+
+                        if (prompt_result == "yes")
+                        {
+                            $.ajax({
+                                type: "POST",
+                                dataType: 'json',
+                                contentType: 'application/json',
+                                url: add_url,
+                                data: JSON.stringify(data),
+                                success: function(data){
+                                   window.location = redirect_url;
+                                },
+                                error: function(e){
+                                    alert('We are sorry but request failed. Check console for more information');
+                                    console.log(e);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                },
+                error: function(e){
+                    alert('We are sorry but request failed. Check console for more information');
+                    console.log(e);
+                }
+            });
+        });
+    });
+
     $('.confirm').click(function(e){
         var message = $(this).data('confirm-message');
         if (!confirm(message))

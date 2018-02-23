@@ -19,7 +19,10 @@
                     <div class="row">
                         {% include 'url_info.html' %}
                         <div class="col-xs-12 col-sm-12 col-md-12">
-                            {{render_field(form.project_mirror, 'form-group', _('Project mirror'))}}
+                            <div class="form-group{{ ' has-error' if form.project_mirror.errors else '' }}">
+                              <label class="sr-only" for="{{form.project_mirror.id}}">{{_('Project mirror')}}</label>
+                              {{form.project_mirror(class_="form-control input-sm check-signature", **{'placeholder': title, 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-content': '<br>'.join(form.project_mirror.errors)})}}
+                            </div>
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
                             {{render_field(form.project_name, 'form-group', _('Project name'))}}

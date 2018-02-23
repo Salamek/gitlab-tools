@@ -1,25 +1,18 @@
 import hashlib
 import random
+import socket
+import paramiko
 import time
 import sys
 import os
 import pwd
 import grp
+import re
 import urllib.parse
 from gitlab_tools.enums.VcsEnum import VcsEnum
+from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
 from gitlab_tools.models.gitlab_tools import User
 from typing import Union
-
-
-def random_password() -> str:
-    """
-    Generates random password with fixed len of 32 characters
-    :return: 32 len string
-    """
-    return hashlib.md5('{}_{}'.format(
-        random.randint(0, sys.maxsize),
-        round(time.time() * 1000)
-    ).encode('UTF-8')).hexdigest()
 
 
 def get_home_dir(user_name: str) -> str:
@@ -108,6 +101,52 @@ def detect_vcs_type(vcs_url: str) -> Union[int, None]:
     return None
 
 
+def detect_vcs_protocol(vcs_url: str) -> int:
+    """
+        Detects VCS protocol by its URL protocol
+        :param vcs_url: URL to detect
+        :return: VcsEnum int
+        """
+    parsed_url = urllib.parse.urlparse(vcs_url)
+    if 'bzr' in parsed_url.scheme:
+        return ProtocolEnum.HTTPS if 'https' in parsed_url.scheme else ProtocolEnum.HTTP
+
+    if 'hg' in parsed_url.scheme:
+        return ProtocolEnum.HTTPS if 'https' in parsed_url.scheme else ProtocolEnum.HTTP
+
+    if 'svn' in parsed_url.scheme:
+        return ProtocolEnum.HTTPS if 'https' in parsed_url.scheme else ProtocolEnum.HTTP
+
+    if 'ssh' in parsed_url.scheme:
+        return ProtocolEnum.SSH
+
+    if 'http' in parsed_url.scheme:
+        return ProtocolEnum.HTTPS if 'https' in parsed_url.scheme else ProtocolEnum.HTTP
+
+    if 'git' in parsed_url.scheme:
+        return ProtocolEnum.SSH
+
+    if not parsed_url.scheme:
+        return ProtocolEnum.SSH
+
+    return ProtocolEnum.SSH
+
+
+def parse_scp_like_url(url: str) -> dict:
+    """
+    Parses SCP like URL
+    :param url: Url to parse
+    :return: parset chunks
+    """
+    compiled_re = re.compile(r'(?P<username>.+)@(?P<hostname>.+):(?P<path>.+).git')
+    result = compiled_re.search(url)
+    return {
+        'username': result.group('username'),
+        'hostname': result.group('hostname'),
+        'path': result.group('path')
+    }
+
+
 def get_user_public_key_path(user: User, user_name: str) -> str:
     """
     Returns path for user public key
@@ -129,3 +168,13 @@ def get_user_private_key_path(user: User, user_name: str) -> str:
     ssh_storage = get_ssh_storage(user_name)
     return os.path.join(ssh_storage, 'id_rsa_{}'.format(user.id))
 
+
+def get_user_know_hosts_path(user: User, user_name: str) -> str:
+    """
+    Returns path for user know_hosts
+    :param user: gitlab tools user
+    :param user_name: system user name
+    :return: 
+    """
+    ssh_storage = get_ssh_storage(user_name)
+    return os.path.join(ssh_storage, 'know_hosts_{}'.format(user.id))

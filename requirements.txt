@@ -17,3 +17,4 @@ pycrypto
 celery
 python-gitlab
 gitpython
+paramiko

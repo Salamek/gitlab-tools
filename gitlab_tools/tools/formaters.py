@@ -1,4 +1,6 @@
 from gitlab_tools.enums.VcsEnum import VcsEnum
+import base64
+
 
 def format_bytes(num: int, suffix: str='B') -> str:
     """
@@ -49,3 +51,22 @@ def format_vcs(vcs_id: int) -> str:
         VcsEnum.MERCURIAL: 'Mercurial',
         VcsEnum.BAZAAR: 'Bazaar',
     }.get(vcs_id, '?')
+
+
+def format_md5_fingerprint(fingerprint: bytes) -> str:
+    """
+    Formats md5 fingerprint
+    :param fingerprint: fingerprint to format 
+    :return: formated fingerprint
+    """
+    fingerprint_hex = fingerprint.hex()
+    return ':'.join(a + b for a, b in zip(fingerprint_hex[::2], fingerprint_hex[1::2]))
+
+
+def format_sha256_fingerprint(fingerprint: bytes) -> str:
+    """
+    Formats sha256 fingerprint
+    :param fingerprint: fingerprint to format 
+    :return: formated fingerprint
+    """
+    return base64.b64encode(fingerprint).decode().rstrip('=')

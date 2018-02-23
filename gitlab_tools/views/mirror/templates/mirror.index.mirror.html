@@ -5,6 +5,7 @@
 <h1>{{ _('Mirrors') }}</h1>
 
 <a class="btn btn-success" href="{{url_for('mirror.index.new_mirror')}}"><i class="fa fa-plus" aria-hidden="true"></i> {{ _('Add') }}</a>
+<a class="btn btn-success" href="{{url_for('mirror.index.check_domain_signature', vcs_url='git@github.com:Salamek/datagrid.git')}}"><i class="fa fa-plus" aria-hidden="true"></i> {{ _('TEST') }}</a>
 
 <table class="table table-hover">
     <thead>
