@@ -105,7 +105,12 @@ def new_fingerprint():
 def delete_fingerprint(hostname: str):
     know_hosts_path = get_user_know_hosts_path(current_user, flask.current_app.config['USER'])
     host_keys = paramiko.hostkeys.HostKeys(know_hosts_path if os.path.isfile(know_hosts_path) else None)
-    del host_keys[hostname]
+    # !FIXME i could not find a better way how to do this
+    for entry in host_keys._entries:
+        if hostname in entry.hostnames:
+            host_keys._entries.remove(entry)
+
+    host_keys.save(know_hosts_path)
     flask.flash('Fingerprint was deleted successfully.', 'success')
 
     return flask.redirect(flask.url_for('fingerprint.index.get_fingerprint'))
