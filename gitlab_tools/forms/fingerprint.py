@@ -6,7 +6,7 @@ from wtforms import Form, StringField, validators, HiddenField, TextAreaField, S
 
 from gitlab_tools.enums.VcsEnum import VcsEnum
 from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
-from gitlab_tools.models.gitlab_tools import Mirror
+from gitlab_tools.models.gitlab_tools import PullMirror
 from gitlab_tools.tools.helpers import detect_vcs_type
 
 __author__ = "Adam Schubert"

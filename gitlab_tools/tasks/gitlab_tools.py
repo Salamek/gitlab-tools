@@ -4,13 +4,12 @@ import flask
 import gitlab
 import datetime
 from Crypto.PublicKey import RSA
-import requests
 import shutil
 from flask_celery import single_instance
 from git import Repo
-from gitlab_tools.models.gitlab_tools import Mirror, User
+from gitlab_tools.models.gitlab_tools import PullMirror, User
 from gitlab_tools.enums.VcsEnum import VcsEnum
-from gitlab_tools.tools.helpers import get_ssh_storage, get_repository_storage, get_user_public_key_path, get_user_private_key_path
+from gitlab_tools.tools.helpers import get_repository_storage, get_user_public_key_path, get_user_private_key_path
 from logging import getLogger
 from gitlab_tools.extensions import celery, db
 
@@ -18,20 +17,20 @@ from gitlab_tools.extensions import celery, db
 LOG = getLogger(__name__)
 
 
-def get_group_path(mirror: Mirror):
+def get_group_path(mirror: PullMirror):
     repository_storage_path = get_repository_storage(flask.current_app.config['USER'])
     return os.path.join(repository_storage_path, str(mirror.group.id))
 
 
-def get_repository_path(mirror: Mirror):
+def get_repository_path(mirror: PullMirror):
     # Check if project clone exists
     return os.path.join(get_group_path(mirror), str(mirror.id))
 
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def add_mirror(mirror_id: int) -> None:
-    mirror = Mirror.query.filter_by(id=mirror_id).first()
+def add_pull_mirror(mirror_id: int) -> None:
+    mirror = PullMirror.query.filter_by(id=mirror_id).first()
 
     if not mirror.is_no_create and not mirror.is_no_remote:
 
@@ -101,7 +100,7 @@ def add_mirror(mirror_id: int) -> None:
 
             mirror.user.gitlab_deploy_key_id = key.id
 
-        mirror_remote = project.ssh_url_to_repo
+        target_remote = project.ssh_url_to_repo
 
         mirror.gitlab_id = project.id
 
@@ -109,7 +108,7 @@ def add_mirror(mirror_id: int) -> None:
         db.session.commit()
 
     else:
-        mirror_remote = None
+        target_remote = None
 
     # 2. Create/pull local repository
 
@@ -124,8 +123,8 @@ def add_mirror(mirror_id: int) -> None:
     if os.path.isdir(project_path):
         repo = Repo(project_path)
         repo.remotes.origin.set_url(mirror.project_mirror)
-        if not mirror.is_no_remote:
-            repo.remotes.gitlab.set_url(mirror_remote)
+        if target_remote:
+            repo.remotes.gitlab.set_url(target_remote)
     else:
         # Project not found, we can clone
         LOG.info('Creating mirror for {}'.format(mirror.project_mirror))
@@ -133,28 +132,28 @@ def add_mirror(mirror_id: int) -> None:
         # 3. Pull
         # 4. Push
 
-        if mirror.vcs == VcsEnum.SVN:
+        if mirror.foreign_vcs_type == VcsEnum.SVN:
             subprocess.Popen(
-                ['git', 'svn', 'clone', mirror.project_mirror, mirror.project_name],
+                ['git', 'svn', 'clone', mirror.source, mirror.project_name],
                 cwd=repository_storage_group_path
             ).communicate()
             repo = Repo(project_path)
         else:
-            repo = Repo.clone_from(mirror.project_mirror, project_path, mirror=True)
+            repo = Repo.clone_from(mirror.source, project_path, mirror=True)
 
-            if mirror.vcs in [VcsEnum.BAZAAR, VcsEnum.MERCURIAL]:
+            if mirror.foreign_vcs_type in [VcsEnum.BAZAAR, VcsEnum.MERCURIAL]:
                 subprocess.Popen(
                     ['git', 'gc', '--aggressive'],
                     cwd=project_path
                 )
 
-        if not mirror.is_no_remote:
+        if target_remote:
             LOG.info('Adding GitLab remote to project.')
 
-            gitlab_remote = repo.create_remote('gitlab', mirror_remote, mirror='push')
+            gitlab_remote = repo.create_remote('gitlab', target_remote, mirror='push')
 
             LOG.info('Checking the mirror into GitLab.')
-            if mirror.vcs == VcsEnum.SVN:
+            if mirror.foreign_vcs_type == VcsEnum.SVN:
                 repo.reset(hard=True)  # 'git', 'reset', '--hard'
 
                 subprocess.Popen(
@@ -191,7 +190,7 @@ def add_mirror(mirror_id: int) -> None:
 @celery.task(bind=True)
 @single_instance(include_args=True)
 def sync_mirror(mirror_id: int) -> None:
-    mirror = Mirror.query.filter_by(id=mirror_id).first()
+    mirror = PullMirror.query.filter_by(id=mirror_id).first()
 
     repository_storage_group_path = get_group_path(mirror)
 
@@ -206,7 +205,7 @@ def sync_mirror(mirror_id: int) -> None:
 
     repo = Repo(project_path)
     # Special code for SVN repo mirror
-    if mirror.vcs == VcsEnum.SVN:
+    if mirror.foreign_vcs_type == VcsEnum.SVN:
         """
         commands.append((
             project_path,
@@ -251,7 +250,7 @@ def sync_mirror(mirror_id: int) -> None:
 @celery.task(bind=True)
 @single_instance(include_args=True)
 def delete_mirror(mirror_id: int) -> None:
-    mirror = Mirror.query.filter_by(id=mirror_id, is_deleted=True).first()
+    mirror = PullMirror.query.filter_by(id=mirror_id, is_deleted=True).first()
     if mirror:
         # Check if project clone exists
         project_path = get_repository_path(mirror)

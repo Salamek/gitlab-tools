@@ -54,7 +54,7 @@ $(function () {
                 success: function(data){
                     if (data.found)
                     {
-                        window.location = redirect_url;
+                        $form.unbind().submit();
                     }
                     else
                     {
@@ -74,7 +74,7 @@ $(function () {
                                 url: add_url,
                                 data: JSON.stringify(data),
                                 success: function(data){
-                                   window.location = redirect_url;
+                                   $form.unbind().submit();
                                 },
                                 error: function(e){
                                     alert('We are sorry but request failed. Check console for more information');

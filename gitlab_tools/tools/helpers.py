@@ -178,3 +178,7 @@ def get_user_know_hosts_path(user: User, user_name: str) -> str:
     """
     ssh_storage = get_ssh_storage(user_name)
     return os.path.join(ssh_storage, 'know_hosts_{}'.format(user.id))
+
+
+def convert_url_for_user(url: str, user: User, user_name: str) -> str:
+    return url

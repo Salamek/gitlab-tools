@@ -4,7 +4,7 @@ from flask import jsonify, request, url_for, render_template
 
 from gitlab_tools.blueprints import api_index
 from gitlab_tools.tasks.gitlab_tools import sync_mirror
-from gitlab_tools.models.gitlab_tools import Mirror
+from gitlab_tools.models.gitlab_tools import PullMirror
 
 
 __author__ = "Adam Schubert"
@@ -17,7 +17,7 @@ def sync_mirror(mirror_id: int):
     if not hook_token:
         return jsonify({'message': 'Token was not provided'}), 400
 
-    found_mirror = Mirror.query.filter_by(id=mirror_id).first()
+    found_mirror = PullMirror.query.filter_by(id=mirror_id).first()
     if not found_mirror:
         return jsonify({'message': 'Mirror not found'}), 404
 

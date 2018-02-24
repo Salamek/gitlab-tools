@@ -31,7 +31,7 @@ home_index = _factory('home.index')
 sign_index = _factory('sign.index', '/sign')
 api_index = _factory('api.index', '/api')
 
-mirror_index = _factory('mirror.index', '/mirror')
+pull_mirror_index = _factory('pull_mirror.index', '/pull-mirror')
 fingerprint_index = _factory('fingerprint.index', '/fingerprint')
 
 
@@ -39,6 +39,6 @@ all_blueprints = (
     home_index,
     sign_index,
     api_index,
-    mirror_index,
+    pull_mirror_index,
     fingerprint_index
 )

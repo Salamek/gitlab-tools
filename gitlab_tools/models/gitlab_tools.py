@@ -1,5 +1,6 @@
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.ext.declarative import declared_attr
 import sys
 from werkzeug.security import generate_password_hash, check_password_hash
 from gitlab_tools.extensions import db
@@ -12,6 +13,25 @@ class BaseTable(db.Model):
     __abstract__ = True
     updated = db.Column(db.DateTime, default=func.now(), onupdate=func.current_timestamp())
     created = db.Column(db.DateTime, default=func.now())
+
+
+class Mirror(BaseTable):
+    __abstract__ = True
+
+    @declared_attr
+    def user_id(cls):
+        return db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
+
+    source = db.Column(db.String(255), nullable=True)
+    target = db.Column(db.String(255), nullable=True)
+    gitlab_id = db.Column(db.Integer)
+    foreign_vcs_type = db.Column(db.Integer)
+    last_sync = db.Column(db.DateTime, nullable=True)
+    note = db.Column(db.String(255))
+    hook_token = db.Column(db.String(255))
+    is_force_update = db.Column(db.Boolean)
+    is_prune_mirrors = db.Column(db.Boolean)
+    is_deleted = db.Column(db.Boolean)
 
 
 class OAuth2State(BaseTable):
@@ -31,7 +51,7 @@ class User(BaseTable):
     access_token = db.Column(db.String(255), unique=True, nullable=True)
     refresh_token = db.Column(db.String(255), unique=True, nullable=True)
     expires = db.Column(db.DateTime, default=func.now())
-    mirrors = relationship("Mirror", order_by="Mirror.id", backref="user", lazy='dynamic')
+    pull_mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="user", lazy='dynamic')
 
     def is_active(self):
         return True
@@ -76,19 +96,13 @@ class User(BaseTable):
         __hash__ = object.__hash__
 
 
-class Mirror(BaseTable):
-    __tablename__ = 'mirror'
+class PullMirror(Mirror):
+    __tablename__ = 'pull_mirror'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), index=True)
-    fingerprint = db.Column(db.Text)
-    vcs = db.Column(db.Integer)
-    gitlab_id = db.Column(db.Integer)
     project_name = db.Column(db.String(255))
     project_mirror = db.Column(db.String(255))
-    last_sync = db.Column(db.DateTime, nullable=True)
-    note = db.Column(db.String(255))
-    hook_token = db.Column(db.String(255))
+
     is_no_create = db.Column(db.Boolean)
     is_force_create = db.Column(db.Boolean)
     is_no_remote = db.Column(db.Boolean)
@@ -98,9 +112,6 @@ class Mirror(BaseTable):
     is_snippets_enabled = db.Column(db.Boolean)
     is_merge_requests_enabled = db.Column(db.Boolean)
     is_public = db.Column(db.Boolean)
-    is_force_update = db.Column(db.Boolean)
-    is_prune_mirrors = db.Column(db.Boolean)
-    is_deleted = db.Column(db.Boolean)
 
 
 class Group(BaseTable):
@@ -109,5 +120,5 @@ class Group(BaseTable):
     id = db.Column(db.Integer, primary_key=True)
     gitlab_id = db.Column(db.Integer, unique=True)
     name = db.Column(db.String(255))
-    mirrors = relationship("Mirror", order_by="Mirror.id", backref="group", lazy='dynamic')
+    mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="group", lazy='dynamic')
 

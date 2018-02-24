@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block body %}
+{% from 'macros.html' import render_pagination %}
+
+<h1>{{ _('Mirrors') }}</h1>
+
+<a class="btn btn-success" href="{{url_for('pull_mirror.index.new_mirror')}}"><i class="fa fa-plus" aria-hidden="true"></i> {{ _('Add') }}</a>
+
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>{{ _('VCS') }}</th>
+        <th>{{ _('Project name') }}</th>
+        <th>{{ _('Mirror') }}</th>
+        <th>{{ _('Note') }}</th>
+        <th>{{ _('Web trigger') }}</th>
+        <th>{{ _('Last sync') }}</th>
+        <th>{{ _('Created') }}</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for item in pagination.items %}
+    <tr>
+        <th scope="row">{{item.id}}</th>
+        <td>{{item.foreign_vcs_type|format_vcs}}</td>
+        <td>{{item.project_name}}</td>
+        <td>{{item.project_mirror}}</td>
+        <td>{{item.note}}</td>
+        <td>{{url_for('api.index.sync_mirror', mirror_id=item.id, token=item.hook_token, _external=True)}}</td>
+        <td>{{item.last_sync|format_datetime}}</td>
+        <td>{{item.created|format_datetime}}</td>
+        <td>
+            {% if item.gitlab_id %}
+                <a class="btn btn-xs btn-default" href="{{url_for('pull_mirror.index.schedule_sync_mirror', mirror_id=item.id)}}"><i class="fa fa-map-signs" aria-hidden="true"></i> {{ _('Trigger sync') }}</a>
+            {% endif %}
+            <a class="btn btn-xs btn-primary" href="{{url_for('pull_mirror.index.edit_mirror', mirror_id=item.id)}}" title="{{ _('Edit') }}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+            <a class="btn btn-xs btn-danger confirm" data-confirm-message="{{_('Are you sure you want to delete this mirror ?')}}" href="{{url_for('pull_mirror.index.schedule_delete_mirror', mirror_id=item.id)}}" title="{{ _('Delete') }}"><i class="fa fa-trash" aria-hidden="true"></i></a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="text-center">
+{{render_pagination(pagination)}}
+</div>
+{% endblock %}

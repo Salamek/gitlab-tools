@@ -77,7 +77,7 @@ def before_request():
 
     if current_user.is_authenticated:
         menu_items.append(navigation.Item('Home', 'home.index.get_home'))
-        menu_items.append(navigation.Item('Pull mirrors', 'mirror.index.get_mirror'))
+        menu_items.append(navigation.Item('Pull mirrors', 'pull_mirror.index.get_mirror'))
         menu_items.append(navigation.Item('Fingerprints', 'fingerprint.index.get_fingerprint'))
 
     navigation.Bar('top', menu_items)

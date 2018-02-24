@@ -6,7 +6,7 @@ from wtforms import Form, StringField, validators, HiddenField, TextAreaField, S
 
 from gitlab_tools.enums.VcsEnum import VcsEnum
 from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
-from gitlab_tools.models.gitlab_tools import Mirror
+from gitlab_tools.models.gitlab_tools import PullMirror
 from gitlab_tools.tools.helpers import detect_vcs_type
 
 __author__ = "Adam Schubert"
@@ -52,14 +52,14 @@ class NewForm(Form):
         if not rv:
             return False
 
-        project_name_exists = Mirror.query.filter_by(project_name=self.project_name.data).first()
+        project_name_exists = PullMirror.query.filter_by(project_name=self.project_name.data).first()
         if project_name_exists:
             self.project_name.errors.append(
                 gettext('Project name %(project_name)s already exists.', project_name=self.project_name.data)
             )
             return False
 
-        project_mirror_exists = Mirror.query.filter_by(project_mirror=self.project_mirror.data).first()
+        project_mirror_exists = PullMirror.query.filter_by(project_mirror=self.project_mirror.data).first()
         if project_mirror_exists:
             self.project_mirror.errors.append(
                 gettext('Project mirror %(project_mirror)s already exists.', project_mirror=self.project_mirror.data)
@@ -83,12 +83,12 @@ class EditForm(NewForm):
         if not rv:
             return False
 
-        project_name_exists = Mirror.query.filter(Mirror.project_name == self.project_name.data, Mirror.id != self.id.data).first()
+        project_name_exists = PullMirror.query.filter(PullMirror.project_name == self.project_name.data, PullMirror.id != self.id.data).first()
         if project_name_exists:
             self.project_name.errors.append(gettext('Project name %(project_name)s already exists.', project_name=self.project_name.data))
             return False
 
-        project_mirror_exists = Mirror.query.filter(Mirror.project_mirror == self.project_mirror.data, Mirror.id != self.id.data).first()
+        project_mirror_exists = PullMirror.query.filter(PullMirror.project_mirror == self.project_mirror.data, PullMirror.id != self.id.data).first()
         if project_mirror_exists:
             self.project_mirror.errors.append(
                 gettext('Project mirror %(project_mirror)s already exists.', project_mirror=self.project_mirror.data)

@@ -93,8 +93,7 @@ def new_fingerprint():
         flask.request.form
     )
     if flask.request.method == 'POST' and form.validate():
-        # If we get here, it means JS check was not triggered for some reason, maybe JS disabled ?
-        flask.flash('You need to have JavaScript enabled for this.', 'danger')
+        flask.flash('New fingerprint was added.', 'success')
         return flask.redirect(flask.url_for('fingerprint.index.get_fingerprint'))
 
     return flask.render_template('fingerprint.index.new.html', form=form)
@@ -163,6 +162,11 @@ def check_vcs_hostname_fingerprint():
             hostname = parsed_url['hostname']
         hostname_string = str(hostname)
         return check_fingerprint_hostname(hostname_string)
+
+    return flask.jsonify({
+        'message': 'Not a SSH',
+        'found': True  # It is not a SSH so lets just act like we have this signature
+    }), 200
 
 
 @fingerprint_index.route('/fingerprint-add', methods=['POST'])

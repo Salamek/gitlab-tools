@@ -18,7 +18,7 @@
     {% for item in host_keys_proccessed %}
     <tr>
         <th scope="row">{{item['hostname']}}</th>
-        <th scope="row">
+        <td>
             <table class="table table-hover">
                 <thead>
                     <tr>
@@ -49,7 +49,7 @@
                 {% endfor %}
                 </tbody>
             </table>
-        </th>
+        </td>
         <td>
             <a class="btn btn-xs btn-danger confirm" data-confirm-message="{{_('Are you sure you want to delete this fingerprint ?')}}" href="{{url_for('fingerprint.index.delete_fingerprint', hostname=item['hostname'])}}" title="{{ _('Delete') }}"><i class="fa fa-trash" aria-hidden="true"></i></a>
         </td>

@@ -3,12 +3,12 @@
 
 import flask
 from flask_login import current_user, login_required
-from gitlab_tools.models.gitlab_tools import db, Mirror, Group
+from gitlab_tools.models.gitlab_tools import db, PullMirror, Group
 from gitlab_tools.forms.mirror import EditForm, NewForm
-from gitlab_tools.tools.helpers import detect_vcs_type
+from gitlab_tools.tools.helpers import detect_vcs_type, convert_url_for_user
 from gitlab_tools.tools.crypto import random_password
-from gitlab_tools.blueprints import mirror_index
-from gitlab_tools.tasks.gitlab_tools import sync_mirror, delete_mirror, add_mirror
+from gitlab_tools.blueprints import pull_mirror_index
+from gitlab_tools.tasks.gitlab_tools import sync_mirror, delete_mirror, add_pull_mirror
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
@@ -27,15 +27,15 @@ def process_group(group: int) -> Group:
     return found_group
 
 
-@mirror_index.route('/', methods=['GET'], defaults={'page': 1})
-@mirror_index.route('/page/<int:page>', methods=['GET'])
+@pull_mirror_index.route('/', methods=['GET'], defaults={'page': 1})
+@pull_mirror_index.route('/page/<int:page>', methods=['GET'])
 @login_required
 def get_mirror(page: int):
-    pagination = Mirror.query.filter_by(is_deleted=False, user=current_user).order_by(Mirror.created.desc()).paginate(page, PER_PAGE)
-    return flask.render_template('mirror.index.mirror.html', pagination=pagination)
+    pagination = PullMirror.query.filter_by(is_deleted=False, user=current_user).order_by(PullMirror.created.desc()).paginate(page, PER_PAGE)
+    return flask.render_template('pull_mirror.index.pull_mirror.html', pagination=pagination)
 
 
-@mirror_index.route('/new', methods=['GET', 'POST'])
+@pull_mirror_index.route('/new', methods=['GET', 'POST'])
 @login_required
 def new_mirror():
     form = NewForm(
@@ -53,11 +53,10 @@ def new_mirror():
         is_prune_mirrors=False
     )
     if flask.request.method == 'POST' and form.validate():
-        mirror_new = Mirror()
+        mirror_new = PullMirror()
+        # PullMirror
         mirror_new.project_name = form.project_name.data
         mirror_new.project_mirror = form.project_mirror.data
-        mirror_new.vcs = detect_vcs_type(form.project_mirror.data)
-        mirror_new.note = form.note.data
         mirror_new.is_no_create = form.is_no_create.data
         mirror_new.is_force_create = form.is_force_create.data
         mirror_new.is_no_remote = form.is_no_remote.data
@@ -67,28 +66,36 @@ def new_mirror():
         mirror_new.is_snippets_enabled = form.is_snippets_enabled.data
         mirror_new.is_merge_requests_enabled = form.is_merge_requests_enabled.data
         mirror_new.is_public = form.is_public.data
+        mirror_new.group = process_group(form.group.data)
+
+        # Mirror
         mirror_new.is_force_update = form.is_force_update.data
         mirror_new.is_prune_mirrors = form.is_prune_mirrors.data
-        mirror_new.hook_token = random_password()
-        mirror_new.group = process_group(form.group.data)
         mirror_new.is_deleted = False
         mirror_new.user = current_user
+        mirror_new.foreign_vcs_type = detect_vcs_type(form.project_mirror.data)
+        mirror_new.note = form.note.data
+        mirror_new.target = None  # We are getting target wia gitlab API
+        mirror_new.source = convert_url_for_user(mirror_new.project_mirror, current_user, flask.current_app.config['USER'])
+        mirror_new.last_sync = None
+        mirror_new.hook_token = random_password()
+
         db.session.add(mirror_new)
         db.session.commit()
 
-        add_mirror.delay(mirror_new.id)
+        add_pull_mirror.delay(mirror_new.id)
 
         flask.flash('New mirror item was added successfully.', 'success')
         return flask.redirect(flask.url_for('mirror.index.get_mirror'))
 
-    return flask.render_template('mirror.index.new.html', form=form)
+    return flask.render_template('pull_mirror.index.new.html', form=form)
 
 
-@mirror_index.route('/edit/<int:mirror_id>', methods=['GET', 'POST'])
+@pull_mirror_index.route('/edit/<int:mirror_id>', methods=['GET', 'POST'])
 @login_required
 def edit_mirror(mirror_id: int):
     # We dont have any edit functionality for mirrors, so just create new one and delete old one
-    mirror_detail = Mirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
+    mirror_detail = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     form = EditForm(
         flask.request.form,
         id=mirror_detail.id,
@@ -110,11 +117,9 @@ def edit_mirror(mirror_id: int):
         group=mirror_detail.group.gitlab_id
     )
     if flask.request.method == 'POST' and form.validate():
-        # Add new mirror with new config
+        # PullMirror
         mirror_detail.project_name = form.project_name.data
         mirror_detail.project_mirror = form.project_mirror.data
-        mirror_detail.vcs = detect_vcs_type(form.project_mirror.data)
-        mirror_detail.note = form.note.data
         mirror_detail.is_no_create = form.is_no_create.data
         mirror_detail.is_force_create = form.is_force_create.data
         mirror_detail.is_no_remote = form.is_no_remote.data
@@ -124,42 +129,48 @@ def edit_mirror(mirror_id: int):
         mirror_detail.is_snippets_enabled = form.is_snippets_enabled.data
         mirror_detail.is_merge_requests_enabled = form.is_merge_requests_enabled.data
         mirror_detail.is_public = form.is_public.data
+        mirror_detail.group = process_group(form.group.data)
+
+        # Mirror
         mirror_detail.is_force_update = form.is_force_update.data
         mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
-        mirror_detail.group = process_group(form.group.data)
         mirror_detail.is_deleted = False
         mirror_detail.user = current_user
+        mirror_detail.foreign_vcs_type = detect_vcs_type(form.project_mirror.data)
+        mirror_detail.note = form.note.data
+        mirror_detail.target = None  # We are getting target wia gitlab API
+        mirror_detail.source = convert_url_for_user(mirror_detail.project_mirror, current_user, flask.current_app.config['USER'])
 
         db.session.add(mirror_detail)
         db.session.commit()
 
         # Create new mirror repo
-        add_mirror.delay(mirror_detail.id)
+        add_pull_mirror.delay(mirror_detail.id)
 
         flask.flash('Mirror was saved successfully.', 'success')
         return flask.redirect(flask.url_for('mirror.index.get_mirror'))
 
-    return flask.render_template('mirror.index.edit.html', form=form, mirror_detail=mirror_detail)
+    return flask.render_template('pull_mirror.index.edit.html', form=form, mirror_detail=mirror_detail)
 
 
-@mirror_index.route('/sync/<int:mirror_id>', methods=['GET'])
+@pull_mirror_index.route('/sync/<int:mirror_id>', methods=['GET'])
 @login_required
 def schedule_sync_mirror(mirror_id: int):
     # Check if mirror exists or throw 404
-    found_mirror = Mirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
+    found_mirror = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     if not found_mirror.gitlab_id:
         flask.flash('Mirror is not created, cannot be synced', 'danger')
         return flask.redirect(flask.url_for('mirror.index.get_mirror'))
     task = sync_mirror.delay(mirror_id)
 
     flask.flash('Sync has been started with UUID: {}'.format(task.id), 'success')
-    return flask.redirect(flask.url_for('mirror.index.get_mirror'))
+    return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
 
 
-@mirror_index.route('/delete/<int:mirror_id>', methods=['GET'])
+@pull_mirror_index.route('/delete/<int:mirror_id>', methods=['GET'])
 @login_required
 def schedule_delete_mirror(mirror_id: int):
-    mirror_detail = Mirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
+    mirror_detail = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     mirror_detail.is_deleted = True
     db.session.add(mirror_detail)
     db.session.commit()
@@ -168,4 +179,4 @@ def schedule_delete_mirror(mirror_id: int):
 
     flask.flash('Mirror was deleted successfully.', 'success')
 
-    return flask.redirect(flask.url_for('mirror.index.get_mirror'))
+    return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))

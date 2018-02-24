@@ -20,7 +20,7 @@
                         <div class="col-xs-12 col-sm-12 col-md-12">
                             <div class="form-group{{ ' has-error' if form.hostname.errors else '' }}">
                               <label class="sr-only" for="{{form.hostname.id}}">{{_('Domain')}}</label>
-                              {{form.hostname(class_="form-control input-sm check-signature", **{'placeholder': title, 'data-toggle':"popover", 'data-trigger':"focus ", 'data-fingerprint-url': url_for('fingerprint.index.check_hostname_fingerprint'), 'data-fingerprint-add-url': url_for('fingerprint.index.add_hostname_fingerprint'), 'data-fingerprint-redirect-url': url_for('fingerprint.index.get_fingerprint'), 'data-placement': "bottom", 'data-content': '<br>'.join(form.hostname.errors)})}}
+                              {{form.hostname(class_="form-control input-sm check-signature", **{'placeholder': title, 'data-toggle':"popover", 'data-trigger':"focus ", 'data-fingerprint-url': url_for('fingerprint.index.check_hostname_fingerprint'), 'data-fingerprint-add-url': url_for('fingerprint.index.add_hostname_fingerprint'), 'data-placement': "bottom", 'data-content': '<br>'.join(form.hostname.errors)})}}
                             </div>
                         </div>
                     </div>

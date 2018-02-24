@@ -15,13 +15,13 @@
                     {% endfor %}
                 </div>
                 {% endif %}
-                <form method="post" role="form" action="{{url_for('mirror.index.edit_mirror', mirror_id=mirror_detail.id)}}">
+                <form method="post" role="form" action="{{url_for('pull_mirror.index.edit_mirror', mirror_id=mirror_detail.id)}}">
                     <div class="row">
                         {% include 'url_info.html' %}
                         <div class="col-xs-12 col-sm-12 col-md-12">
                             <div class="form-group{{ ' has-error' if form.project_mirror.errors else '' }}">
                               <label class="sr-only" for="{{form.project_mirror.id}}">{{_('Project mirror')}}</label>
-                              {{form.project_mirror(class_="form-control input-sm check-signature", **{'placeholder': title, 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-content': '<br>'.join(form.project_mirror.errors)})}}
+                              {{form.project_mirror(class_="form-control input-sm check-signature", **{'placeholder': _('Project mirror'), 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-fingerprint-url': url_for('fingerprint.index.check_vcs_hostname_fingerprint'), 'data-fingerprint-add-url': url_for('fingerprint.index.add_hostname_fingerprint'), 'data-content': '<br>'.join(form.project_mirror.errors)})}}
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
