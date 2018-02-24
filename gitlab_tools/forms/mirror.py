@@ -3,11 +3,8 @@ import flask
 from flask_babel import gettext
 from flask_login import current_user
 from wtforms import Form, StringField, validators, HiddenField, TextAreaField, SelectField, BooleanField
-
-from gitlab_tools.enums.VcsEnum import VcsEnum
-from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
 from gitlab_tools.models.gitlab_tools import PullMirror
-from gitlab_tools.tools.helpers import detect_vcs_type
+from gitlab_tools.tools.GitRemote import GitRemote
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
@@ -66,7 +63,7 @@ class NewForm(Form):
             )
             return False
 
-        if not detect_vcs_type(self.project_mirror.data):
+        if not GitRemote.detect_vcs_type(self.project_mirror.data):
             self.project_mirror.errors.append(
                 gettext('Unknown VCS type or detection failed.')
             )

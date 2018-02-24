@@ -1,18 +1,8 @@
-import hashlib
-import random
-import socket
-import paramiko
-import time
-import sys
 import os
 import pwd
 import grp
-import re
-import urllib.parse
-from gitlab_tools.enums.VcsEnum import VcsEnum
-from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
-from gitlab_tools.models.gitlab_tools import User
-from typing import Union
+from gitlab_tools.models.gitlab_tools import User, PullMirror, Mirror
+from gitlab_tools.tools.GitRemote import GitRemote
 
 
 def get_home_dir(user_name: str) -> str:
@@ -22,6 +12,32 @@ def get_home_dir(user_name: str) -> str:
     :return: Path to homedir
     """
     return os.path.expanduser('~{}'.format(user_name))
+
+
+def get_namespace_path(mirror: Mirror, user_name: str) -> str:
+    """
+    Returns path to repository group
+    :param mirror: Mirror
+    :param user_name: system username
+    :return: 
+    """
+    repository_storage_path = get_repository_storage(user_name)
+
+    if isinstance(mirror, PullMirror):
+        return os.path.join(repository_storage_path, mirror.user.id, 'pull', str(mirror.group.id))
+    else:
+        return os.path.join(repository_storage_path, mirror.user.id, 'push', str(mirror.id))
+
+
+def get_repository_path(namespace: str, mirror: Mirror):
+    """
+    Get repository path
+    :param namespace: namespace path
+    :param mirror: Mirror
+    :return: 
+    """
+    # Check if project clone exists
+    return os.path.join(namespace, str(mirror.id))
 
 
 def get_ssh_storage(user_name: str) -> str:
@@ -69,84 +85,6 @@ def get_user_id(user_name: str) -> int:
     return pwd.getpwnam(user_name).pw_uid
 
 
-def detect_vcs_type(vcs_url: str) -> Union[int, None]:
-    """
-    Detects VCS type by its URL protocol
-    :param vcs_url: URL to detect
-    :return: VcsEnum int
-    """
-    parsed_url = urllib.parse.urlparse(vcs_url)
-    if 'bzr' in parsed_url.scheme:
-        return VcsEnum.BAZAAR
-
-    if 'hg' in parsed_url.scheme:
-        return VcsEnum.MERCURIAL
-
-    if 'svn' in parsed_url.scheme:
-        return VcsEnum.SVN
-
-    # We got here... so it must be Git Right ? Lets validate that also...
-    if 'ssh' in parsed_url.scheme:
-        return VcsEnum.GIT
-
-    if 'http' in parsed_url.scheme:
-        return VcsEnum.GIT
-
-    if 'git' in parsed_url.scheme:
-        return VcsEnum.GIT
-
-    if not parsed_url.scheme:
-        return VcsEnum.GIT
-
-    return None
-
-
-def detect_vcs_protocol(vcs_url: str) -> int:
-    """
-        Detects VCS protocol by its URL protocol
-        :param vcs_url: URL to detect
-        :return: VcsEnum int
-        """
-    parsed_url = urllib.parse.urlparse(vcs_url)
-    if 'bzr' in parsed_url.scheme:
-        return ProtocolEnum.HTTPS if 'https' in parsed_url.scheme else ProtocolEnum.HTTP
-
-    if 'hg' in parsed_url.scheme:
-        return ProtocolEnum.HTTPS if 'https' in parsed_url.scheme else ProtocolEnum.HTTP
-
-    if 'svn' in parsed_url.scheme:
-        return ProtocolEnum.HTTPS if 'https' in parsed_url.scheme else ProtocolEnum.HTTP
-
-    if 'ssh' in parsed_url.scheme:
-        return ProtocolEnum.SSH
-
-    if 'http' in parsed_url.scheme:
-        return ProtocolEnum.HTTPS if 'https' in parsed_url.scheme else ProtocolEnum.HTTP
-
-    if 'git' in parsed_url.scheme:
-        return ProtocolEnum.SSH
-
-    if not parsed_url.scheme:
-        return ProtocolEnum.SSH
-
-    return ProtocolEnum.SSH
-
-
-def parse_scp_like_url(url: str) -> dict:
-    """
-    Parses SCP like URL
-    :param url: Url to parse
-    :return: parset chunks
-    """
-    compiled_re = re.compile(r'(?P<username>.+)@(?P<hostname>.+):(?P<path>.+).git')
-    result = compiled_re.search(url)
-    return {
-        'username': result.group('username'),
-        'hostname': result.group('hostname'),
-        'path': result.group('path')
-    }
-
-
 def get_user_public_key_path(user: User, user_name: str) -> str:
     """
     Returns path for user public key
@@ -180,5 +118,23 @@ def get_user_know_hosts_path(user: User, user_name: str) -> str:
     return os.path.join(ssh_storage, 'know_hosts_{}'.format(user.id))
 
 
-def convert_url_for_user(url: str, user: User, user_name: str) -> str:
-    return url
+def get_ssh_config_path(user_name: str) -> str:
+    """
+    Returns path to ssh config
+    :param user_name: 
+    :return: 
+    """
+    ssh_storage = get_ssh_storage(user_name)
+    return os.path.join(ssh_storage, 'config')
+
+
+def convert_url_for_user(url: str, user: User) -> str:
+    """
+    Converts url hostname of url to user identified type for SSH config
+    :param url: Url to 
+    :param user: User to use
+    :return: Returns modified URL
+    """
+    hostname = GitRemote.get_url_hostname(url)
+
+    return url.replace(hostname, '{}_{}'.format(hostname, user.id), 1)

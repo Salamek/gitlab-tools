@@ -3,7 +3,7 @@
 from flask import jsonify, request, url_for, render_template
 
 from gitlab_tools.blueprints import api_index
-from gitlab_tools.tasks.gitlab_tools import sync_mirror
+from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror
 from gitlab_tools.models.gitlab_tools import PullMirror
 
 

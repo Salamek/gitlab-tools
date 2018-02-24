@@ -1,15 +1,20 @@
-import subprocess
 import os
 import flask
 import gitlab
 import datetime
+import paramiko
 from Crypto.PublicKey import RSA
 import shutil
 from flask_celery import single_instance
-from git import Repo
 from gitlab_tools.models.gitlab_tools import PullMirror, User
-from gitlab_tools.enums.VcsEnum import VcsEnum
-from gitlab_tools.tools.helpers import get_repository_storage, get_user_public_key_path, get_user_private_key_path
+from gitlab_tools.tools.GitRemote import GitRemote
+from gitlab_tools.tools.git import create_mirror, sync_mirror
+from gitlab_tools.tools.helpers import get_repository_path, \
+    get_namespace_path, \
+    get_user_public_key_path, \
+    get_user_private_key_path, \
+    get_user_know_hosts_path, \
+    get_ssh_config_path
 from logging import getLogger
 from gitlab_tools.extensions import celery, db
 
@@ -17,19 +22,9 @@ from gitlab_tools.extensions import celery, db
 LOG = getLogger(__name__)
 
 
-def get_group_path(mirror: PullMirror):
-    repository_storage_path = get_repository_storage(flask.current_app.config['USER'])
-    return os.path.join(repository_storage_path, str(mirror.group.id))
-
-
-def get_repository_path(mirror: PullMirror):
-    # Check if project clone exists
-    return os.path.join(get_group_path(mirror), str(mirror.id))
-
-
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def add_pull_mirror(mirror_id: int) -> None:
+def save_pull_mirror(mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=mirror_id).first()
 
     if not mirror.is_no_create and not mirror.is_no_remote:
@@ -95,7 +90,7 @@ def add_pull_mirror(mirror_id: int) -> None:
             key = project.keys.create({
                 'title': 'Gitlab tools deploy key for user {}'.format(mirror.user.name),
                 'key': open(get_user_public_key_path(mirror.user, flask.current_app.config['USER'])).read(),
-                'can_push': True # We need write access
+                'can_push': True  # We need write access
             })
 
             mirror.user.gitlab_deploy_key_id = key.id
@@ -110,141 +105,32 @@ def add_pull_mirror(mirror_id: int) -> None:
     else:
         target_remote = None
 
-    # 2. Create/pull local repository
-
-    repository_storage_group_path = get_group_path(mirror)
+    namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
 
     # Check if repository storage group directory exists:
-    if not os.path.isdir(repository_storage_group_path):
-        os.mkdir(repository_storage_group_path)
+    if not os.path.isdir(namespace_path):
+        os.mkdir(namespace_path)
 
-    # Check if project clone exists
-    project_path = get_repository_path(mirror)
-    if os.path.isdir(project_path):
-        repo = Repo(project_path)
-        repo.remotes.origin.set_url(mirror.project_mirror)
-        if target_remote:
-            repo.remotes.gitlab.set_url(target_remote)
-    else:
-        # Project not found, we can clone
-        LOG.info('Creating mirror for {}'.format(mirror.project_mirror))
+    create_mirror(namespace_path, mirror.id, GitRemote(mirror.source), GitRemote(target_remote))
 
-        # 3. Pull
-        # 4. Push
-
-        if mirror.foreign_vcs_type == VcsEnum.SVN:
-            subprocess.Popen(
-                ['git', 'svn', 'clone', mirror.source, mirror.project_name],
-                cwd=repository_storage_group_path
-            ).communicate()
-            repo = Repo(project_path)
-        else:
-            repo = Repo.clone_from(mirror.source, project_path, mirror=True)
-
-            if mirror.foreign_vcs_type in [VcsEnum.BAZAAR, VcsEnum.MERCURIAL]:
-                subprocess.Popen(
-                    ['git', 'gc', '--aggressive'],
-                    cwd=project_path
-                )
-
-        if target_remote:
-            LOG.info('Adding GitLab remote to project.')
-
-            gitlab_remote = repo.create_remote('gitlab', target_remote, mirror='push')
-
-            LOG.info('Checking the mirror into GitLab.')
-            if mirror.foreign_vcs_type == VcsEnum.SVN:
-                repo.reset(hard=True)  # 'git', 'reset', '--hard'
-
-                subprocess.Popen(
-                    ['git', 'svn', 'fetch'],
-                    cwd=project_path
-                ).communicate()
-                """
-                subprocess.Popen(
-                    ['git', 'config', '--bool', 'core.bare', 'true'],
-                    cwd=project_path
-                )
-                """
-            else:
-                repo.remotes.origin.fetch()
-
-            gitlab_remote.push(mirror=True)
-
-            """
-            if mirror.vcs == VcsEnum.SVN:
-                subprocess.Popen(
-                    ['git', 'config', '--bool', 'core.bare', 'false'],
-                    cwd=project_path
-                )
-            """
-
-        LOG.info('All done!')
-
-        # 5. Set last_sync date to mirror
-        mirror.last_sync = datetime.datetime.now()
-        db.session.add(mirror)
-        db.session.commit()
+    # 5. Set last_sync date to mirror
+    mirror.target = target_remote
+    mirror.last_sync = datetime.datetime.now()
+    db.session.add(mirror)
+    db.session.commit()
 
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def sync_mirror(mirror_id: int) -> None:
+def sync_pull_mirror(mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=mirror_id).first()
+    namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
+    sync_mirror(namespace_path, mirror.id, GitRemote(mirror.source), GitRemote(mirror.target))
 
-    repository_storage_group_path = get_group_path(mirror)
-
-    # Check if repository storage group directory exists:
-    if not os.path.isdir(repository_storage_group_path):
-        raise Exception('Group storage {} not found, creation failed ?'.format(repository_storage_group_path))
-
-    # Check if project clone exists
-    project_path = get_repository_path(mirror)
-    if not os.path.isdir(project_path):
-        raise Exception('Repository storage {} not found, creation failed ?'.format(project_path))
-
-    repo = Repo(project_path)
-    # Special code for SVN repo mirror
-    if mirror.foreign_vcs_type == VcsEnum.SVN:
-        """
-        commands.append((
-            project_path,
-            ['git', 'config', '--bool', 'core.bare', 'false'],
-        ))
-        """
-        repo.reset(hard=True)  # 'git', 'reset', '--hard'
-
-        subprocess.Popen(
-            ['git', 'svn', 'fetch'],
-            cwd=project_path
-        ).communicate()
-
-        subprocess.Popen(
-            ['git', 'svn', 'rebase'],
-            cwd=project_path
-        ).communicate()
-
-        if not mirror.is_no_remote:
-            """
-            commands.append((
-                project_path,
-                ['git', 'config', '--bool', 'core.bare', 'true'],
-            ))
-            """
-            repo.remotes.gitlab.push()
-            """
-            commands.append((
-                project_path,
-                ['git', 'config', '--bool', 'core.bare', 'false'],
-            ))
-            """
-
-    else:
-        # Everything else
-        repo.remotes.origin.fetch(force=mirror.is_force_update, prune=mirror.is_prune_mirrors)
-        repo.remotes.gitlab.push(force=mirror.is_force_update, prune=mirror.is_prune_mirrors)
-
-    LOG.info('Mirror sync done')
+    # 5. Set last_sync date to mirror
+    mirror.last_sync = datetime.datetime.now()
+    db.session.add(mirror)
+    db.session.commit()
 
 
 @celery.task(bind=True)
@@ -253,7 +139,13 @@ def delete_mirror(mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=mirror_id, is_deleted=True).first()
     if mirror:
         # Check if project clone exists
-        project_path = get_repository_path(mirror)
+        project_path = get_repository_path(
+            get_namespace_path(
+                mirror,
+                flask.current_app.config['USER']
+            ),
+            mirror
+        )
         if os.path.isdir(project_path):
             shutil.rmtree(project_path)
 
@@ -283,3 +175,30 @@ def create_rsa_pair(user_id: int) -> None:
             user.is_rsa_pair_set = True
             db.session.add(user)
             db.session.commit()
+
+
+@celery.task(bind=True)
+@single_instance()
+def create_ssh_config(user_id: int, host: str, hostname: str) -> None:
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        raise Exception('User {} not found'.format(user_id))
+    ssh_config_path = get_ssh_config_path(flask.current_app.config['USER'])
+    user_know_hosts_path = get_user_know_hosts_path(user, flask.current_app.config['USER'])
+    user_private_key_path = get_user_private_key_path(user, flask.current_app.config['USER'])
+
+    ssh_config = paramiko.config.SSHConfig()
+    if os.path.isfile(ssh_config_path):
+        ssh_config.parse(ssh_config_path)
+    if host not in ssh_config.get_hostnames():
+        rows = [
+            "Host {}".format(host),
+            "   HostName {}".format(hostname),
+            "   UserKnownHostsFile {}".format(user_know_hosts_path),
+            "   IdentitiesOnly yes",
+            "   IdentityFile {}".format(user_private_key_path),
+            ""
+        ]
+
+        with open(ssh_config_path, 'a') as f:
+            f.write('\n'.join(rows))

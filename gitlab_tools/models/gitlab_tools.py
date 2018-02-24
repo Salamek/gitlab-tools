@@ -1,8 +1,7 @@
+import sys
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declared_attr
-import sys
-from werkzeug.security import generate_password_hash, check_password_hash
 from gitlab_tools.extensions import db
 
 __author__ = "Adam Schubert"

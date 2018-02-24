@@ -6,15 +6,13 @@ import paramiko
 import os
 import datetime
 import json
-import hashlib
 import base64
 import urllib.parse
 import dateutil.parser
 from flask_login import current_user, login_required
 from gitlab_tools.forms.fingerprint import NewForm
-from gitlab_tools.tools.helpers import detect_vcs_protocol, \
-    parse_scp_like_url, \
-    get_user_public_key_path, \
+from gitlab_tools.tools.GitRemote import GitRemote
+from gitlab_tools.tools.helpers import get_user_public_key_path, \
     get_user_private_key_path, \
     get_user_know_hosts_path
 from gitlab_tools.tools.formaters import format_md5_fingerprint, format_sha256_fingerprint
@@ -154,11 +152,11 @@ def check_vcs_hostname_fingerprint():
             'message': 'Required parameter URL is missing'
         }), 400
 
-    if detect_vcs_protocol(url) == ProtocolEnum.SSH:
+    if GitRemote.detect_vcs_protocol(url) == ProtocolEnum.SSH:
         parsed_url = urllib.parse.urlparse(url)
         hostname = parsed_url.hostname
         if not hostname:
-            parsed_url = parse_scp_like_url(url)
+            parsed_url = GitRemote.parse_scp_like_url(url)
             hostname = parsed_url['hostname']
         hostname_string = str(hostname)
         return check_fingerprint_hostname(hostname_string)

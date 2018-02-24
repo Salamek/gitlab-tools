@@ -5,10 +5,14 @@ import flask
 from flask_login import current_user, login_required
 from gitlab_tools.models.gitlab_tools import db, PullMirror, Group
 from gitlab_tools.forms.mirror import EditForm, NewForm
-from gitlab_tools.tools.helpers import detect_vcs_type, convert_url_for_user
+from gitlab_tools.tools.helpers import convert_url_for_user
 from gitlab_tools.tools.crypto import random_password
+from gitlab_tools.tools.GitRemote import GitRemote
 from gitlab_tools.blueprints import pull_mirror_index
-from gitlab_tools.tasks.gitlab_tools import sync_mirror, delete_mirror, add_pull_mirror
+from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror, \
+    delete_mirror, \
+    save_pull_mirror, \
+    create_ssh_config
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
@@ -53,6 +57,9 @@ def new_mirror():
         is_prune_mirrors=False
     )
     if flask.request.method == 'POST' and form.validate():
+        project_mirror = GitRemote(form.project_mirror.data)
+        source = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
+
         mirror_new = PullMirror()
         # PullMirror
         mirror_new.project_name = form.project_name.data
@@ -73,20 +80,27 @@ def new_mirror():
         mirror_new.is_prune_mirrors = form.is_prune_mirrors.data
         mirror_new.is_deleted = False
         mirror_new.user = current_user
-        mirror_new.foreign_vcs_type = detect_vcs_type(form.project_mirror.data)
+        mirror_new.foreign_vcs_type = source.vcs_type
         mirror_new.note = form.note.data
         mirror_new.target = None  # We are getting target wia gitlab API
-        mirror_new.source = convert_url_for_user(mirror_new.project_mirror, current_user, flask.current_app.config['USER'])
+        mirror_new.source = source.url
         mirror_new.last_sync = None
         mirror_new.hook_token = random_password()
 
         db.session.add(mirror_new)
         db.session.commit()
 
-        add_pull_mirror.delay(mirror_new.id)
+        create_ssh_config.apply_async(
+            (
+                current_user.id,
+                source.hostname,
+                project_mirror.hostname
+            ),
+            link=save_pull_mirror.si(mirror_new.id)
+        )
 
         flask.flash('New mirror item was added successfully.', 'success')
-        return flask.redirect(flask.url_for('mirror.index.get_mirror'))
+        return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
 
     return flask.render_template('pull_mirror.index.new.html', form=form)
 
@@ -99,7 +113,6 @@ def edit_mirror(mirror_id: int):
     form = EditForm(
         flask.request.form,
         id=mirror_detail.id,
-        vcs=mirror_detail.vcs,
         project_name=mirror_detail.project_name,
         project_mirror=mirror_detail.project_mirror,
         note=mirror_detail.note,
@@ -117,6 +130,9 @@ def edit_mirror(mirror_id: int):
         group=mirror_detail.group.gitlab_id
     )
     if flask.request.method == 'POST' and form.validate():
+        project_mirror = GitRemote(form.project_mirror.data)
+        source = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
+
         # PullMirror
         mirror_detail.project_name = form.project_name.data
         mirror_detail.project_mirror = form.project_mirror.data
@@ -136,19 +152,25 @@ def edit_mirror(mirror_id: int):
         mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
         mirror_detail.is_deleted = False
         mirror_detail.user = current_user
-        mirror_detail.foreign_vcs_type = detect_vcs_type(form.project_mirror.data)
+        mirror_detail.foreign_vcs_type = source.vcs_type
         mirror_detail.note = form.note.data
         mirror_detail.target = None  # We are getting target wia gitlab API
-        mirror_detail.source = convert_url_for_user(mirror_detail.project_mirror, current_user, flask.current_app.config['USER'])
+        mirror_detail.source = source.url
 
         db.session.add(mirror_detail)
         db.session.commit()
 
-        # Create new mirror repo
-        add_pull_mirror.delay(mirror_detail.id)
+        create_ssh_config.apply_async(
+            (
+                current_user.id,
+                source.hostname,
+                project_mirror.hostname
+            ),
+            link=save_pull_mirror.si(mirror_detail.id)
+        )
 
         flask.flash('Mirror was saved successfully.', 'success')
-        return flask.redirect(flask.url_for('mirror.index.get_mirror'))
+        return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
 
     return flask.render_template('pull_mirror.index.edit.html', form=form, mirror_detail=mirror_detail)
 
@@ -160,8 +182,8 @@ def schedule_sync_mirror(mirror_id: int):
     found_mirror = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     if not found_mirror.gitlab_id:
         flask.flash('Mirror is not created, cannot be synced', 'danger')
-        return flask.redirect(flask.url_for('mirror.index.get_mirror'))
-    task = sync_mirror.delay(mirror_id)
+        return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
+    task = sync_pull_mirror.delay(mirror_id)
 
     flask.flash('Sync has been started with UUID: {}'.format(task.id), 'success')
     return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
