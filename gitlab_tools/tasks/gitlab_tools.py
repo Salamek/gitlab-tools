@@ -13,8 +13,8 @@ from gitlab_tools.tools.helpers import get_repository_path, \
     get_namespace_path, \
     get_user_public_key_path, \
     get_user_private_key_path, \
-    get_user_know_hosts_path, \
-    get_ssh_config_path, \
+    convert_url_for_user, \
+    add_ssh_config, \
     mkdir_p
 from logging import getLogger
 from gitlab_tools.extensions import celery, db
@@ -96,7 +96,24 @@ def save_pull_mirror(mirror_id: int) -> None:
 
             mirror.user.gitlab_deploy_key_id = key.id
 
-        target_remote = project.ssh_url_to_repo
+        git_remote_target_original = GitRemote(
+            project.ssh_url_to_repo,
+            mirror.is_force_update,
+            mirror.is_prune_mirrors
+        )
+
+        git_remote_target = GitRemote(
+            convert_url_for_user(project.ssh_url_to_repo, mirror.user),
+            mirror.is_force_update,
+            mirror.is_prune_mirrors
+        )
+
+        add_ssh_config(
+            mirror.user,
+            flask.current_app.config['USER'],
+            git_remote_target.hostname,
+            git_remote_target_original.hostname
+        )
 
         mirror.gitlab_id = project.id
 
@@ -104,7 +121,7 @@ def save_pull_mirror(mirror_id: int) -> None:
         db.session.commit()
 
     else:
-        target_remote = None
+        git_remote_target = None
 
     namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
 
@@ -112,10 +129,12 @@ def save_pull_mirror(mirror_id: int) -> None:
     if not os.path.isdir(namespace_path):
         mkdir_p(namespace_path)
 
-    create_mirror(namespace_path, str(mirror.id), GitRemote(mirror.source), GitRemote(target_remote))
+    git_remote_source = GitRemote(mirror.source, mirror.is_force_update, mirror.is_prune_mirrors)
+
+    create_mirror(namespace_path, str(mirror.id), git_remote_source, git_remote_target)
 
     # 5. Set last_sync date to mirror
-    mirror.target = target_remote
+    mirror.target = git_remote_target.url
     mirror.last_sync = datetime.datetime.now()
     db.session.add(mirror)
     db.session.commit()
@@ -184,23 +203,5 @@ def create_ssh_config(user_id: int, host: str, hostname: str) -> None:
     user = User.query.filter_by(id=user_id).first()
     if not user:
         raise Exception('User {} not found'.format(user_id))
-    ssh_config_path = get_ssh_config_path(flask.current_app.config['USER'])
-    user_know_hosts_path = get_user_know_hosts_path(user, flask.current_app.config['USER'])
-    user_private_key_path = get_user_private_key_path(user, flask.current_app.config['USER'])
 
-    ssh_config = paramiko.config.SSHConfig()
-    if os.path.isfile(ssh_config_path):
-        with open(ssh_config_path, 'r') as f:
-            ssh_config.parse(f)
-    if host not in ssh_config.get_hostnames():
-        rows = [
-            "Host {}".format(host),
-            "   HostName {}".format(hostname),
-            "   UserKnownHostsFile {}".format(user_know_hosts_path),
-            "   IdentitiesOnly yes",
-            "   IdentityFile {}".format(user_private_key_path),
-            ""
-        ]
-
-        with open(ssh_config_path, 'a') as f:
-            f.write('\n'.join(rows))
+    add_ssh_config(user, flask.current_app.config['USER'], host, hostname)

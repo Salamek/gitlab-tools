@@ -14,9 +14,10 @@ from gitlab_tools.forms.fingerprint import NewForm
 from gitlab_tools.tools.GitRemote import GitRemote
 from gitlab_tools.tools.helpers import get_user_public_key_path, \
     get_user_private_key_path, \
-    get_user_know_hosts_path
+    get_user_known_hosts_path
 from gitlab_tools.tools.formaters import format_md5_fingerprint, format_sha256_fingerprint
 from gitlab_tools.tools.crypto import get_remote_server_key, calculate_fingerprint, import_key, sign_data, verify_data
+from gitlab_tools.tools.fingerprint import check_hostname, add_hostname
 from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
 from gitlab_tools.blueprints import fingerprint_index
 
@@ -32,19 +33,8 @@ def check_fingerprint_hostname(hostname):
     :param hostname: 
     :return: 
     """
-    know_hosts_path = get_user_know_hosts_path(current_user, flask.current_app.config['USER'])
-
-    host_keys = paramiko.hostkeys.HostKeys(know_hosts_path if os.path.isfile(know_hosts_path) else None)
-    remote_server_key_lookup = host_keys.lookup(hostname)
-
-    if remote_server_key_lookup:
-        key_name, = remote_server_key_lookup
-        remote_server_key = remote_server_key_lookup[key_name]
-        found = True
-    else:
-        # Not found, request validation
-        remote_server_key = get_remote_server_key(hostname)
-        found = False
+    known_hosts_path = get_user_known_hosts_path(current_user, flask.current_app.config['USER'])
+    found, remote_server_key = check_hostname(hostname, known_hosts_path)
 
     data = {
         'found': found,
@@ -63,8 +53,8 @@ def check_fingerprint_hostname(hostname):
 @fingerprint_index.route('/', methods=['GET'])
 @login_required
 def get_fingerprint():
-    know_hosts_path = get_user_know_hosts_path(current_user, flask.current_app.config['USER'])
-    host_keys = paramiko.hostkeys.HostKeys(know_hosts_path if os.path.isfile(know_hosts_path) else None)
+    known_hosts_path = get_user_known_hosts_path(current_user, flask.current_app.config['USER'])
+    host_keys = paramiko.hostkeys.HostKeys(known_hosts_path if os.path.isfile(known_hosts_path) else None)
     host_keys_proccessed = []
     for host_key in host_keys:
         keys = []
@@ -100,14 +90,14 @@ def new_fingerprint():
 @fingerprint_index.route('/delete/<path:hostname>', methods=['GET'])
 @login_required
 def delete_fingerprint(hostname: str):
-    know_hosts_path = get_user_know_hosts_path(current_user, flask.current_app.config['USER'])
-    host_keys = paramiko.hostkeys.HostKeys(know_hosts_path if os.path.isfile(know_hosts_path) else None)
+    known_hosts_path = get_user_known_hosts_path(current_user, flask.current_app.config['USER'])
+    host_keys = paramiko.hostkeys.HostKeys(known_hosts_path if os.path.isfile(known_hosts_path) else None)
     # !FIXME i could not find a better way how to do this
     for entry in host_keys._entries:
         if hostname in entry.hostnames:
             host_keys._entries.remove(entry)
 
-    host_keys.save(know_hosts_path)
+    host_keys.save(known_hosts_path)
     flask.flash('Fingerprint was deleted successfully.', 'success')
 
     return flask.redirect(flask.url_for('fingerprint.index.get_fingerprint'))
@@ -212,10 +202,8 @@ def add_hostname_fingerprint():
         }), 403
 
     # Everything looks "hunky dory" lets continue
-    know_hosts_path = get_user_know_hosts_path(current_user, flask.current_app.config['USER'])
-    host_keys = paramiko.hostkeys.HostKeys(know_hosts_path if os.path.isfile(know_hosts_path) else None)
-    host_keys.add(data['hostname'], remote_server_key.get_name(), remote_server_key)
-    host_keys.save(know_hosts_path)
+    known_hosts_path = get_user_known_hosts_path(current_user, flask.current_app.config['USER'])
+    add_hostname(data['hostname'], remote_server_key, known_hosts_path)
 
     return flask.jsonify({
         'message': 'OK'

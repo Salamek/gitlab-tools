@@ -69,6 +69,7 @@ def get_remote_server_key(ip: str, port: int=22) -> paramiko.pkey.PKey:
     my_transport = paramiko.Transport(my_socket)
     my_transport.start_client()
     ssh_key = my_transport.get_remote_server_key()
+
     my_transport.close()
     my_socket.close()
     return ssh_key

@@ -2,6 +2,7 @@ import os
 import pwd
 import grp
 import errno
+import paramiko
 from gitlab_tools.models.gitlab_tools import User, PullMirror, Mirror
 from gitlab_tools.tools.GitRemote import GitRemote
 
@@ -108,15 +109,25 @@ def get_user_private_key_path(user: User, user_name: str) -> str:
     return os.path.join(ssh_storage, 'id_rsa_{}'.format(user.id))
 
 
-def get_user_know_hosts_path(user: User, user_name: str) -> str:
+def get_user_known_hosts_path(user: User, user_name: str) -> str:
     """
-    Returns path for user know_hosts
+    Returns path for user known_hosts
     :param user: gitlab tools user
     :param user_name: system user name
     :return: 
     """
     ssh_storage = get_ssh_storage(user_name)
-    return os.path.join(ssh_storage, 'know_hosts_{}'.format(user.id))
+    return os.path.join(ssh_storage, 'known_hosts_{}'.format(user.id))
+
+
+def get_known_hosts_path(user_name: str) -> str:
+    """
+    Returns path for user known_hosts
+    :param user_name: system user name
+    :return: 
+    """
+    ssh_storage = get_ssh_storage(user_name)
+    return os.path.join(ssh_storage, 'known_hosts')
 
 
 def get_ssh_config_path(user_name: str) -> str:
@@ -154,3 +165,34 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+
+def add_ssh_config(user: User, user_name: str, host: str, hostname: str) -> None:
+    """
+    Adds new SSH config host
+    :param user: 
+    :param user_name: 
+    :param host: 
+    :param hostname: 
+    :return: 
+    """
+    ssh_config_path = get_ssh_config_path(user_name)
+    user_known_hosts_path = get_user_known_hosts_path(user, user_name)
+    user_private_key_path = get_user_private_key_path(user, user_name)
+
+    ssh_config = paramiko.config.SSHConfig()
+    if os.path.isfile(ssh_config_path):
+        with open(ssh_config_path, 'r') as f:
+            ssh_config.parse(f)
+    if host not in ssh_config.get_hostnames():
+        rows = [
+            "Host {}".format(host),
+            "   HostName {}".format(hostname),
+            "   UserKnownHostsFile {}".format(user_known_hosts_path),
+            "   IdentitiesOnly yes",
+            "   IdentityFile {}".format(user_private_key_path),
+            ""
+        ]
+
+        with open(ssh_config_path, 'a') as f:
+            f.write('\n'.join(rows))

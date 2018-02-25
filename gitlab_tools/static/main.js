@@ -62,7 +62,7 @@ $(function () {
                         "The authenticity of host "+ data.hostname +" can't be established.\n" +
                         "RSA key fingerprint is MD5:" + data.rsa_md5_fingerprint + ".\n" +
                         "RSA key fingerprint is SHA256:" + data.rsa_sha256_fingerprint + ".\n" +
-                        "Are you sure you want to continue connecting (yes/no)?"
+                        "Are you sure you want to add this fingerprint (yes/no)?"
                         );
 
                         if (prompt_result == "yes")

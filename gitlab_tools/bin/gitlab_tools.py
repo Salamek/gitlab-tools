@@ -74,8 +74,10 @@ from celery.bin.celery import main as celery_main
 from gitlab_tools.extensions import db
 from gitlab_tools.application import create_app, get_config
 from gitlab_tools.config import Config
-from gitlab_tools.tools.helpers import get_home_dir, get_user_group_id, get_user_id, get_repository_storage, get_ssh_storage
-from gitlab_tools.tools.crypto import random_password
+from gitlab_tools.tools.helpers import get_home_dir, get_user_group_id, get_user_id, get_repository_storage, get_ssh_storage, get_known_hosts_path
+from gitlab_tools.tools.fingerprint import check_hostname, add_hostname
+from gitlab_tools.tools.formaters import format_md5_fingerprint, format_sha256_fingerprint
+from gitlab_tools.tools.crypto import random_password, calculate_fingerprint
 
 OPTIONS = docopt(__doc__)
 
@@ -423,6 +425,21 @@ def setup() -> None:
     default_gitlab_app_id = configuration.get('GITLAB_APP_ID')
     default_gitlab_app_secret = configuration.get('GITLAB_APP_SECRET')
     configuration['GITLAB_URL'] = input('Gitlab URL [{}]:'.format(default_gitlab_url)) or default_gitlab_url
+    parsed_gitlab_url = urllib.parse.urlparse(configuration['GITLAB_URL'])
+
+    known_hosts_path = get_known_hosts_path(app.config['USER'])
+    found, remote_server_key = check_hostname(parsed_gitlab_url.hostname, known_hosts_path)
+    if not found:
+        # Key not found, ask!
+        print("The authenticity of host {} can't be established.".format(parsed_gitlab_url.hostname))
+        print("RSA key fingerprint is MD5: {}.".format(format_md5_fingerprint(calculate_fingerprint(remote_server_key, 'md5'))))
+        print("RSA key fingerprint is SHA256: {}.".format(format_sha256_fingerprint(calculate_fingerprint(remote_server_key, 'sha256'))))
+        result = input("Are you sure you want to add this fingerprint (yes/no)?") or 'yes'
+        if result != 'yes':
+            exit()
+
+        add_hostname(parsed_gitlab_url.hostname, remote_server_key, known_hosts_path)
+
     configuration['GITLAB_APP_ID'] = input('Gitlab APP ID [{}]:'.format(default_gitlab_app_id)) or default_gitlab_app_id
     configuration['GITLAB_APP_SECRET'] = input('Gitlab APP SECRET [{}]:'.format(default_gitlab_app_secret)) or default_gitlab_app_secret
 
