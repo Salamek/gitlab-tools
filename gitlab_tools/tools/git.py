@@ -91,7 +91,7 @@ def create_mirror(namespace_path: str, temp_name: str, source: GitRemote, target
         if target:
             logging.info('Adding GitLab remote to project.')
 
-            repo.create_remote('gitlab', target, mirror='push')
+            repo.create_remote('gitlab', target.url, mirror='push')
 
             sync_mirror(namespace_path, temp_name, source, target)
 

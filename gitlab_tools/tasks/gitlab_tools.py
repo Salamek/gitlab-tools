@@ -14,7 +14,8 @@ from gitlab_tools.tools.helpers import get_repository_path, \
     get_user_public_key_path, \
     get_user_private_key_path, \
     get_user_know_hosts_path, \
-    get_ssh_config_path
+    get_ssh_config_path, \
+    mkdir_p
 from logging import getLogger
 from gitlab_tools.extensions import celery, db
 
@@ -109,9 +110,9 @@ def save_pull_mirror(mirror_id: int) -> None:
 
     # Check if repository storage group directory exists:
     if not os.path.isdir(namespace_path):
-        os.mkdir(namespace_path)
+        mkdir_p(namespace_path)
 
-    create_mirror(namespace_path, mirror.id, GitRemote(mirror.source), GitRemote(target_remote))
+    create_mirror(namespace_path, str(mirror.id), GitRemote(mirror.source), GitRemote(target_remote))
 
     # 5. Set last_sync date to mirror
     mirror.target = target_remote
@@ -189,7 +190,8 @@ def create_ssh_config(user_id: int, host: str, hostname: str) -> None:
 
     ssh_config = paramiko.config.SSHConfig()
     if os.path.isfile(ssh_config_path):
-        ssh_config.parse(ssh_config_path)
+        with open(ssh_config_path, 'r') as f:
+            ssh_config.parse(f)
     if host not in ssh_config.get_hostnames():
         rows = [
             "Host {}".format(host),

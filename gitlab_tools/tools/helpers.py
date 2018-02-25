@@ -1,6 +1,7 @@
 import os
 import pwd
 import grp
+import errno
 from gitlab_tools.models.gitlab_tools import User, PullMirror, Mirror
 from gitlab_tools.tools.GitRemote import GitRemote
 
@@ -24,9 +25,9 @@ def get_namespace_path(mirror: Mirror, user_name: str) -> str:
     repository_storage_path = get_repository_storage(user_name)
 
     if isinstance(mirror, PullMirror):
-        return os.path.join(repository_storage_path, mirror.user.id, 'pull', str(mirror.group.id))
+        return os.path.join(repository_storage_path, str(mirror.user.id), 'pull', str(mirror.group.id))
     else:
-        return os.path.join(repository_storage_path, mirror.user.id, 'push', str(mirror.id))
+        return os.path.join(repository_storage_path, str(mirror.user.id), 'push', str(mirror.id))
 
 
 def get_repository_path(namespace: str, mirror: Mirror):
@@ -138,3 +139,18 @@ def convert_url_for_user(url: str, user: User) -> str:
     hostname = GitRemote.get_url_hostname(url)
 
     return url.replace(hostname, '{}_{}'.format(hostname, user.id), 1)
+
+
+def mkdir_p(path):
+    """
+    Create path recursive
+    :param path: 
+    :return: 
+    """
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise

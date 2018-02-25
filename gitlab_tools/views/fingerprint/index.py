@@ -97,7 +97,7 @@ def new_fingerprint():
     return flask.render_template('fingerprint.index.new.html', form=form)
 
 
-@fingerprint_index.route('/delete/<string:hostname>', methods=['GET'])
+@fingerprint_index.route('/delete/<path:hostname>', methods=['GET'])
 @login_required
 def delete_fingerprint(hostname: str):
     know_hosts_path = get_user_know_hosts_path(current_user, flask.current_app.config['USER'])
