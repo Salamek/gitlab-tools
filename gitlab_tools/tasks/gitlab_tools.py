@@ -205,19 +205,17 @@ def create_rsa_pair(user_id: int) -> None:
         private_key_path = get_user_private_key_path(user, flask.current_app.config['USER'])
         public_key_path = get_user_public_key_path(user, flask.current_app.config['USER'])
 
-        if not os.path.isfile(private_key_path) or not os.path.isfile(public_key_path):
+        key = RSA.generate(4096)
+        with open(private_key_path, 'wb') as content_file:
+            os.chmod(private_key_path, 0o0600)
+            content_file.write(key.exportKey('PEM'))
+        pubkey = key.publickey()
+        with open(public_key_path, 'wb') as content_file:
+            content_file.write(pubkey.exportKey('OpenSSH'))
 
-            key = RSA.generate(4096)
-            with open(private_key_path, 'wb') as content_file:
-                os.chmod(private_key_path, 0o0600)
-                content_file.write(key.exportKey('PEM'))
-            pubkey = key.publickey()
-            with open(public_key_path, 'wb') as content_file:
-                content_file.write(pubkey.exportKey('OpenSSH'))
-
-            user.is_rsa_pair_set = True
-            db.session.add(user)
-            db.session.commit()
+        user.is_rsa_pair_set = True
+        db.session.add(user)
+        db.session.commit()
 
 
 @celery.task(bind=True)

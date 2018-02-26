@@ -2,7 +2,9 @@ import flask
 import os
 import paramiko
 from flask_login import current_user, login_required
+from gitlab_tools.extensions import db
 from gitlab_tools.models.gitlab_tools import PullMirror
+from gitlab_tools.tasks.gitlab_tools import create_rsa_pair
 from gitlab_tools.tools.helpers import get_user_public_key_path, get_user_private_key_path
 from gitlab_tools.tools.formaters import format_md5_fingerprint, format_sha256_fingerprint
 from gitlab_tools.tools.crypto import import_key, calculate_fingerprint
@@ -35,3 +37,15 @@ def get_home():
         fingerprint_md5=fingerprint_md5,
         fingerprint_sha256=fingerprint_sha256
     )
+
+
+@home_index.route('/new-rsa-key', methods=['GET'])
+def get_new_rsa_key():
+
+    current_user.is_rsa_pair_set = False
+    db.session.add(current_user)
+    db.session.commit()
+
+    create_rsa_pair.delay(current_user.id)
+    flask.flash('New RSA pair key has been requested!', 'success')
+    return flask.redirect(flask.url_for('home.index.get_home'))

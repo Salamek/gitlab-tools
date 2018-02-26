@@ -39,7 +39,7 @@ def sync_mirror(namespace_path: str, temp_name: str, source: GitRemote, target: 
                 ['git', 'config', '--bool', 'core.bare', 'true'],
             ))
             """
-            repo.remotes.gitlab.push(mirror=True)
+            repo.remotes.gitlab.push()
             """
             commands.append((
                 project_path,
@@ -63,9 +63,9 @@ def create_mirror(namespace_path: str, temp_name: str, source: GitRemote, target
     project_path = os.path.join(namespace_path, temp_name)
     if os.path.isdir(project_path):
         repo = Repo(project_path)
-        repo.remotes.origin.set_url(source.url)
+        repo.remotes.origin.set_url(source.url, mirror='fetch')
         if target:
-            repo.remotes.gitlab.set_url(target.url)
+            repo.remotes.gitlab.set_url(target.url, mirror='push')
     else:
         # Project not found, we can clone
         logging.info('Creating mirror for {}'.format(source.url))
