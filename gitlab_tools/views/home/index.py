@@ -20,18 +20,18 @@ def get_home():
     if os.path.isfile(private_key_path):
 
         with open(private_key_path, 'r') as f:
-            public_key = paramiko.RSAKey.from_private_key(f)
-        fingerprint_md5 = format_md5_fingerprint(calculate_fingerprint(public_key, 'md5'))
-        fingerprint_sha256 = format_sha256_fingerprint(calculate_fingerprint(public_key, 'sha256'))
+            private_key = paramiko.RSAKey.from_private_key(f)
+        fingerprint_md5 = format_md5_fingerprint(calculate_fingerprint(private_key, 'md5'))
+        fingerprint_sha256 = format_sha256_fingerprint(calculate_fingerprint(private_key, 'sha256'))
     else:
-        public_key = None
+        private_key = None
         fingerprint_md5 = None
         fingerprint_sha256 = None
 
     return flask.render_template(
         'home.index.home.html',
         pull_mirrors=pull_mirrors,
-        public_key=public_key,
+        private_key=private_key,
         fingerprint_md5=fingerprint_md5,
         fingerprint_sha256=fingerprint_sha256
     )

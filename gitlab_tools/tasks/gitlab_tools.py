@@ -46,7 +46,13 @@ def save_pull_mirror(mirror_id: int) -> None:
         # 1. check if mirror exists in group/s if not create
         # If we have gitlab_id check if exists and use it if does, or create new project if not
         if mirror.gitlab_id:
-            project = gl.projects.get(mirror.gitlab_id)
+            try:
+                project = gl.projects.get(mirror.gitlab_id)
+            except gitlab.exceptions.GitlabError as e:
+                if e.response_code == 404:
+                    project = None
+                else:
+                    raise
 
             # @TODO Project exists, lets check if it is in correct group ? This may not be needed if project.namespace_id bellow works
         else:
@@ -81,12 +87,29 @@ def save_pull_mirror(mirror_id: int) -> None:
                 'namespace_id': mirror.group.gitlab_id
             })
 
-        # Check deploy key for this project
+        # Check deploy key exists in gitlab
+        key = None
         if mirror.user.gitlab_deploy_key_id:
-            # This mirror user have a deploy key ID, so just enable it if disabled
-            if not project.keys.get(mirror.user.gitlab_deploy_key_id):
-                project.keys.enable(mirror.user.gitlab_deploy_key_id)
-        else:
+            try:
+                key = gl.deploykeys.get(mirror.user.gitlab_deploy_key_id)
+            except gitlab.exceptions.GitlabError as e:
+                if e.response_code == 404:
+                    key = None
+                else:
+                    raise
+
+            if key:
+                # We got here, so key exists! lets check if its enabled for project
+                try:
+                    project.keys.get(mirror.user.gitlab_deploy_key_id)
+                except gitlab.exceptions.GitlabError as e:
+                    if e.response_code == 404:
+                        # Enable if not enabled
+                        project.keys.enable(mirror.user.gitlab_deploy_key_id)
+                    else:
+                        raise
+
+        if not key:
             # No deploy key ID found, that means we need to add that key
             key = project.keys.create({
                 'title': 'Gitlab tools deploy key for user {}'.format(mirror.user.name),
