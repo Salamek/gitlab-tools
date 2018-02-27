@@ -59,7 +59,10 @@ def new_mirror():
     )
     if flask.request.method == 'POST' and form.validate():
         project_mirror = GitRemote(form.project_mirror.data)
-        source = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
+        source = GitRemote(form.project_mirror.data)
+        if source.vcs_protocol == ProtocolEnum.SSH:
+            # If protocol is SSH we need to convert URL to use USER RSA pair
+            source = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
 
         mirror_new = PullMirror()
         # PullMirror
@@ -91,14 +94,18 @@ def new_mirror():
         db.session.add(mirror_new)
         db.session.commit()
 
-        create_ssh_config.apply_async(
-            (
-                current_user.id,
-                source.hostname,
-                project_mirror.hostname
-            ),
-            link=save_pull_mirror.si(mirror_new.id)
-        )
+        if source.vcs_protocol == ProtocolEnum.SSH:
+            # If source is SSH, create SSH COnfig for it also
+            create_ssh_config.apply_async(
+                (
+                    current_user.id,
+                    source.hostname,
+                    project_mirror.hostname
+                ),
+                link=save_pull_mirror.si(mirror_new.id)
+            )
+        else:
+            save_pull_mirror.delay(mirror_new.id)
 
         flask.flash('New mirror item was added successfully.', 'success')
         return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
