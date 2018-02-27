@@ -187,7 +187,9 @@ def save_pull_mirror(mirror_id: int) -> None:
 def sync_pull_mirror(mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=mirror_id).first()
     namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
-    Git.sync_mirror(namespace_path, mirror.id, GitRemote(mirror.source), GitRemote(mirror.target))
+    git_remote_source = GitRemote(mirror.source, mirror.is_force_update, mirror.is_prune_mirrors)
+    git_remote_target = GitRemote(mirror.target, mirror.is_force_update, mirror.is_prune_mirrors)
+    Git.sync_mirror(namespace_path, str(mirror.id), git_remote_source, git_remote_target)
 
     # 5. Set last_sync date to mirror
     mirror.last_sync = datetime.datetime.now()
