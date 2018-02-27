@@ -12,7 +12,7 @@ version = re.compile(r'VERSION\s*=\s*\((.*?)\)')
 
 def get_package_version() -> str:
     base = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(base, "gitlab-tools/__init__.py")) as init_f:
+    with open(os.path.join(base, "gitlab_tools/__init__.py")) as init_f:
         for line in init_f:
             m = version.match(line.strip())
             if not m:
@@ -60,19 +60,19 @@ extra_files = [
         'static/*'
 ]
 
-extra_files.extend(package_files('gitlab-tools/translations'))
+extra_files.extend(package_files('gitlab_tools/translations'))
 
-extra_files.extend(package_files('gitlab-tools/static/img'))
+extra_files.extend(package_files('gitlab_tools/static/img'))
 
 # Bower components
-extra_files.extend(package_files('gitlab-tools/static/bower_components/bootstrap/dist'))
+extra_files.extend(package_files('gitlab_tools/static/bower_components/bootstrap/dist'))
 
-extra_files.extend(package_files('gitlab-tools/static/bower_components/font-awesome/css'))
-extra_files.extend(package_files('gitlab-tools/static/bower_components/font-awesome/fonts'))
+extra_files.extend(package_files('gitlab_tools/static/bower_components/font-awesome/css'))
+extra_files.extend(package_files('gitlab_tools/static/bower_components/font-awesome/fonts'))
 
-extra_files.extend(package_files('gitlab-tools/static/bower_components/jquery/dist'))
+extra_files.extend(package_files('gitlab_tools/static/bower_components/jquery/dist'))
 
-extra_files.extend(package_files('gitlab-tools/static/bower_components/ekko-lightbox/dist'))
+extra_files.extend(package_files('gitlab_tools/static/bower_components/ekko-lightbox/dist'))
 
 setup(
     name='gitlab-tools',
