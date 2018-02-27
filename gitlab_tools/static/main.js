@@ -49,7 +49,7 @@ $(function () {
                 contentType: 'application/json',
                 url: url,
                 data: JSON.stringify({
-                    'url': $input.val()
+                    'url': $input.val().trim()
                 }),
                 success: function(data){
                     if (data.found)
