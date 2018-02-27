@@ -2,13 +2,12 @@ import os
 import flask
 import gitlab
 import datetime
-import paramiko
 from Crypto.PublicKey import RSA
 import shutil
 from flask_celery import single_instance
 from gitlab_tools.models.gitlab_tools import PullMirror, User
 from gitlab_tools.tools.GitRemote import GitRemote
-from gitlab_tools.tools.git import create_mirror, sync_mirror
+from gitlab_tools.tools.Git import Git
 from gitlab_tools.tools.helpers import get_repository_path, \
     get_namespace_path, \
     get_user_public_key_path, \
@@ -87,6 +86,13 @@ def save_pull_mirror(mirror_id: int) -> None:
                 'namespace_id': mirror.group.gitlab_id
             })
 
+            # !FIXME Trigger housekeeping right after creation to prevent ugly 404/500 project detail bug
+            gl.http_post('/projects/{project_id}/housekeeping'.format(project_id=project.id))
+
+            mirror.gitlab_id = project.id
+            db.session.add(mirror)
+            db.session.commit()
+
         # Check deploy key exists in gitlab
         key = None
         if mirror.user.gitlab_deploy_key_id:
@@ -109,6 +115,23 @@ def save_pull_mirror(mirror_id: int) -> None:
                     else:
                         raise
 
+                enabled_key = project.keys.get(mirror.user.gitlab_deploy_key_id)
+                gl.http_put(
+                    '/projects/{project_id}/deploy_keys/{key_id}'.format(
+                        project_id=project.id,
+                        key_id=enabled_key.id
+                    ),
+                    post_data={
+                        'can_push': True
+                    }
+                )
+                # Make sure that key has can_push=True
+                """ !FIXME Enable when implemented
+                enabled_key = project.keys.get(mirror.user.gitlab_deploy_key_id)
+                enabled_key.can_push = True
+                enabled_key.save()
+                """
+
         if not key:
             # No deploy key ID found, that means we need to add that key
             key = project.keys.create({
@@ -118,6 +141,8 @@ def save_pull_mirror(mirror_id: int) -> None:
             })
 
             mirror.user.gitlab_deploy_key_id = key.id
+            db.session.add(mirror)
+            db.session.commit()
 
         git_remote_target_original = GitRemote(
             project.ssh_url_to_repo,
@@ -137,12 +162,6 @@ def save_pull_mirror(mirror_id: int) -> None:
             git_remote_target.hostname,
             git_remote_target_original.hostname
         )
-
-        mirror.gitlab_id = project.id
-
-        db.session.add(mirror)
-        db.session.commit()
-
     else:
         git_remote_target = None
 
@@ -154,7 +173,28 @@ def save_pull_mirror(mirror_id: int) -> None:
 
     git_remote_source = GitRemote(mirror.source, mirror.is_force_update, mirror.is_prune_mirrors)
 
-    create_mirror(namespace_path, str(mirror.id), git_remote_source, git_remote_target)
+    Git.create_mirror(namespace_path, str(mirror.id), git_remote_source, git_remote_target)
+
+    """
+    c = []
+    import subprocess
+    project_path = os.path.join(namespace_path, str(mirror.id))
+    cmd = ['git', 'clone', '--mirror', '-v', git_remote_source.url, project_path]
+    print(cmd)
+    call = subprocess.Popen(cmd)
+    call.communicate()
+
+    c.append(['git', 'remote', 'add', 'gitlab',  git_remote_target.url])
+    c.append(['git', 'fetch', 'origin'])
+    c.append(['git', 'push', '--mirror', 'gitlab'])
+
+
+    for co in c:
+        call = subprocess.Popen(co, cwd=project_path)
+        print(co)
+        call.communicate()
+    """
+
 
     # 5. Set last_sync date to mirror
     mirror.target = git_remote_target.url
@@ -168,7 +208,7 @@ def save_pull_mirror(mirror_id: int) -> None:
 def sync_pull_mirror(mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=mirror_id).first()
     namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
-    sync_mirror(namespace_path, mirror.id, GitRemote(mirror.source), GitRemote(mirror.target))
+    Git.sync_mirror(namespace_path, mirror.id, GitRemote(mirror.source), GitRemote(mirror.target))
 
     # 5. Set last_sync date to mirror
     mirror.last_sync = datetime.datetime.now()
