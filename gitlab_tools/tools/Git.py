@@ -2,6 +2,7 @@ import os
 import subprocess
 import logging
 from git import Repo
+from gitlab_tools.tools.Svn import Svn
 from gitlab_tools.enums.VcsEnum import VcsEnum
 from gitlab_tools.tools.GitRemote import GitRemote
 
@@ -27,19 +28,15 @@ class Git(object):
             repo.git.svn('fetch')
             repo.git.svn('rebase')
 
-            if not target:
-                # repo.git.config('--bool', 'core.bare', 'true')
-                repo.remotes.gitlab.push()
-                # repo.git.config('--bool', 'core.bare', 'false')
+            if target:
+                #repo.git.config('--bool', 'core.bare', 'true')
+                repo.remotes.gitlab.push(refspec='master')
+                #repo.git.config('--bool', 'core.bare', 'false')
 
         else:
             # Everything else
             repo.remotes.origin.fetch(force=source.is_force_update, prune=source.is_prune_mirrors)
             repo.remotes.gitlab.push(
-                #refspec=[
-                #   '+refs/heads/*:refs/heads/*',
-                #    '+refs/tags/*:refs/tags/*'
-                #],
                 mirror=True,
                 force=target.is_force_update,
                 prune=target.is_prune_mirrors
@@ -56,7 +53,11 @@ class Git(object):
         project_path = os.path.join(namespace_path, temp_name)
         if os.path.isdir(project_path):
             repo = Repo(project_path)
-            repo.remotes.origin.set_url(source.url)
+
+            # SVN REPO has no origin
+            if source.vcs_type not in [VcsEnum.SVN]:
+                repo.remotes.origin.set_url(source.url)
+
             if target:
                 repo.remotes.gitlab.set_url(target.url)
         else:
@@ -68,7 +69,7 @@ class Git(object):
 
             if source.vcs_type == VcsEnum.SVN:
                 subprocess.Popen(
-                    ['git', 'svn', 'clone', source.url, project_path],
+                    ['git', 'svn', 'clone', Svn.fix_url(source.url), project_path],
                     cwd=namespace_path
                 ).communicate()
                 repo = Repo(project_path)
