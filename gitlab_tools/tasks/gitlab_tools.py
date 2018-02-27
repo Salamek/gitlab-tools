@@ -86,7 +86,7 @@ def save_pull_mirror(mirror_id: int) -> None:
                 'namespace_id': mirror.group.gitlab_id
             })
 
-            # !FIXME Trigger housekeeping right after creation to prevent ugly 404/500 project detail bug
+            # !FIXME BUG Trigger housekeeping right after creation to prevent ugly 404/500 project detail bug
             gl.http_post('/projects/{project_id}/housekeeping'.format(project_id=project.id))
 
             mirror.gitlab_id = project.id
@@ -174,27 +174,6 @@ def save_pull_mirror(mirror_id: int) -> None:
     git_remote_source = GitRemote(mirror.source, mirror.is_force_update, mirror.is_prune_mirrors)
 
     Git.create_mirror(namespace_path, str(mirror.id), git_remote_source, git_remote_target)
-
-    """
-    c = []
-    import subprocess
-    project_path = os.path.join(namespace_path, str(mirror.id))
-    cmd = ['git', 'clone', '--mirror', '-v', git_remote_source.url, project_path]
-    print(cmd)
-    call = subprocess.Popen(cmd)
-    call.communicate()
-
-    c.append(['git', 'remote', 'add', 'gitlab',  git_remote_target.url])
-    c.append(['git', 'fetch', 'origin'])
-    c.append(['git', 'push', '--mirror', 'gitlab'])
-
-
-    for co in c:
-        call = subprocess.Popen(co, cwd=project_path)
-        print(co)
-        call.communicate()
-    """
-
 
     # 5. Set last_sync date to mirror
     mirror.target = git_remote_target.url

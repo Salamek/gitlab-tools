@@ -4,6 +4,7 @@
 import flask
 from flask_login import current_user, login_required
 from gitlab_tools.models.gitlab_tools import db, PullMirror, Group
+from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
 from gitlab_tools.forms.mirror import EditForm, NewForm
 from gitlab_tools.tools.helpers import convert_url_for_user
 from gitlab_tools.tools.crypto import random_password
@@ -131,7 +132,10 @@ def edit_mirror(mirror_id: int):
     )
     if flask.request.method == 'POST' and form.validate():
         project_mirror = GitRemote(form.project_mirror.data)
-        source = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
+        source = GitRemote(form.project_mirror.data)
+        if source.vcs_protocol == ProtocolEnum.SSH:
+            # If protocol is SSH we need to convert URL to use USER RSA pair
+            source = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
 
         # PullMirror
         mirror_detail.project_name = form.project_name.data
@@ -160,14 +164,18 @@ def edit_mirror(mirror_id: int):
         db.session.add(mirror_detail)
         db.session.commit()
 
-        create_ssh_config.apply_async(
-            (
-                current_user.id,
-                source.hostname,
-                project_mirror.hostname
-            ),
-            link=save_pull_mirror.si(mirror_detail.id)
-        )
+        if source.vcs_protocol == ProtocolEnum.SSH:
+            # If source is SSH, create SSH COnfig for it also
+            create_ssh_config.apply_async(
+                (
+                    current_user.id,
+                    source.hostname,
+                    project_mirror.hostname
+                ),
+                link=save_pull_mirror.si(mirror_detail.id)
+            )
+        else:
+            save_pull_mirror.delay(mirror_detail.id)
 
         flask.flash('Mirror was saved successfully.', 'success')
         return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
