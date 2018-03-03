@@ -88,7 +88,7 @@ setup(
     install_requires=install_requires,
     test_suite="tests",
     tests_require=install_requires,
-    package_data={'gitlab-tools': extra_files},
+    package_data={'gitlab_tools': extra_files},
     entry_points={
         'console_scripts': [
             'gitlab-tools = gitlab_tools.__main__:main',
