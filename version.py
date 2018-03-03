@@ -13,7 +13,7 @@ class VersionModifier(object):
 
     def __init__(self):
         base = os.path.abspath(os.path.dirname(__file__))
-        self.version_file_path = os.path.join(base, "gitlab-tools/__init__.py")
+        self.version_file_path = os.path.join(base, "gitlab_tools/__init__.py")
         with open(self.version_file_path, 'r') as init_f:
             self.version_file = init_f.read()
 
@@ -27,7 +27,7 @@ class VersionModifier(object):
             init_f.write(file_content)
 
     def tag(self, version_string: str) -> None:
-        subprocess.call(['git', 'add', 'gitlab-tools/__init__.py'])
+        subprocess.call(['git', 'add', 'gitlab_tools/__init__.py'])
         subprocess.call(['git', 'add', 'archlinux/PKGBUILD'])
         subprocess.call(['git', 'commit', '-m', "New version {}".format(version_string)])
         subprocess.call(['git', 'tag', '-a', version_string, '-m', "New version {}".format(version_string)])
