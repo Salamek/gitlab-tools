@@ -20,7 +20,6 @@ depends=(
     'python-flask-migrate'
     'python-flask-wtf'
     'python-raven'
-    'python-lxml'
     'python-docopt'
     'python-flask-babel'
     'python-flask-navigation'
