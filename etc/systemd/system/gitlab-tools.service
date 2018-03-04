@@ -7,7 +7,7 @@ User=gitlab-tools
 Type=simple
 Restart=on-failure
 RemainAfterExit=yes
-ExecStart=/usr/bin/gitlab-tools server --config_prod --log_dir /var/log
+ExecStart=/usr/bin/gitlab-tools server --config_prod --log_dir ${HOME}
 
 [Install]
 WantedBy=multi-user.target
