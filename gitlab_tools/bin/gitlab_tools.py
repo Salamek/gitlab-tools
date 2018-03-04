@@ -389,6 +389,22 @@ def setup() -> None:
     default_user = configuration.get('USER', app.config.get('USER'))
     app.config['USER'] = configuration['USER'] = input('[{}]: '.format(default_user)) or default_user
 
+    # Check if repository storage directory exists
+    repository_storage_path = get_repository_storage(app.config['USER'])
+    if not os.path.isdir(repository_storage_path):
+        print('Creating {}'.format(repository_storage_path))
+        os.mkdir(repository_storage_path)
+
+    os.chown(repository_storage_path, get_user_id(app.config['USER']), get_user_group_id(app.config['USER']))
+
+    # Check if ssh storage directory exists
+    ssh_storage_path = get_ssh_storage(app.config['USER'])
+    if not os.path.isdir(ssh_storage_path):
+        print('Creating {}'.format(ssh_storage_path))
+        os.mkdir(ssh_storage_path)
+
+    os.chown(ssh_storage_path, get_user_id(app.config['USER']), get_user_group_id(app.config['USER']))
+
     database_types = {
         0: {'name': 'Ignore', 'default': True, 'call': ignore},
         1: {'name': 'SQLite', 'default': False, 'call': database_sqlite},
@@ -477,22 +493,6 @@ def setup() -> None:
             stamp()
 
             print('Database has been created')
-
-    # Check if repository storage directory exists
-    repository_storage_path = get_repository_storage(app.config['USER'])
-    if not os.path.isdir(repository_storage_path):
-        print('Creating {}'.format(repository_storage_path))
-        os.mkdir(repository_storage_path)
-
-    os.chown(repository_storage_path, get_user_id(app.config['USER']), get_user_group_id(app.config['USER']))
-
-    # Check if ssh storage directory exists
-    ssh_storage_path = get_ssh_storage(app.config['USER'])
-    if not os.path.isdir(ssh_storage_path):
-        print('Creating {}'.format(ssh_storage_path))
-        os.mkdir(ssh_storage_path)
-
-    os.chown(ssh_storage_path, get_user_id(app.config['USER']), get_user_group_id(app.config['USER']))
 
     restart_services = input('Restart services to load new configuration ? (y/n) [n]: ') or 'n'
     if restart_services == 'y':
