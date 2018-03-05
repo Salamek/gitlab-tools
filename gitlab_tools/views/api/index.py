@@ -11,8 +11,8 @@ __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
 
 
-@api_index.route('/sync/<int:mirror_id>', methods=['POST'])
-def sync_mirror(mirror_id: int):
+@api_index.route('/pull/sync/<int:mirror_id>', methods=['POST'])
+def schedule_sync_pull_mirror(mirror_id: int):
     hook_token = request.args.get('token')
     if not hook_token:
         return jsonify({'message': 'Token was not provided'}), 400

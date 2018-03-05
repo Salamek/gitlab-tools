@@ -28,10 +28,10 @@
         <td>{{item.project_name}}</td>
         <td>{{item.project_mirror}}</td>
         <td>{{item.note}}</td>
-        <td>{{url_for('api.index.sync_mirror', mirror_id=item.id, token=item.hook_token, _external=True)}}</td>
+        <td>{{url_for('api.index.schedule_sync_pull_mirror', mirror_id=item.id, token=item.hook_token, _external=True)}}</td>
         <td>{{item.last_sync|format_datetime}}</td>
         <td>{{item.created|format_datetime}}</td>
-        <td>
+        <td class="text-nowrap">
             {% if item.gitlab_id %}
                 <a class="btn btn-xs btn-default" href="{{url_for('pull_mirror.index.schedule_sync_mirror', mirror_id=item.id)}}"><i class="fa fa-map-signs" aria-hidden="true"></i> {{ _('Trigger sync') }}</a>
             {% endif %}
