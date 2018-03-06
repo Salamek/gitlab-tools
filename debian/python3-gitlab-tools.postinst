@@ -19,17 +19,17 @@ case "$1" in
     else
         gitlab-tools migrations upgrade
         systemctl daemon-reload
+        
         # Restart service only when is active or enabled
-        systemctl is-active --quiet gitlab-tools || systemctl is-enabled --quiet gitlab-tools
-        if [ $? -eq 0 ]; then
+        if systemctl is-active --quiet gitlab-tools || systemctl is-enabled --quiet gitlab-tools; then
             systemctl restart gitlab-tools
         fi
-        systemctl is-active --quiet gitlab-tools_celeryworker || systemctl is-enabled --quiet gitlab-tools_celeryworker
-        if [ $? -eq 0 ]; then
+
+        if systemctl is-active --quiet gitlab-tools_celeryworker || systemctl is-enabled --quiet gitlab-tools_celeryworker; then
             systemctl restart gitlab-tools_celeryworker
         fi
-        systemctl is-active --quiet gitlab-tools_celerybeat || systemctl is-enabled --quiet gitlab-tools_celerybeat
-        if [ $? -eq 0 ]; then
+
+        if systemctl is-active --quiet gitlab-tools_celerybeat || systemctl is-enabled --quiet gitlab-tools_celerybeat; then
             systemctl restart gitlab-tools_celerybeat
         fi
     fi
