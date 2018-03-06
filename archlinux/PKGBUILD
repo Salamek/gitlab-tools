@@ -29,6 +29,7 @@ depends=(
     'python-flask-caching'
     'python-gitlab'
     'python-gitpython'
+    'python-paramiko'
     'git'
 )
 
