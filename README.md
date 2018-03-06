@@ -7,7 +7,8 @@ This application provides functionality not avaiable in GitLab (CE)
 |  Feature name |  Gitlab CE  |  Gitlab EE  |  Gitlab Tools  |
 |:--------------|:-----------:|:-----------:|:--------------:|
 |  Pull mirror  |      No     |     Yes     |       Yes      |
-|  Push mirror  |      No     |     Yes     |       Yes      |
+|  Push mirror  |      No     |     Yes     |       WIP      |
+|  Deploy       |      No     |     No      |       WIP      |
 
 ## Pull mirror
 Allows to automaticaly mirror your Git or SVN repositories to GitLab by hook trigger or periodicaly
