@@ -64,6 +64,7 @@ def get_remote_server_key(ip: str, port: int=22) -> paramiko.pkey.PKey:
     """
 
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    my_socket.settimeout(10)
     my_socket.connect((ip, port))
 
     my_transport = paramiko.Transport(my_socket)

@@ -95,6 +95,18 @@ class User(BaseTable):
         __hash__ = object.__hash__
 
 
+class Fingerprint(BaseTable):
+    __tablename__ = 'fingerprint'
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'hashed_hostname', name='_user_id_hashed_hostname_uc'),
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
+    hostname = db.Column(db.String(255))
+    sha256_fingerprint = db.Column(db.String(255))
+    hashed_hostname = db.Column(db.String(255), index=True)
+
+
 class PullMirror(Mirror):
     __tablename__ = 'pull_mirror'
     id = db.Column(db.Integer, primary_key=True)

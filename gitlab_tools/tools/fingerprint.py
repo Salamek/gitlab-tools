@@ -3,7 +3,7 @@ import paramiko
 from gitlab_tools.tools.crypto import get_remote_server_key
 
 
-def check_hostname(hostname: str, known_hosts_path: str):
+def check_hostname(hostname: str, known_hosts_path: str) -> tuple:
     """
     Get remote_key
     :param hostname: 
@@ -25,14 +25,17 @@ def check_hostname(hostname: str, known_hosts_path: str):
     return found, remote_server_key
 
 
-def add_hostname(hostname: str, remote_server_key: paramiko.pkey.PKey, known_hosts_path: str) -> None:
+def add_hostname(hostname: str, remote_server_key: paramiko.pkey.PKey, known_hosts_path: str) -> str:
     """
     Add hostname to known_hosts
     :param hostname: 
     :param remote_server_key: 
     :param known_hosts_path: 
-    :return: 
+    :return: str
     """
     host_keys = paramiko.hostkeys.HostKeys(known_hosts_path if os.path.isfile(known_hosts_path) else None)
-    host_keys.add(hostname, remote_server_key.get_name(), remote_server_key)
+    hashed_hostname = host_keys.hash_host(hostname)
+    host_keys.add(hashed_hostname, remote_server_key.get_name(), remote_server_key)
     host_keys.save(known_hosts_path)
+
+    return hashed_hostname

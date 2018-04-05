@@ -79,7 +79,7 @@ class GitRemote(object):
         return ProtocolEnum.SSH
 
     @staticmethod
-    def parse_scp_like_url(url: str) -> dict:
+    def parse_scp_like_url(url: str) -> Union[dict, None]:
         """
         Parses SCP like URL
         :param url: Url to parse
@@ -87,6 +87,9 @@ class GitRemote(object):
         """
         compiled_re = re.compile(r'(?P<username>.+)@(?P<hostname>.+):(?P<path>.+).git')
         result = compiled_re.search(url)
+        if not result:
+            return None
+
         return {
             'username': result.group('username'),
             'hostname': result.group('hostname'),

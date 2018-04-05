@@ -1,8 +1,8 @@
-
 # -*- coding: utf-8 -*-
 
 import flask
 import paramiko
+import socket
 import os
 import datetime
 import json
@@ -10,8 +10,10 @@ import base64
 import urllib.parse
 import dateutil.parser
 from flask_login import current_user, login_required
+from gitlab_tools.extensions import db
 from gitlab_tools.forms.fingerprint import NewForm
 from gitlab_tools.tools.GitRemote import GitRemote
+from gitlab_tools.models.gitlab_tools import Fingerprint
 from gitlab_tools.tools.helpers import get_user_public_key_path, \
     get_user_private_key_path, \
     get_user_known_hosts_path
@@ -34,14 +36,19 @@ def check_fingerprint_hostname(hostname):
     :return: 
     """
     known_hosts_path = get_user_known_hosts_path(current_user, flask.current_app.config['USER'])
-    found, remote_server_key = check_hostname(hostname, known_hosts_path)
+    try:
+        found, remote_server_key = check_hostname(hostname, known_hosts_path)
+    except (TimeoutError, socket.timeout) as e:
+        return flask.jsonify({
+            'message': 'Failed to obtain SSH response with error: {}. (Is SSH server running at {}:22 ?)'.format(str(e), hostname)
+        }), 400
 
     data = {
         'found': found,
         'datetime': datetime.datetime.now().isoformat(),
         'hostname': hostname,
-        'rsa_md5_fingerprint': format_md5_fingerprint(calculate_fingerprint(remote_server_key, 'md5')),
-        'rsa_sha256_fingerprint': format_sha256_fingerprint(calculate_fingerprint(remote_server_key, 'sha256'))
+        'md5_fingerprint': format_md5_fingerprint(calculate_fingerprint(remote_server_key, 'md5')),
+        'sha256_fingerprint': format_sha256_fingerprint(calculate_fingerprint(remote_server_key, 'sha256'))
     }
 
     data_sign = json.dumps(data, sort_keys=True).encode()
@@ -57,17 +64,42 @@ def get_fingerprint():
     host_keys = paramiko.hostkeys.HostKeys(known_hosts_path if os.path.isfile(known_hosts_path) else None)
     host_keys_proccessed = []
     for host_key in host_keys:
+
         keys = []
+        sha256_fingerprints = []
         for type in host_keys[host_key].keys():
             remote_server_key = host_keys[host_key][type]
+            sha256_fingerprint = format_sha256_fingerprint(calculate_fingerprint(remote_server_key, 'sha256'))
+            sha256_fingerprints.append(sha256_fingerprint)
+            md5_fingerprint = format_md5_fingerprint(calculate_fingerprint(remote_server_key, 'md5'))
             keys.append({
                 'type': type,
-                'md5_fingerprint': format_md5_fingerprint(calculate_fingerprint(remote_server_key, 'md5')),
-                'sha256_fingerprint': format_sha256_fingerprint(calculate_fingerprint(remote_server_key, 'sha256'))
+                'md5_fingerprint': md5_fingerprint,
+                'sha256_fingerprint': sha256_fingerprint
             })
 
+        fingerprint_info = Fingerprint.query.filter(Fingerprint.user_id == current_user.id,
+                                                    Fingerprint.hashed_hostname == host_key).first()
+
+        if not fingerprint_info:
+            fingerprint_info = Fingerprint.query.filter(Fingerprint.user_id == current_user.id,
+                                                        Fingerprint.sha256_fingerprint.in_(sha256_fingerprints)).first()
+
+        color_class = 'danger'
+        title = '{} - Not in fingerprint database'.format(host_key)
+        if fingerprint_info:
+            if fingerprint_info.hashed_hostname == host_key:
+                color_class = 'success'
+                title = '{} - Matched by hostname hash'.format(host_key)
+            else:
+                color_class = 'warning'
+                title = '{} - Matched by hostname fingerprint'.format(host_key)
+
         host_keys_proccessed.append({
-            'hostname': host_key,
+            'hostname': fingerprint_info.hostname if fingerprint_info else host_key,
+            'title': title,
+            'color_class': color_class,
+            'hashed_hostname': host_key,
             'keys': keys
         })
 
@@ -118,43 +150,30 @@ def check_hostname_fingerprint():
             'message': 'Required parameter URL is missing'
         }), 400
 
-    parsed_url = urllib.parse.urlparse(url)
-    if parsed_url.hostname:
-        hostname = str(parsed_url.hostname)
-    else:
-        hostname = url
-
-    return check_fingerprint_hostname(hostname)
-
-
-@fingerprint_index.route('/fingerprint-check-vcs', methods=['POST'])
-@login_required
-def check_vcs_hostname_fingerprint():
-    json_data = flask.request.get_json()
-    if not json_data:
-        return flask.jsonify({
-            'message': 'No data'
-        }), 400
-
-    url = json_data.get('url')
-    if not url:
-        return flask.jsonify({
-            'message': 'Required parameter URL is missing'
-        }), 400
-
-    if GitRemote.detect_vcs_protocol(url) == ProtocolEnum.SSH:
+    detected_protocol = GitRemote.detect_vcs_protocol(url)
+    if detected_protocol == ProtocolEnum.SSH:
         parsed_url = urllib.parse.urlparse(url)
         hostname = parsed_url.hostname
         if not hostname:
             parsed_url = GitRemote.parse_scp_like_url(url)
-            hostname = parsed_url['hostname']
+            if parsed_url:
+                hostname = parsed_url['hostname']
+            else:
+                hostname = url
         hostname_string = str(hostname)
-        return check_fingerprint_hostname(hostname_string)
 
-    return flask.jsonify({
-        'message': 'Not a SSH',
-        'found': True  # It is not a SSH so lets just act like we have this signature
-    }), 200
+    elif detected_protocol in [ProtocolEnum.HTTP, ProtocolEnum.HTTPS]:
+        parsed_url = urllib.parse.urlparse(url)
+        if parsed_url.hostname:
+            hostname_string = str(parsed_url.hostname)
+        else:
+            hostname_string = url
+    else:
+        return flask.jsonify({
+            'message': 'Unknown protocol',
+        }), 400
+
+    return check_fingerprint_hostname(hostname_string)
 
 
 @fingerprint_index.route('/fingerprint-add', methods=['POST'])
@@ -180,15 +199,15 @@ def add_hostname_fingerprint():
         'hostname': hostname,
         # Recalculation fingerprint for remote_server_key and not using one in resuest
         # ensures that fingerprint did not change (signature chech would fail)
-        'rsa_md5_fingerprint': format_md5_fingerprint(calculate_fingerprint(remote_server_key, 'md5')),
-        'rsa_sha256_fingerprint': format_sha256_fingerprint(calculate_fingerprint(remote_server_key, 'sha256'))
+        'md5_fingerprint': format_md5_fingerprint(calculate_fingerprint(remote_server_key, 'md5')),
+        'sha256_fingerprint': format_sha256_fingerprint(calculate_fingerprint(remote_server_key, 'sha256'))
     }
     data_sign = json.dumps(data, sort_keys=True).encode()
     # Validate signature
     public_key = import_key(get_user_public_key_path(current_user, flask.current_app.config['USER']))
     signature = base64.b64decode(flask.request.json.get('signature'))
     if not verify_data(data_sign, signature, public_key):
-        # Déjà vu, It happens when they change something...
+        # Déjà vu Neo, It happens when they change something...
         return flask.jsonify({
             'message': 'Signature is invalid, we will get out of this hotel!'
         }), 401
@@ -203,11 +222,26 @@ def add_hostname_fingerprint():
 
     # Everything looks "hunky dory" lets continue
     known_hosts_path = get_user_known_hosts_path(current_user, flask.current_app.config['USER'])
-    add_hostname(data['hostname'], remote_server_key, known_hosts_path)
+
+    found = check_hostname(hostname, known_hosts_path)[0]
+    if found:
+        return flask.jsonify({
+            'message': 'Fingerprint is already in known_hosts file'
+        }), 200
+
+    hashed_hostname = add_hostname(data['hostname'], remote_server_key, known_hosts_path)
+
+    found_fingerprint = Fingerprint.query.filter_by(hashed_hostname=hashed_hostname, user_id=current_user.id).first()
+    if not found_fingerprint:
+        found_fingerprint = Fingerprint()
+        found_fingerprint.hostname = data['hostname']
+        found_fingerprint.user_id = current_user.id
+        found_fingerprint.hashed_hostname = hashed_hostname
+        found_fingerprint.sha256_fingerprint = data['sha256_fingerprint']
+        db.session.add(found_fingerprint)
+        db.session.commit()
 
     return flask.jsonify({
-        'message': 'OK'
+        'message': 'OK',
+        'hashed_hostname': hashed_hostname
     }), 200
-
-
-

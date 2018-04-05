@@ -17,7 +17,7 @@
     <tbody>
     {% for item in host_keys_proccessed %}
     <tr>
-        <th scope="row">{{item['hostname']}}</th>
+        <th scope="row" title="{{item['title']}}"><span class="text-{{item['color_class']}}">{{item['hostname']}}</span></th>
         <td>
             <table class="table table-hover">
                 <thead>

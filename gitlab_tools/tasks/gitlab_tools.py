@@ -87,6 +87,7 @@ def save_pull_mirror(mirror_id: int) -> None:
             })
 
             # !FIXME BUG Trigger housekeeping right after creation to prevent ugly 404/500 project detail bug
+            # !FIXME BUG See https://gitlab.com/gitlab-org/gitlab-ce/issues/43825
             gl.http_post('/projects/{project_id}/housekeeping'.format(project_id=project.id))
 
             mirror.gitlab_id = project.id
