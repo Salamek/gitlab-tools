@@ -21,9 +21,12 @@ class Mirror(BaseTable):
     def user_id(cls):
         return db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
 
+    @declared_attr
+    def project_id(self):
+        return db.Column(db.Integer, db.ForeignKey('project.id'), index=True)
+
     source = db.Column(db.String(255), nullable=True)
     target = db.Column(db.String(255), nullable=True)
-    gitlab_id = db.Column(db.Integer)
     foreign_vcs_type = db.Column(db.Integer)
     last_sync = db.Column(db.DateTime, nullable=True)
     note = db.Column(db.String(255))
@@ -51,6 +54,7 @@ class User(BaseTable):
     refresh_token = db.Column(db.String(255), unique=True, nullable=True)
     expires = db.Column(db.DateTime, default=func.now())
     pull_mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="user", lazy='dynamic')
+    push_mirrors = relationship("PushMirror", order_by="PushMirror.id", backref="user", lazy='dynamic')
 
     def is_active(self):
         return True
@@ -113,7 +117,6 @@ class PullMirror(Mirror):
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), index=True)
     project_name = db.Column(db.String(255))
     project_mirror = db.Column(db.String(255))
-
     is_no_create = db.Column(db.Boolean)
     is_force_create = db.Column(db.Boolean)
     is_no_remote = db.Column(db.Boolean)
@@ -125,11 +128,28 @@ class PullMirror(Mirror):
     is_public = db.Column(db.Boolean)
 
 
+class PushMirror(Mirror):
+    __tablename__ = 'push_mirror'
+    id = db.Column(db.Integer, primary_key=True)
+    project_mirror = db.Column(db.String(255))
+
+
+class Project(BaseTable):
+    __tablename__ = 'project'
+
+    id = db.Column(db.Integer, primary_key=True)
+    gitlab_id = db.Column(db.Integer, unique=True)
+    name = db.Column(db.String(255))
+    name_with_namespace = db.Column(db.String(255))
+    web_url = db.Column(db.String(255))
+    push_mirrors = relationship("PushMirror", order_by="PushMirror.id", backref="project", lazy='dynamic')
+
+
 class Group(BaseTable):
     __tablename__ = 'group'
 
     id = db.Column(db.Integer, primary_key=True)
     gitlab_id = db.Column(db.Integer, unique=True)
     name = db.Column(db.String(255))
-    mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="group", lazy='dynamic')
+    pull_mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="group", lazy='dynamic')
 

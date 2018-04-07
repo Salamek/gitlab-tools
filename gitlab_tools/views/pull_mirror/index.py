@@ -5,13 +5,13 @@ import flask
 from flask_login import current_user, login_required
 from gitlab_tools.models.gitlab_tools import db, PullMirror, Group
 from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
-from gitlab_tools.forms.mirror import EditForm, NewForm
+from gitlab_tools.forms.pull_mirror import EditForm, NewForm
 from gitlab_tools.tools.helpers import convert_url_for_user
 from gitlab_tools.tools.crypto import random_password
 from gitlab_tools.tools.GitRemote import GitRemote
 from gitlab_tools.blueprints import pull_mirror_index
 from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror, \
-    delete_mirror, \
+    delete_pull_mirror, \
     save_pull_mirror, \
     create_ssh_config
 
@@ -95,7 +95,7 @@ def new_mirror():
         db.session.commit()
 
         if source.vcs_protocol == ProtocolEnum.SSH:
-            # If source is SSH, create SSH COnfig for it also
+            # If source is SSH, create SSH Config for it also
             create_ssh_config.apply_async(
                 (
                     current_user.id,
@@ -107,7 +107,7 @@ def new_mirror():
         else:
             save_pull_mirror.delay(mirror_new.id)
 
-        flask.flash('New mirror item was added successfully.', 'success')
+        flask.flash('New pull mirror item was added successfully.', 'success')
         return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
 
     return flask.render_template('pull_mirror.index.new.html', form=form)
@@ -116,7 +116,6 @@ def new_mirror():
 @pull_mirror_index.route('/edit/<int:mirror_id>', methods=['GET', 'POST'])
 @login_required
 def edit_mirror(mirror_id: int):
-    # We dont have any edit functionality for mirrors, so just create new one and delete old one
     mirror_detail = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     form = EditForm(
         flask.request.form,
@@ -172,7 +171,7 @@ def edit_mirror(mirror_id: int):
         db.session.commit()
 
         if source.vcs_protocol == ProtocolEnum.SSH:
-            # If source is SSH, create SSH COnfig for it also
+            # If source is SSH, create SSH Config for it also
             create_ssh_config.apply_async(
                 (
                     current_user.id,
@@ -184,7 +183,7 @@ def edit_mirror(mirror_id: int):
         else:
             save_pull_mirror.delay(mirror_detail.id)
 
-        flask.flash('Mirror was saved successfully.', 'success')
+        flask.flash('Pull mirror was saved successfully.', 'success')
         return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
 
     return flask.render_template('pull_mirror.index.edit.html', form=form, mirror_detail=mirror_detail)
@@ -195,8 +194,8 @@ def edit_mirror(mirror_id: int):
 def schedule_sync_mirror(mirror_id: int):
     # Check if mirror exists or throw 404
     found_mirror = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
-    if not found_mirror.gitlab_id:
-        flask.flash('Mirror is not created, cannot be synced', 'danger')
+    if not found_mirror.project_id:
+        flask.flash('Project mirror is not created, cannot be synced', 'danger')
         return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
     task = sync_pull_mirror.delay(mirror_id)
 
@@ -212,8 +211,8 @@ def schedule_delete_mirror(mirror_id: int):
     db.session.add(mirror_detail)
     db.session.commit()
 
-    delete_mirror.delay(mirror_detail.id)
+    delete_pull_mirror.delay(mirror_detail.id)
 
-    flask.flash('Mirror was deleted successfully.', 'success')
+    flask.flash('Pull mirror was deleted successfully.', 'success')
 
     return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block body %}
+{% from "_formhelpers.html" import render_field, render_checkbox %}
+<div class="row">
+    <div class="col-xs-12 col-sm-8 col-md-8 col-sm-offset-2 col-md-offset-2">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{ _("Edit mirror of %(project_name_with_namespace)s", project_name_with_namespace=mirror_detail.project.name_with_namespace) }}</h3>
+            </div>
+            <div class="panel-body">
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    There was some errors when proccesing a form.
+                    {% for field, errors in form.errors.items() %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <form method="post" role="form" action="{{url_for('pull_mirror.index.edit_mirror', mirror_id=mirror_detail.id)}}">
+                    <div class="row">
+                        {% include 'url_info.html' %}
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            <div class="form-group{{ ' has-error' if form.project_mirror.errors else '' }}">
+                              <label class="sr-only" for="{{form.project_mirror.id}}">{{_('Project mirror')}}</label>
+                              {{form.project_mirror(class_="form-control input-sm check-signature", **{'placeholder': _('Project mirror'), 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-fingerprint-url': url_for('fingerprint.index.check_hostname_fingerprint'), 'data-fingerprint-add-url': url_for('fingerprint.index.add_hostname_fingerprint'), 'data-gitlab-url': config['GITLAB_URL'], 'data-content': '<br>'.join(form.project_mirror.errors)})}}
+                            </div>
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            {{render_field(form.note, 'form-group', _('Note'))}}
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            {{render_field(form.project, 'form-group', _('Project'))}}
+                        </div>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_force_update(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_force_update.errors)})}}
+                            Enable force fetching and pushing.
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            {{form.is_prune_mirrors(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                            'data-placement': "bottom", 'data-content': '<br>'.join(form.is_prune_mirrors.errors)})}}
+                            Enable pruning mirror.
+                        </label>
+                    </div>
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12">
+                            <input type="submit" value="{{_('Save')}}" class="btn btn-info btn-block">
+                        </div>
+                    </div>
+                    {{ form.id() }}
+                    {{ form.csrf_token }}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

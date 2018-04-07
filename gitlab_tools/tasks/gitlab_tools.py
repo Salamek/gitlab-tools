@@ -5,7 +5,7 @@ import datetime
 from Crypto.PublicKey import RSA
 import shutil
 from flask_celery import single_instance
-from gitlab_tools.models.gitlab_tools import PullMirror, User
+from gitlab_tools.models.gitlab_tools import PullMirror, User, PushMirror, Project
 from gitlab_tools.tools.GitRemote import GitRemote
 from gitlab_tools.tools.Git import Git
 from gitlab_tools.tools.helpers import get_repository_path, \
@@ -42,37 +42,37 @@ def save_pull_mirror(mirror_id: int) -> None:
         if not found_group:
             raise Exception('Selected group ({}) not found'.format(mirror.group.gitlab_id))
 
-        # 1. check if mirror exists in group/s if not create
+        # 1. check if project mirror exists in group/s if not create
         # If we have gitlab_id check if exists and use it if does, or create new project if not
-        if mirror.gitlab_id:
+        if mirror.project_id:
             try:
-                project = gl.projects.get(mirror.gitlab_id)
+                gitlab_project = gl.projects.get(mirror.project.gitlab_id)
             except gitlab.exceptions.GitlabError as e:
                 if e.response_code == 404:
-                    project = None
+                    gitlab_project = None
                 else:
                     raise
 
             # @TODO Project exists, lets check if it is in correct group ? This may not be needed if project.namespace_id bellow works
         else:
-            project = None
+            gitlab_project = None
 
-        if project:
+        if gitlab_project:
             # Update project
-            project.name = mirror.project_name
-            project.description = 'Mirror of {}.'.format(
+            gitlab_project.name = mirror.project_name
+            gitlab_project.description = 'Mirror of {}.'.format(
                 mirror.project_mirror
             )
-            project.issues_enabled = mirror.is_issues_enabled
-            project.wall_enabled = mirror.is_wall_enabled
-            project.merge_requests_enabled = mirror.is_merge_requests_enabled
-            project.wiki_enabled = mirror.is_wiki_enabled
-            project.snippets_enabled = mirror.is_snippets_enabled
-            project.public = mirror.is_public
-            project.namespace_id = mirror.group.gitlab_id  # !FIXME is this enough to move it to different group ?
-            project.save()
+            gitlab_project.issues_enabled = mirror.is_issues_enabled
+            gitlab_project.wall_enabled = mirror.is_wall_enabled
+            gitlab_project.merge_requests_enabled = mirror.is_merge_requests_enabled
+            gitlab_project.wiki_enabled = mirror.is_wiki_enabled
+            gitlab_project.snippets_enabled = mirror.is_snippets_enabled
+            gitlab_project.public = mirror.is_public
+            gitlab_project.namespace_id = mirror.group.gitlab_id  # !FIXME is this enough to move it to different group ?
+            gitlab_project.save()
         else:
-            project = gl.projects.create({
+            gitlab_project = gl.projects.create({
                 'name': mirror.project_name,
                 'description': 'Mirror of {}.'.format(
                     mirror.project_mirror
@@ -88,9 +88,19 @@ def save_pull_mirror(mirror_id: int) -> None:
 
             # !FIXME BUG Trigger housekeeping right after creation to prevent ugly 404/500 project detail bug
             # !FIXME BUG See https://gitlab.com/gitlab-org/gitlab-ce/issues/43825
-            gl.http_post('/projects/{project_id}/housekeeping'.format(project_id=project.id))
+            gl.http_post('/projects/{project_id}/housekeeping'.format(project_id=gitlab_project.id))
 
-            mirror.gitlab_id = project.id
+            found_project = Project.query.filter_by(gitlab_id=gitlab_project.id).first()
+            if not found_project:
+                found_project = Project()
+                found_project.gitlab_id = gitlab_project.id
+            found_project.name = gitlab_project.name
+            found_project.name_with_namespace = gitlab_project.name_with_namespace
+            found_project.web_url = gitlab_project.web_url
+            db.session.add(found_project)
+            db.session.commit()
+
+            mirror.project_id = found_project.id
             db.session.add(mirror)
             db.session.commit()
 
@@ -108,18 +118,18 @@ def save_pull_mirror(mirror_id: int) -> None:
             if key:
                 # We got here, so key exists! lets check if its enabled for project
                 try:
-                    project.keys.get(mirror.user.gitlab_deploy_key_id)
+                    gitlab_project.keys.get(mirror.user.gitlab_deploy_key_id)
                 except gitlab.exceptions.GitlabError as e:
                     if e.response_code == 404:
                         # Enable if not enabled
-                        project.keys.enable(mirror.user.gitlab_deploy_key_id)
+                        gitlab_project.keys.enable(mirror.user.gitlab_deploy_key_id)
                     else:
                         raise
 
-                enabled_key = project.keys.get(mirror.user.gitlab_deploy_key_id)
+                enabled_key = gitlab_project.keys.get(mirror.user.gitlab_deploy_key_id)
                 gl.http_put(
                     '/projects/{project_id}/deploy_keys/{key_id}'.format(
-                        project_id=project.id,
+                        project_id=gitlab_project.id,
                         key_id=enabled_key.id
                     ),
                     post_data={
@@ -135,7 +145,7 @@ def save_pull_mirror(mirror_id: int) -> None:
 
         if not key:
             # No deploy key ID found, that means we need to add that key
-            key = project.keys.create({
+            key = gitlab_project.keys.create({
                 'title': 'Gitlab tools deploy key for user {}'.format(mirror.user.name),
                 'key': open(get_user_public_key_path(mirror.user, flask.current_app.config['USER'])).read(),
                 'can_push': True  # We need write access
@@ -146,13 +156,13 @@ def save_pull_mirror(mirror_id: int) -> None:
             db.session.commit()
 
         git_remote_target_original = GitRemote(
-            project.ssh_url_to_repo,
+            gitlab_project.ssh_url_to_repo,
             mirror.is_force_update,
             mirror.is_prune_mirrors
         )
 
         git_remote_target = GitRemote(
-            convert_url_for_user(project.ssh_url_to_repo, mirror.user),
+            convert_url_for_user(gitlab_project.ssh_url_to_repo, mirror.user),
             mirror.is_force_update,
             mirror.is_prune_mirrors
         )
@@ -185,8 +195,105 @@ def save_pull_mirror(mirror_id: int) -> None:
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def sync_pull_mirror(mirror_id: int) -> None:
-    mirror = PullMirror.query.filter_by(id=mirror_id).first()
+def save_push_mirror(push_mirror_id) -> None:
+    mirror = PushMirror.query.filter_by(id=push_mirror_id).first()
+    gl = gitlab.Gitlab(
+        flask.current_app.config['GITLAB_URL'],
+        oauth_token=mirror.user.access_token,
+        api_version=flask.current_app.config['GITLAB_API_VERSION']
+    )
+
+    gl.auth()
+
+    # 0. Check if project exists
+    gitlab_project = gl.groups.get(mirror.project.gitlab_id)
+    if not gitlab_project:
+        raise Exception('Selected group ({}) not found'.format(mirror.project.gitlab_id))
+
+    found_project = Project.query.filter_by(gitlab_id=gitlab_project.id).first()
+    if not found_project:
+        found_project = Project()
+        found_project.gitlab_id = gitlab_project.id
+    found_project.name = gitlab_project.name
+    found_project.name_with_namespace = gitlab_project.name_with_namespace
+    found_project.web_url = gitlab_project.web_url
+    db.session.add(found_project)
+    db.session.commit()
+
+    # Check deploy key exists in gitlab
+    key = None
+    if mirror.user.gitlab_deploy_key_id:
+        try:
+            key = gl.deploykeys.get(mirror.user.gitlab_deploy_key_id)
+        except gitlab.exceptions.GitlabError as e:
+            if e.response_code == 404:
+                key = None
+            else:
+                raise
+
+        if key:
+            # We got here, so key exists! lets check if its enabled for project
+            try:
+                gitlab_project.keys.get(mirror.user.gitlab_deploy_key_id)
+            except gitlab.exceptions.GitlabError as e:
+                if e.response_code == 404:
+                    # Enable if not enabled
+                    gitlab_project.keys.enable(mirror.user.gitlab_deploy_key_id)
+                else:
+                    raise
+
+    if not key:
+        # No deploy key ID found, that means we need to add that key
+        key = gitlab_project.keys.create({
+            'title': 'Gitlab tools deploy key for user {}'.format(mirror.user.name),
+            'key': open(get_user_public_key_path(mirror.user, flask.current_app.config['USER'])).read(),
+            'can_push': True  # We need write access
+        })
+
+        mirror.user.gitlab_deploy_key_id = key.id
+        db.session.add(mirror)
+        db.session.commit()
+
+    git_remote_source_original = GitRemote(
+        gitlab_project.ssh_url_to_repo,
+        mirror.is_force_update,
+        mirror.is_prune_mirrors
+    )
+
+    git_remote_source = GitRemote(
+        convert_url_for_user(gitlab_project.ssh_url_to_repo, mirror.user),
+        mirror.is_force_update,
+        mirror.is_prune_mirrors
+    )
+
+    add_ssh_config(
+        mirror.user,
+        flask.current_app.config['USER'],
+        git_remote_source.hostname,
+        git_remote_source_original.hostname
+    )
+
+    namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
+
+    # Check if repository storage group directory exists:
+    if not os.path.isdir(namespace_path):
+        mkdir_p(namespace_path)
+
+    git_remote_target = GitRemote(mirror.target, mirror.is_force_update, mirror.is_prune_mirrors)
+
+    Git.create_mirror(namespace_path, str(mirror.id), git_remote_source, git_remote_target)
+
+    # 5. Set last_sync date to mirror
+    mirror.source = git_remote_source_original.url
+    mirror.last_sync = datetime.datetime.now()
+    db.session.add(mirror)
+    db.session.commit()
+
+
+@celery.task(bind=True)
+@single_instance(include_args=True)
+def sync_pull_mirror(pull_mirror_id: int) -> None:
+    mirror = PullMirror.query.filter_by(id=pull_mirror_id).first()
     namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
     git_remote_source = GitRemote(mirror.source, mirror.is_force_update, mirror.is_prune_mirrors)
     git_remote_target = GitRemote(mirror.target, mirror.is_force_update, mirror.is_prune_mirrors)
@@ -200,8 +307,43 @@ def sync_pull_mirror(mirror_id: int) -> None:
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def delete_mirror(mirror_id: int) -> None:
-    mirror = PullMirror.query.filter_by(id=mirror_id, is_deleted=True).first()
+def sync_push_mirror(push_mirror_id: int) -> None:
+    mirror = PushMirror.query.filter_by(id=push_mirror_id).first()
+    namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
+    git_remote_source = GitRemote(mirror.source, mirror.is_force_update, mirror.is_prune_mirrors)
+    git_remote_target = GitRemote(mirror.target, mirror.is_force_update, mirror.is_prune_mirrors)
+    Git.sync_mirror(namespace_path, str(mirror.id), git_remote_source, git_remote_target)
+
+    # 5. Set last_sync date to mirror
+    mirror.last_sync = datetime.datetime.now()
+    db.session.add(mirror)
+    db.session.commit()
+
+
+@celery.task(bind=True)
+@single_instance(include_args=True)
+def delete_pull_mirror(pull_mirror_id: int) -> None:
+    mirror = PullMirror.query.filter_by(id=pull_mirror_id, is_deleted=True).first()
+    if mirror:
+        # Check if project clone exists
+        project_path = get_repository_path(
+            get_namespace_path(
+                mirror,
+                flask.current_app.config['USER']
+            ),
+            mirror
+        )
+        if os.path.isdir(project_path):
+            shutil.rmtree(project_path)
+
+        db.session.delete(mirror)
+        db.session.commit()
+
+
+@celery.task(bind=True)
+@single_instance(include_args=True)
+def delete_push_mirror(push_mirror_id: int) -> None:
+    mirror = PushMirror.query.filter_by(id=push_mirror_id, is_deleted=True).first()
     if mirror:
         # Check if project clone exists
         project_path = get_repository_path(

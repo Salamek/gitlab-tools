@@ -406,7 +406,7 @@ def setup() -> None:
     database_types = {
         0: {'name': 'Ignore', 'default': True, 'call': ignore},
         1: {'name': 'SQLite', 'default': False, 'call': database_sqlite},
-        2: {'name': 'PostgreSQL', 'default': False, 'call': database_postgresql},
+        2: {'name': 'PostgreSQL [Recommended]', 'default': False, 'call': database_postgresql},
         3: {'name': 'MySQL', 'default': False, 'call': database_mysql},
     }
 
