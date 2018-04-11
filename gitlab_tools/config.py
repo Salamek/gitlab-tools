@@ -73,6 +73,7 @@ class Testing(Config):
 
 class Production(Config):
     DEBUG = False
+    SERVER_NAME = None
     SECRET_KEY = None  # To be overwritten by a YAML file.
     SQLALCHEMY_DATABASE_URI = None
     PORT = None  # To be overwritten by a YAML file.

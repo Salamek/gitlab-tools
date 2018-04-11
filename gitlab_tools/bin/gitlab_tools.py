@@ -431,8 +431,10 @@ def setup() -> None:
     print('Webserver configuration:')
     webserver_host = configuration.get('HOST', '127.0.0.1')
     webserver_port = configuration.get('PORT', '80')
-    configuration['HOST'] = input('Host [{}]: '.format(webserver_host)) or webserver_host
-    configuration['PORT'] = input('Port [{}]: '.format(webserver_port)) or webserver_port
+    configuration['HOST'] = input('Host (for integrated web server - when used) [{}]: '.format(webserver_host)) or webserver_host
+    configuration['PORT'] = input('Port (for integrated web server - when used) [{}]: '.format(webserver_port)) or webserver_port
+    server_name = '{}:{}'.format(configuration['HOST'], configuration['PORT'])
+    configuration['SERVER_NAME'] = input('Server name (on what domain or ip+port is this application available) [{}]: '.format(server_name)) or server_name
 
     print('Gitlab configuration:')
     default_gitlab_url = configuration.get('GITLAB_URL')
