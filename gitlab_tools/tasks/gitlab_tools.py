@@ -256,13 +256,24 @@ def save_push_mirror(push_mirror_id) -> None:
         # No deploy key ID found, that means we need to add that key
         key = gitlab_project.keys.create({
             'title': 'Gitlab tools deploy key for user {}'.format(mirror.user.name),
-            'key': open(get_user_public_key_path(mirror.user, flask.current_app.config['USER'])).read(),
-            'can_push': True  # We need write access
+            'key': open(get_user_public_key_path(mirror.user, flask.current_app.config['USER'])).read()
         })
 
         mirror.user.gitlab_deploy_key_id = key.id
         db.session.add(mirror)
         db.session.commit()
+
+    # Create hook
+    gitlab_project.hooks.create({
+        'url': flask.url_for(
+            'api.index.schedule_sync_push_mirror',
+            mirror_id=mirror.id,
+            token=mirror.hook_token,
+            _external=True
+        ),
+        'push_events': True,
+        'tag_push_events': True
+    })
 
     git_remote_source_original = GitRemote(
         gitlab_project.ssh_url_to_repo,
