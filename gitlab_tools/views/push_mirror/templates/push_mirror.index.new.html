@@ -15,7 +15,7 @@
                     {% endfor %}
                 </div>
                 {% endif %}
-                <form method="post" role="form" action="{{url_for('pull_mirror.index.new_mirror')}}">
+                <form method="post" role="form" action="{{url_for('push_mirror.index.new_mirror')}}">
                     <div class="row">
                         {% include 'url_info.html' %}
                         <div class="col-xs-12 col-sm-12 col-md-12">
@@ -28,7 +28,7 @@
                             {{render_field(form.note, 'form-group', _('Note'))}}
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
-                            {{render_field(form.group, 'form-group', _('Project'))}}
+                            {{render_field(form.project, 'form-group', _('Project'))}}
                         </div>
                     </div>
                     <div class="checkbox">

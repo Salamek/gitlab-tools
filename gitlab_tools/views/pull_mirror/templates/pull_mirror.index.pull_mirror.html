@@ -32,7 +32,7 @@
         <td>{{item.last_sync|format_datetime}}</td>
         <td>{{item.created|format_datetime}}</td>
         <td class="text-nowrap">
-            {% if item.gitlab_id %}
+            {% if item.project_id %}
                 <a class="btn btn-xs btn-default" href="{{url_for('pull_mirror.index.schedule_sync_mirror', mirror_id=item.id)}}"><i class="fa fa-map-signs" aria-hidden="true"></i> {{ _('Trigger sync') }}</a>
             {% endif %}
             <a class="btn btn-xs btn-primary" href="{{url_for('pull_mirror.index.edit_mirror', mirror_id=item.id)}}" title="{{ _('Edit') }}"><i class="fa fa-pencil" aria-hidden="true"></i></a>

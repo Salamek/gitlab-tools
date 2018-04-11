@@ -6,7 +6,7 @@ from typing import Union
 
 
 class GitRemote(object):
-    def __init__(self, url, is_force_update: bool=False, is_prune_mirrors: bool=False):
+    def __init__(self, url: str, is_force_update: bool=False, is_prune_mirrors: bool=False):
         self.vcs_type = GitRemote.detect_vcs_type(url)
         self.vcs_protocol = GitRemote.detect_vcs_protocol(url)
         self.hostname = GitRemote.get_url_hostname(url)

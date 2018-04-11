@@ -26,7 +26,8 @@ LOG = getLogger(__name__)
 @single_instance(include_args=True)
 def save_pull_mirror(mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=mirror_id).first()
-
+    gl = None  # !FIXME this is here cos hotfix on the end of script
+    gitlab_project = None  # !FIXME this is here cos hotfix on the end of script
     if not mirror.is_no_create and not mirror.is_no_remote:
 
         gl = gitlab.Gitlab(
@@ -38,12 +39,16 @@ def save_pull_mirror(mirror_id: int) -> None:
         gl.auth()
 
         # 0. Check if group/s exists
-        found_group = gl.groups.get(mirror.group.gitlab_id)
-        if not found_group:
-            raise Exception('Selected group ({}) not found'.format(mirror.group.gitlab_id))
+        try:
+            gl.groups.get(mirror.group.gitlab_id)
+        except gitlab.exceptions.GitlabError as e:
+            if e.response_code == 404:
+                raise Exception('Selected group ({}) not found'.format(mirror.group.gitlab_id))
+            else:
+                raise
 
         # 1. check if project mirror exists in group/s if not create
-        # If we have gitlab_id check if exists and use it if does, or create new project if not
+        # If we have project_id check if exists and use it if does, or create new project if not
         if mirror.project_id:
             try:
                 gitlab_project = gl.projects.get(mirror.project.gitlab_id)
@@ -186,6 +191,11 @@ def save_pull_mirror(mirror_id: int) -> None:
 
     Git.create_mirror(namespace_path, str(mirror.id), git_remote_source, git_remote_target)
 
+    if gl and gitlab_project:
+        # !FIXME BUG Trigger housekeeping right after mirror sync to reload homepage of project
+        # !FIXME BUG Somehow i'm unable to reproduce this in simple script :/ to report this bug
+        gl.http_post('/projects/{project_id}/housekeeping'.format(project_id=gitlab_project.id))
+
     # 5. Set last_sync date to mirror
     mirror.target = git_remote_target.url
     mirror.last_sync = datetime.datetime.now()
@@ -206,7 +216,7 @@ def save_push_mirror(push_mirror_id) -> None:
     gl.auth()
 
     # 0. Check if project exists
-    gitlab_project = gl.groups.get(mirror.project.gitlab_id)
+    gitlab_project = gl.projects.get(mirror.project.gitlab_id)
     if not gitlab_project:
         raise Exception('Selected group ({}) not found'.format(mirror.project.gitlab_id))
 
@@ -294,6 +304,13 @@ def save_push_mirror(push_mirror_id) -> None:
 @single_instance(include_args=True)
 def sync_pull_mirror(pull_mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=pull_mirror_id).first()
+
+    if not mirror.source:
+        raise Exception('Mirror {} has no source'.format(mirror.id))
+
+    if not mirror.target:
+        raise Exception('Mirror {} has no target'.format(mirror.id))
+
     namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
     git_remote_source = GitRemote(mirror.source, mirror.is_force_update, mirror.is_prune_mirrors)
     git_remote_target = GitRemote(mirror.target, mirror.is_force_update, mirror.is_prune_mirrors)
@@ -309,6 +326,13 @@ def sync_pull_mirror(pull_mirror_id: int) -> None:
 @single_instance(include_args=True)
 def sync_push_mirror(push_mirror_id: int) -> None:
     mirror = PushMirror.query.filter_by(id=push_mirror_id).first()
+
+    if not mirror.source:
+        raise Exception('Mirror {} has no source'.format(mirror.id))
+
+    if not mirror.target:
+        raise Exception('Mirror {} has no target'.format(mirror.id))
+
     namespace_path = get_namespace_path(mirror, flask.current_app.config['USER'])
     git_remote_source = GitRemote(mirror.source, mirror.is_force_update, mirror.is_prune_mirrors)
     git_remote_target = GitRemote(mirror.target, mirror.is_force_update, mirror.is_prune_mirrors)

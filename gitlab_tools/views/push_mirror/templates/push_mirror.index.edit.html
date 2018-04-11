@@ -15,7 +15,7 @@
                     {% endfor %}
                 </div>
                 {% endif %}
-                <form method="post" role="form" action="{{url_for('pull_mirror.index.edit_mirror', mirror_id=mirror_detail.id)}}">
+                <form method="post" role="form" action="{{url_for('push_mirror.index.edit_mirror', mirror_id=mirror_detail.id)}}">
                     <div class="row">
                         {% include 'url_info.html' %}
                         <div class="col-xs-12 col-sm-12 col-md-12">

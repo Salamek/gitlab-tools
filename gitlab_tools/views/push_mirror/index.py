@@ -67,7 +67,7 @@ def new_mirror():
         mirror_new.user = current_user
         mirror_new.foreign_vcs_type = target.vcs_type
         mirror_new.note = form.note.data
-        mirror_new.target = target
+        mirror_new.target = target.url
         mirror_new.source = None  # We are getting source wia gitlab API
         mirror_new.last_sync = None
         mirror_new.hook_token = random_password()

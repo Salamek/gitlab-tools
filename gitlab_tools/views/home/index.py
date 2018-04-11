@@ -45,6 +45,7 @@ def get_home():
 def get_new_rsa_key():
 
     current_user.is_rsa_pair_set = False
+    current_user.gitlab_deploy_key_id = None
     db.session.add(current_user)
     db.session.commit()
 
