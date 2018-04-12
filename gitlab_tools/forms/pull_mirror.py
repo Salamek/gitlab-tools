@@ -1,10 +1,8 @@
-import gitlab
-import flask
 from flask_babel import gettext
-from flask_login import current_user
-from wtforms import Form, StringField, validators, HiddenField, TextAreaField, SelectField, BooleanField
+from wtforms import Form, StringField, validators, HiddenField, TextAreaField, BooleanField
 from gitlab_tools.models.gitlab_tools import PullMirror
 from gitlab_tools.tools.GitRemote import GitRemote
+from gitlab_tools.forms.custom_fields import NonValidatingSelectField
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
@@ -14,7 +12,7 @@ class NewForm(Form):
     project_name = StringField(None, [validators.Length(min=1, max=255)])
     project_mirror = StringField(None, [validators.Length(min=1, max=255)])
     note = TextAreaField(None, [validators.Optional()])
-    group = SelectField(None, [validators.DataRequired()], coerce=int)
+    group = NonValidatingSelectField(None, [validators.Optional()], coerce=int, choices=[])
 
     is_no_create = BooleanField()
     is_force_create = BooleanField()
@@ -27,22 +25,6 @@ class NewForm(Form):
     is_public = BooleanField()
     is_force_update = BooleanField()
     is_prune_mirrors = BooleanField()
-
-    def __init__(self, *args, **kwargs):
-        Form.__init__(self, *args, **kwargs)
-
-        gl = gitlab.Gitlab(
-            flask.current_app.config['GITLAB_URL'],
-            oauth_token=current_user.access_token,
-            api_version=flask.current_app.config['GITLAB_API_VERSION']
-        )
-
-        gl.auth()
-
-        choices = []
-        for group in gl.groups.list():
-            choices.append((group.id, '{} ({})'.format(group.name, group.full_path)))
-        self.group.choices = choices
 
     def validate(self) -> bool:
         rv = Form.validate(self)

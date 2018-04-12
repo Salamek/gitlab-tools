@@ -31,7 +31,10 @@
                             {{render_field(form.note, 'form-group', _('Note'))}}
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
-                            {{render_field(form.group, 'form-group', _('Group'))}}
+                            <div class="form-group{{ ' has-error' if form.group.errors else '' }}">
+                            <label class="sr-only" for="{{form.group.id}}">{{_('Group')}}</label>
+                                {{form.group(class_="form-control input-sm group-search", **{'placeholder': _('Group'), 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-content': '<br>'.join(form.group.errors), 'data-source': url_for('api.index.search_group'), 'data-selected-url': url_for('api.index.get_group', group_id=form.group.data) if form.group.data})}}
+                            </div>
                         </div>
                     </div>
                     <div class="checkbox">

@@ -39,4 +39,65 @@ html, body
 }
 
 
-.top-buffer { margin-top:20px; }
+.top-buffer {
+    margin-top:20px;
+}
+
+.select2-result-group, .select2-result-project{
+    padding-top:4px;
+    padding-bottom:3px;
+}
+
+.select2-result-group__avatar, .select2-result-project__avatar{
+    float:left;
+    width:60px;
+    margin-right:10px;
+}
+
+.select2-result-group__avatar img, .select2-result-project__avatar img{
+    width:100%;
+    height:auto;
+    border-radius:2px;
+}
+
+.select2-result-group__meta, .select2-result-project__meta{
+    margin-left:70px;
+}
+
+.select2-result-group__title, .select2-result-project__title{
+    color:black;
+    font-weight:700;
+    word-wrap:break-word;
+    line-height:1.1;
+    margin-bottom:4px;
+}
+
+.select2-result-group__description, .select2-result-project__description{
+    font-size:13px;
+    color:#777;
+    margin-top:4px;
+}
+
+.select2-results__option--highlighted .select2-result-group__title,
+.select2-results__option--highlighted .select2-result-project__title{
+    color:white;
+}
+
+.select2-results__option--highlighted .select2-result-group__description,
+.select2-results__option--highlighted .select2-result-project__forks,
+.select2-results__option--highlighted .select2-result-project__stars,
+.select2-results__option--highlighted .select2-result-project__description,
+.select2-results__option--highlighted .select2-result-project__issues{
+    color:#c6dcef;
+}
+
+
+.select2-result-project__forks,.select2-result-project__stars{
+    margin-right:1em;
+}
+
+.select2-result-project__forks,.select2-result-project__stars,.select2-result-project__issues{
+    display:inline-block;
+    color:#aaa;
+    font-size:11px;
+}

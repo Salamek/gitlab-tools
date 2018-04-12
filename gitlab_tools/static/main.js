@@ -1,31 +1,168 @@
 
 $(function () {
-    $(document).on('click', '[data-toggle="lightbox"]', function(event) {
-        event.preventDefault();
-        $(this).ekkoLightbox();
-    });
+    $('.select').select2();
 
-    $('.api-test').click(function(){
-        var url = $(this).data('url');
-
-        var $container = $(this).next('.jumbotron');
-        if (!$container.length)
-        {
-            $container = $('<pre class="jumbotron">');
-            $(this).after($container);
-        }
-
-        $.ajax({
-            type: 'GET',
-            url: url,
-            success: function(data){
-                $container.html(JSON.stringify(data, null, 2));
+    var per_page = 30;
+    var $group_search = $(".group-search");
+    $group_search.select2({
+        ajax: {
+            url: $group_search.data('source'),
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    q: params.term, // search term
+                    page: params.page,
+                    per_page: per_page
+                };
             },
-            error: function() {
-                $container.html('<div class="alert alert-danger">Failed</div>');
+            processResults: function (data, params) {
+                // parse the results into the format expected by Select2
+                // since we are using custom formatting functions we do not need to
+                // alter the remote JSON data, except to indicate that infinite
+                // scrolling can be used
+                params.page = params.page || 1;
+
+                return {
+                    results: data.items,
+                    pagination: {
+                        more: (params.page * per_page) < data.total
+                    }
+                };
+            },
+            cache: true
+        },
+        placeholder: 'Search for a group',
+        escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
+        minimumInputLength: 1,
+        templateResult: function (group) {
+            if (group.loading) {
+                return group.text;
             }
-        });
+
+            var markup = "<div class='select2-result-group clearfix'>" +
+            "<div class='select2-result-group__avatar'><img src='" + group.avatar_url + "' /></div>" +
+            "<div class='select2-result-group__meta'>" +
+              "<div class='select2-result-group__title'>" + group.full_name + "</div>";
+
+            if (group.description) {
+                markup += "<div class='select2-result-group__description'>" + group.description + "</div>";
+            }
+
+            markup += "</div></div>";
+
+            return markup;
+        },
+        templateSelection: function (group) {
+            return group.full_name || group.text;
+        }
     });
+
+    if($group_search.length)
+    {
+        var group_url = $group_search.data('selected-url');
+        if(group_url){
+            $.ajax({
+                type: 'GET',
+                url: group_url
+            }).then(function (data) {
+                // create the option and append to Select2
+                var option = new Option(data.full_name, data.id, true, true);
+                $group_search.append(option).trigger('change');
+
+                // manually trigger the `select2:select` event
+                $group_search.trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: data
+                    }
+                });
+            });
+        }
+    }
+
+    var $project_search = $(".project-search");
+    $project_search.select2({
+        ajax: {
+            url: $project_search.data('source'),
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    q: params.term, // search term
+                    page: params.page,
+                    per_page: per_page
+                };
+            },
+            processResults: function (data, params) {
+                // parse the results into the format expected by Select2
+                // since we are using custom formatting functions we do not need to
+                // alter the remote JSON data, except to indicate that infinite
+                // scrolling can be used
+                params.page = params.page || 1;
+
+                return {
+                    results: data.items,
+                    pagination: {
+                        more: (params.page * per_page) < data.total
+                    }
+                };
+            },
+            cache: true
+        },
+        placeholder: 'Search for a project',
+        escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
+        minimumInputLength: 1,
+        templateResult: function (project) {
+            if (project.loading) {
+                return project.text;
+            }
+
+            var markup = "<div class='select2-result-project clearfix'>" +
+            "<div class='select2-result-project__avatar'><img src='" + (project.avatar_url || project.owner.avatar_url) + "' /></div>" +
+            "<div class='select2-result-project__meta'>" +
+            "<div class='select2-result-project__title'>" + project.name_with_namespace + "</div>";
+
+            if (project.description) {
+                markup += "<div class='select2-result-project__description'>" + project.description + "</div>";
+            }
+
+            markup += "<div class='select2-result-project__statistics'>" +
+            "<div class='select2-result-project__forks'><i class='fa fa-code-fork'></i> " + project.forks_count + " Forks</div>" +
+            "<div class='select2-result-project__stars'><i class='fa fa-star'></i> " + project.star_count + " Stars</div>" +
+            "<div class='select2-result-project__issues'><i class='fa fa-exclamation'></i> " + project.open_issues_count + " Issues</div>" +
+            "</div>" +
+            "</div></div>";
+
+            return markup;
+        },
+        templateSelection: function (project) {
+            return project.name_with_namespace || project.text;
+        }
+    });
+
+    if($project_search.length)
+    {
+        var project_url = $project_search.data('selected-url');
+        if(project_url){
+            $.ajax({
+                type: 'GET',
+                url: project_url
+            }).then(function (data) {
+                // create the option and append to Select2
+                var option = new Option(data.name_with_namespace, data.id, true, true);
+                $project_search.append(option).trigger('change');
+
+                // manually trigger the `select2:select` event
+                $project_search.trigger({
+                    type: 'select2:select',
+                    params: {
+                        data: data
+                    }
+                });
+            });
+        }
+    }
 
     var processAjaxError = function($xhr){
         var data = $xhr.responseJSON;

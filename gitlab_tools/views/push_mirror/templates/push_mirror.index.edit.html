@@ -28,7 +28,10 @@
                             {{render_field(form.note, 'form-group', _('Note'))}}
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
-                            {{render_field(form.project, 'form-group', _('Project'))}}
+                            <div class="form-group{{ ' has-error' if form.project.errors else '' }}">
+                            <label class="sr-only" for="{{form.project.id}}">{{_('Project')}}</label>
+                                {{form.project(class_="form-control input-sm project-search", **{'placeholder': _('Project'), 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-content': '<br>'.join(form.project.errors), 'data-source': url_for('api.index.search_project'), 'data-selected-url': url_for('api.index.get_project', project_id=form.project.data) if form.project.data})}}
+                            </div>
                         </div>
                     </div>
                     <div class="checkbox">

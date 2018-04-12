@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-
-from flask import jsonify, request
-
+import gitlab
+from flask import jsonify, request, current_app, url_for
+from flask_login import current_user, login_required
 from gitlab_tools.blueprints import api_index
 from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror, sync_push_mirror
 from gitlab_tools.models.gitlab_tools import PullMirror, PushMirror
@@ -49,3 +49,123 @@ def schedule_sync_push_mirror(mirror_id: int):
 
     task = sync_push_mirror.delay(found_mirror.id)
     return jsonify({'message': 'Sync task started', 'uuid': task.id}), 200
+
+
+def group_fix_avatar(group: dict) -> dict:
+    if not group['avatar_url']:
+        group['avatar_url'] = url_for('static', filename='img/no_group_avatar.png', _external=True)
+    return group
+
+
+@api_index.route('/groups/search', methods=['GET'])
+@login_required
+def search_group():
+    q = request.args.get('q')
+    per_page = request.args.get('per_page')
+    page = request.args.get('page')
+    if not q:
+        return jsonify({'message': 'q was not provided'}), 400
+
+    gl = gitlab.Gitlab(
+        current_app.config['GITLAB_URL'],
+        oauth_token=current_user.access_token,
+        api_version=current_app.config['GITLAB_API_VERSION']
+    )
+
+    gl.auth()
+
+    params = {
+        'search': q,
+        'as_list': False
+    }
+
+    if per_page:
+        params['per_page'] = per_page
+
+    if page:
+        params['page'] = page
+
+    items_list = gl.groups.list(**params)
+
+    return jsonify({
+        'items': [group_fix_avatar(i.attributes) for i in items_list],
+        'current_page': items_list.current_page,
+        'prev_page': items_list.prev_page,
+        'next_page': items_list.next_page,
+        'per_page': items_list.per_page,
+        'total_pages': items_list.total_pages,
+        'total': items_list.total,
+    }), 200
+
+
+@api_index.route('/groups/<int:group_id>', methods=['GET'])
+@login_required
+def get_group(group_id: int):
+    gl = gitlab.Gitlab(
+        current_app.config['GITLAB_URL'],
+        oauth_token=current_user.access_token,
+        api_version=current_app.config['GITLAB_API_VERSION']
+    )
+
+    gl.auth()
+
+    group = gl.groups.get(group_id)
+
+    return jsonify(group_fix_avatar(group.attributes)), 200
+
+
+@api_index.route('/projects/search', methods=['GET'])
+@login_required
+def search_project():
+    q = request.args.get('q')
+    per_page = request.args.get('per_page')
+    page = request.args.get('page')
+    if not q:
+        return jsonify({'message': 'q was not provided'}), 400
+
+    gl = gitlab.Gitlab(
+        current_app.config['GITLAB_URL'],
+        oauth_token=current_user.access_token,
+        api_version=current_app.config['GITLAB_API_VERSION']
+    )
+
+    gl.auth()
+
+    params = {
+        'search': q,
+        'as_list': False
+    }
+
+    if per_page:
+        params['per_page'] = per_page
+
+    if page:
+        params['page'] = page
+
+    items_list = gl.projects.list(**params)
+
+    return jsonify({
+        'items': [i.attributes for i in items_list],
+        'current_page': items_list.current_page,
+        'prev_page': items_list.prev_page,
+        'next_page': items_list.next_page,
+        'per_page': items_list.per_page,
+        'total_pages': items_list.total_pages,
+        'total': items_list.total,
+    }), 200
+
+
+@api_index.route('/projects/<int:project_id>', methods=['GET'])
+@login_required
+def get_project(project_id: int):
+    gl = gitlab.Gitlab(
+        current_app.config['GITLAB_URL'],
+        oauth_token=current_user.access_token,
+        api_version=current_app.config['GITLAB_API_VERSION']
+    )
+
+    gl.auth()
+
+    project = gl.projects.get(project_id)
+
+    return jsonify(project.attributes), 200

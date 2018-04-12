@@ -7,7 +7,7 @@ backup=('etc/gitlab-tools/config.yml')
 license=('GPL-3.0')
 url='https://github.com/Salamek/gitlab-tools'
 install=gitlab-tools.install
-makedepends=('python-setuptools' 'bower')
+makedepends=('python-setuptools' 'yarn')
 depends=(
     'python'
     'systemd'
@@ -45,7 +45,7 @@ prepare() {
 
 build() {
   cd "${srcdir}/${pkgname}/gitlab_tools/static"
-  bower install
+  yarn install
 }
 
 package() {
