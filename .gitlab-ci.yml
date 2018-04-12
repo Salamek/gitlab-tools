@@ -30,7 +30,7 @@ package:debian:
     - apt-get install -y curl gnupg
     - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
     - curl -sL https://apt.salamek.cz/apt/conf/salamek.gpg.key | apt-key add -
-    - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+    #- echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
     - echo "deb https://apt.salamek.cz/apt all main" | tee /etc/apt/sources.list.d/salamek.cz.list
     - apt-get update -qy
     - apt-get install -y yarn python3-flask-redis-helper python3-python-gitlab python3-paramiko python3-git python3-flask-celery-helper python3-flask-caching python3-dev python-pip redis-server python3-pip python3-stdeb python3-celery nodejs git python3-markupsafe python3-psycopg2 python3-dateutil python3-docopt python3-yaml python3-wtforms python3-raven python3-flask-migrate python3-flask-babel python3-flask-navigation python3-flask-login
