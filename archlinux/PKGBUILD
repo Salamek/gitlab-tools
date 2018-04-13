@@ -1,5 +1,5 @@
 pkgname=gitlab-tools
-pkgver=1.0.7
+pkgver=1.0.8
 pkgdesc="GitLab Tools"
 pkgrel=1
 arch=('any')
