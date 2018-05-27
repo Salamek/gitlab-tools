@@ -7,7 +7,7 @@ This application provides functionality not avaiable in GitLab (CE)
 |  Feature name |  Gitlab CE  |  Gitlab EE  |  Gitlab Tools  |
 |:--------------|:-----------:|:-----------:|:--------------:|
 |  Pull mirror  |      No     |     Yes     |       Yes      |
-|  Push mirror  |      No     |     Yes     |       Yes      |
+|  Push mirror  |  Yes(10.8)  |     Yes     |       Yes      |
 |  Deploy       |      No     |     No      |       WIP      |
 
 ## Pull mirror
