@@ -109,8 +109,8 @@ repoupdate:
     - mkdir -p ~/.ssh
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   script:
-    - ssh www-data@salamek.cz 'rm -rf /var/www/arch-private.salamek.cz/www/any/gitlab-tools*.pkg.tar.xz'
-    - ssh www-data@salamek.cz 'rm -rf /var/www/apt-private.salamek.cz/cache/gitlab-tools*.deb'
+    - ssh www-data@salamek.cz 'rm -rf /var/www/arch.salamek.cz/www/any/gitlab-tools*.pkg.tar.xz'
+    - ssh www-data@salamek.cz 'rm -rf /var/www/apt.salamek.cz/cache/gitlab-tools*.deb'
     - scp archlinux/gitlab-tools*.pkg.tar.xz www-data@salamek.cz:/var/www/arch.salamek.cz/www/any
     - scp deb_dist/*.deb www-data@salamek.cz:/var/www/apt.salamek.cz/cache
     - ssh www-data@salamek.cz '/var/www/arch.salamek.cz/update_repo.sh'
