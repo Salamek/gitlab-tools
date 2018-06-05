@@ -6,25 +6,25 @@ almond@~0.3.1:
   version "0.3.3"
   resolved "https://registry.yarnpkg.com/almond/-/almond-0.3.3.tgz#a0e7c95ac7624d6417b4494b1e68bff693168a20"
 
-bower_components/bootstrap@twbs/bootstrap#~3.3.7:
+bootstrap@twbs/bootstrap#~3.3.7:
   version "3.3.7"
   resolved "https://codeload.github.com/twbs/bootstrap/tar.gz/0b9c4a4007c44201dce9a6cc1a38407005c26c86"
 
-bower_components/font-awesome@FortAwesome/Font-Awesome#~4.7.0:
+font-awesome@FortAwesome/Font-Awesome#~4.7.0:
   version "4.7.0"
   resolved "https://codeload.github.com/FortAwesome/Font-Awesome/tar.gz/a8386aae19e200ddb0f6845b5feeee5eb7013687"
 
-bower_components/jquery@jquery/jquery-dist#~3.2.1:
+jquery-mousewheel@~3.1.13:
+  version "3.1.13"
+  resolved "https://registry.yarnpkg.com/jquery-mousewheel/-/jquery-mousewheel-3.1.13.tgz#06f0335f16e353a695e7206bf50503cb523a6ee5"
+
+jquery@jquery/jquery-dist#~3.2.1:
   version "3.2.1"
   resolved "https://codeload.github.com/jquery/jquery-dist/tar.gz/77d2a51d0520d2ee44173afdf4e40a9201f5964e"
 
-bower_components/select2@ivaynberg/select2#^4.0.5:
+select2@ivaynberg/select2#^4.0.5:
   version "4.0.5"
   resolved "https://codeload.github.com/ivaynberg/select2/tar.gz/ebf10c93db7d6d7a0d1330119d4c6f32cbd231d7"
   dependencies:
     almond "~0.3.1"
     jquery-mousewheel "~3.1.13"
-
-jquery-mousewheel@~3.1.13:
-  version "3.1.13"
-  resolved "https://registry.yarnpkg.com/jquery-mousewheel/-/jquery-mousewheel-3.1.13.tgz#06f0335f16e353a695e7206bf50503cb523a6ee5"

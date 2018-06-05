@@ -3,4 +3,4 @@ include README.md
 recursive-include etc *
 recursive-include tests *
 recursive-include debian *
-recursive-inclide gitlab-tools/static *
+recursive-inclide gitlab_tools/static *

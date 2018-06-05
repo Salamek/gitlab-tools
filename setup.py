@@ -65,14 +65,12 @@ extra_files.extend(package_files('gitlab_tools/translations'))
 extra_files.extend(package_files('gitlab_tools/static/img'))
 
 # Bower components
-extra_files.extend(package_files('gitlab_tools/static/bower_components/bootstrap/dist'))
+extra_files.extend(package_files('gitlab_tools/static/node_modules/bootstrap/dist'))
+extra_files.extend(package_files('gitlab_tools/static/node_modules/select2/dist'))
+extra_files.extend(package_files('gitlab_tools/static/node_modules/font-awesome/css'))
+extra_files.extend(package_files('gitlab_tools/static/node_modules/font-awesome/fonts'))
+extra_files.extend(package_files('gitlab_tools/static/node_modules/jquery/dist'))
 
-extra_files.extend(package_files('gitlab_tools/static/bower_components/font-awesome/css'))
-extra_files.extend(package_files('gitlab_tools/static/bower_components/font-awesome/fonts'))
-
-extra_files.extend(package_files('gitlab_tools/static/bower_components/jquery/dist'))
-
-extra_files.extend(package_files('gitlab_tools/static/bower_components/ekko-lightbox/dist'))
 
 setup(
     name='gitlab-tools',
