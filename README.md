@@ -168,3 +168,6 @@ $ systemctl restart uwsgi
 ```
 
 Now you should have gitlab-tools accessible at `server_name`
+
+# Mirrors
+This project is also mirrored on GitLab https://gitlab.com/Salamek/gitlab-tools
