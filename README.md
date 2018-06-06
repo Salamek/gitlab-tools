@@ -5,17 +5,11 @@ Mainly useful for pull mirroring from GitHub
 
 # Avaiable features
 
-|  Feature name |  Gitlab CE  |  Gitlab EE  |  Gitlab Tools  |
-|:--------------|:-----------:|:-----------:|:--------------:|
-|  Pull mirror  |      No     |     Yes     |       Yes      |
-|  Push mirror  |  Yes(10.8)  |     Yes     |       Yes      |
-|  Deploy       |   Yes(CI)   |   Yes(CI)   |       WIP      |
-
-## Pull mirror
-Allows to automaticaly mirror your Git or SVN repositories to GitLab by hook trigger or periodicaly
-
-## Push mirror
-Allows to automaticaly mirror your GitLab repository to any remote Git repository
+|  Feature name |  Gitlab CE  |  Gitlab EE  |  Gitlab Tools  | Description | 
+|:--------------|:-----------:|:-----------:|:--------------:|:-----------:|
+|  Pull mirror  |      No     |     Yes     |       Yes      | Allows to automaticaly mirror your Git or SVN repositories to GitLab by hook trigger or periodicaly |
+|  Push mirror  |  Yes(10.8)  |     Yes     |       Yes      | Allows to automaticaly mirror your GitLab repository to any remote Git repository |
+|  Deploy       |   Yes(CI)   |   Yes(CI)   |       WIP      | Allows deploy to non GIT network storages (FTP, SCP) using native protocols (no fuse). Cannibalizes https://github.com/Salamek/git-deploy |
 
 # Installation
 
