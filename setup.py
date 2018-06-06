@@ -61,7 +61,7 @@ extra_files.extend(package_files('gitlab_tools/static/node_modules/jquery/dist')
 
 setup(
     name='gitlab-tools',
-    version='1.0.10',
+    version='1.0.11',
     description='GitLab Tools',
     long_description=open('README.md').read(),
     author='Adam Schubert',
