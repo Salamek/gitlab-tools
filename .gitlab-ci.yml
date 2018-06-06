@@ -55,6 +55,7 @@ package:archlinux:
     - echo "SigLevel = Optional" >> /etc/pacman.conf
     - pacman -Sy python-pip gcc nodejs sudo git python-gitlab redis python-paramiko openssh yarn python-gitpython python-flask-caching python-flask-celery-helper python-flask-redis-helper python-celery python-flask python-babel python-yaml python-flask-login python-flask-migrate python-flask-wtf python-raven python-docopt python-eventlet python-psycopg2 python-flask-babel python-flask-navigation fakeroot systemd --noconfirm
     - useradd -m -G users -s /bin/bash package
+    - chown -R package:users archlinux
     - cd archlinux
     - sudo -H -u package makepkg -f
   tags:
