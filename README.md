@@ -72,6 +72,8 @@ This will start simple setup utility where you can/must configure
     2. gitlab-tools_celeryworker: Controlling backround workers, must be enabled and running to perform mirroring
     3. gitlab-tools_celerybeat: Controlling celery scheduler
 
+This creates/updates config file in /etc/gitlab-tools/config.yml, you can modify this file manualy
+
 After this you should have gitlab-tools running on your "server name"
 
 # Running behind UWSGI
