@@ -18,7 +18,7 @@ class Mirror(BaseTable):
     __abstract__ = True
 
     @declared_attr
-    def user_id(cls):
+    def user_id(self):
         return db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
 
     @declared_attr
@@ -115,6 +115,8 @@ class PullMirror(Mirror):
     __tablename__ = 'pull_mirror'
     id = db.Column(db.Integer, primary_key=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), index=True)
+    periodic_task_id = db.Column(db.Integer, db.ForeignKey('periodic_task.id'), index=True, nullable=True)
+    periodic_sync = db.Column(db.String(255), nullable=True)
     project_name = db.Column(db.String(255))
     project_mirror = db.Column(db.String(255))
     is_no_create = db.Column(db.Boolean)
@@ -143,6 +145,7 @@ class Project(BaseTable):
     name_with_namespace = db.Column(db.String(255))
     web_url = db.Column(db.String(255))
     push_mirrors = relationship("PushMirror", order_by="PushMirror.id", backref="project", lazy='dynamic')
+    pull_mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="project", lazy='dynamic')
 
 
 class Group(BaseTable):

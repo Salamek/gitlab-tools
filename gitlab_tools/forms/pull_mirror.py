@@ -2,6 +2,7 @@ from flask_babel import gettext
 from wtforms import Form, StringField, validators, HiddenField, TextAreaField, BooleanField
 from gitlab_tools.models.gitlab_tools import PullMirror
 from gitlab_tools.tools.GitRemote import GitRemote
+from cron_descriptor import ExpressionDescriptor, MissingFieldException, FormatException
 from gitlab_tools.forms.custom_fields import NonValidatingSelectField
 
 __author__ = "Adam Schubert"
@@ -9,8 +10,9 @@ __date__ = "$26.7.2017 19:33:05$"
 
 
 class NewForm(Form):
-    project_name = StringField(None, [validators.Length(min=1, max=255)])
+    project_name = StringField(None, [validators.Regexp('^[a-zA-Z0-9_-]+( \w+)*$', message='Project name cannot contain special characters')])
     project_mirror = StringField(None, [validators.Length(min=1, max=255)])
+    periodic_sync = StringField(None, [validators.Optional()])
     note = TextAreaField(None, [validators.Optional()])
     group = NonValidatingSelectField(None, [validators.Optional()], coerce=int, choices=[])
 
@@ -50,6 +52,14 @@ class NewForm(Form):
                 gettext('Unknown VCS type or detection failed.')
             )
             return False
+
+        if self.periodic_sync.data:
+            try:
+                ExpressionDescriptor(self.periodic_sync.data, throw_exception_on_parse_error=True)
+            except (MissingFieldException, FormatException):
+                self.periodic_sync.errors.append(
+                    gettext('Wrong cron expression.')
+                )
 
         return True
 

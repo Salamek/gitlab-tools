@@ -3,6 +3,8 @@ import pwd
 import grp
 import errno
 import paramiko
+import unicodedata
+import re
 from gitlab_tools.models.gitlab_tools import User, PullMirror, Mirror
 from gitlab_tools.tools.GitRemote import GitRemote
 
@@ -196,3 +198,13 @@ def add_ssh_config(user: User, user_name: str, host: str, hostname: str) -> None
 
         with open(ssh_config_path, 'a') as f:
             f.write('\n'.join(rows))
+
+
+def slugify(value):
+    """
+    Normalizes string, converts to lowercase, removes non-alpha characters,
+    and converts spaces to hyphens.
+    """
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = re.sub('[^\w\s-]', '', value).strip().lower()
+    return re.sub('[-\s]+', '-', value)

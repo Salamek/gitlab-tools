@@ -2,18 +2,24 @@
 # -*- coding: utf-8 -*-
 
 import flask
+import json
 from flask_login import current_user, login_required
-from gitlab_tools.models.gitlab_tools import db, PullMirror, Group
+from gitlab_tools.models.gitlab_tools import PullMirror, Group
 from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
 from gitlab_tools.forms.pull_mirror import EditForm, NewForm
 from gitlab_tools.tools.helpers import convert_url_for_user
 from gitlab_tools.tools.crypto import random_password
 from gitlab_tools.tools.GitRemote import GitRemote
+from gitlab_tools.models.celery_beat import PeriodicTask, CrontabSchedule
+from cron_descriptor.ExpressionParser import ExpressionParser
+from cron_descriptor.Options import Options
 from gitlab_tools.blueprints import pull_mirror_index
+from gitlab_tools.extensions import db
 from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror, \
     delete_pull_mirror, \
     save_pull_mirror, \
     create_ssh_config
+
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
@@ -30,6 +36,58 @@ def process_group(group: int) -> Group:
         db.session.commit()
 
     return found_group
+
+
+def process_cron_expression(pull_mirror: PullMirror) -> None:
+    """
+
+    :param pull_mirror: 
+    :return: 
+    """
+    if pull_mirror.periodic_sync:
+        expression_parser = ExpressionParser(pull_mirror.periodic_sync, Options())
+        second, minute, hour, day_of_week, day_of_month, month_of_year, foo_ = expression_parser.parse()
+
+        parameters = dict(
+            minute=minute,
+            hour=hour,
+            day_of_week=day_of_week,
+            day_of_month=day_of_month,
+            month_of_year=month_of_year
+        )
+
+        crontab_schedule = CrontabSchedule.query.filter_by(**parameters).first()
+        if not crontab_schedule:
+            crontab_schedule = CrontabSchedule(
+                minute=minute,
+                hour=hour,
+                day_of_week=day_of_week,
+                day_of_month=day_of_month,
+                month_of_year=month_of_year
+            )
+            db.session.add(crontab_schedule)
+        periodic_task = PeriodicTask(
+            name="{} periodic task {}".format(type(pull_mirror).__name__, pull_mirror.periodic_sync),
+            task="sync_pull_mirror",
+            crontab=crontab_schedule,
+            args=json.dumps([pull_mirror.id]),
+            kwargs=json.dumps({})
+        )
+        db.session.add(periodic_task)
+        pull_mirror.periodic_task = periodic_task
+    elif pull_mirror.periodic_task:
+        # Find if any other PeriodicTask uses that CrontabSchedule
+        if not PeriodicTask.query.filter(
+                        PeriodicTask.crontab == pull_mirror.periodic_task.crontab,
+                        PeriodicTask.id != pull_mirror.periodic_task.id
+        ).first():
+            db.session.delete(pull_mirror.periodic_task.crontab)
+
+        db.session.delete(pull_mirror.periodic_task)
+
+        pull_mirror.periodic_task = None
+
+    db.session.add(pull_mirror)
 
 
 @pull_mirror_index.route('/', methods=['GET'], defaults={'page': 1})
@@ -82,6 +140,7 @@ def new_mirror():
         # Mirror
         mirror_new.is_force_update = form.is_force_update.data
         mirror_new.is_prune_mirrors = form.is_prune_mirrors.data
+        mirror_new.periodic_sync = form.periodic_sync.data
         mirror_new.is_deleted = False
         mirror_new.user = current_user
         mirror_new.foreign_vcs_type = source.vcs_type
@@ -90,6 +149,8 @@ def new_mirror():
         mirror_new.source = source.url
         mirror_new.last_sync = None
         mirror_new.hook_token = random_password()
+
+        process_cron_expression(mirror_new)
 
         db.session.add(mirror_new)
         db.session.commit()
@@ -160,12 +221,15 @@ def edit_mirror(mirror_id: int):
         # Mirror
         mirror_detail.is_force_update = form.is_force_update.data
         mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
+        mirror_detail.periodic_sync = form.periodic_sync.data
         mirror_detail.is_deleted = False
         mirror_detail.user = current_user
         mirror_detail.foreign_vcs_type = source.vcs_type
         mirror_detail.note = form.note.data
         mirror_detail.target = None  # We are getting target wia gitlab API
         mirror_detail.source = source.url
+
+        process_cron_expression(mirror_detail)
 
         db.session.add(mirror_detail)
         db.session.commit()

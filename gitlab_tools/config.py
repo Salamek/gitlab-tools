@@ -12,7 +12,7 @@ class HardCoded(object):
     extensions goes here.
     """
     ADMINS = ['adam.schubert@sg1-game.net']
-    DB_MODELS_IMPORTS = ('gitlab_tools',)  # Like CELERY_IMPORTS in CeleryConfig.
+    DB_MODELS_IMPORTS = ('gitlab_tools', 'celery_beat')  # Like CELERY_IMPORTS in CeleryConfig.
     ENVIRONMENT = property(lambda self: self.__class__.__name__)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SUPPORTED_LANGUAGES = {'cs': 'Čeština', 'en': 'English'}

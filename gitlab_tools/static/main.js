@@ -32,7 +32,7 @@ $(function () {
             },
             cache: true
         },
-        placeholder: 'Search for a group',
+        placeholder: 'Search for a group *',
         escapeMarkup: function (markup) { return markup; }, // let our custom formatter work
         minimumInputLength: 1,
         templateResult: function (group) {
