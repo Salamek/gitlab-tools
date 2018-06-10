@@ -493,7 +493,7 @@ def celerydev():
     setup_logging('celerydev')
     app = create_app(parse_options(), no_sql=True)
     Logging._setup = True  # Disable Celery from setting up logging, already done in setup_logging().
-    celery_args = ['celery', 'worker', '-B', '-s', '/tmp/celery.db', '--concurrency=5']
+    celery_args = ['celery', 'worker', '-B', '-s', '/tmp/celery.db', '--concurrency=5', '-S', 'gitlab_tools.beat.schedulers.DatabaseScheduler']
     with app.app_context():
         return celery_main(celery_args)
 

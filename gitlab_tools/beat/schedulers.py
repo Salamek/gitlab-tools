@@ -48,6 +48,7 @@ class ModelEntry(ScheduleEntry):
         model.no_changes = True
         model.enabled = False
         self.session.add(model)
+        self.session.commit()
 
     def is_due(self):
         if not self.model.enabled:
@@ -74,6 +75,7 @@ class ModelEntry(ScheduleEntry):
     @staticmethod
     def save_model(session, obj):
         session.add(obj)
+        session.commit()
 
     @classmethod
     def to_model_schedule(cls, schedule, session):
@@ -94,7 +96,7 @@ class ModelEntry(ScheduleEntry):
     @classmethod
     def from_entry(cls, name, session, skip_fields=('relative', 'options'), **entry):
         """
-        创建或者更新PeriodicTask
+        PeriodicTask
         :param session:
         :param name:
         :param skip_fields:

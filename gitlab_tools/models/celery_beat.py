@@ -13,14 +13,13 @@ class ConstraintError(Exception):
 
 @event.listens_for(SignallingSession, "before_flush")
 def before_flush(session, flush_context, instances):
-    for obj in session.new | session.dirty:
+    for obj in session.new | session.dirty | session.deleted:
         if isinstance(obj, PeriodicTask):
             if not obj.interval and not obj.crontab:
                 raise ConstraintError('One of interval or crontab must be set.')
             if obj.interval and obj.crontab:
                 raise ConstraintError('Only one of interval or crontab must be set')
             PeriodicTasks.changed(session, obj)
-            print('REMOVE ME=== UPDATE ==')
 
 
 class BaseTable(db.Model):
@@ -37,7 +36,9 @@ class BaseTable(db.Model):
         """
         return session.query(cls).filter_by(**kwargs)
 
+    """
     @classmethod
+    
     def get_or_create(cls, session_obj, defaults=None, **kwargs):
         obj = session_obj.query(cls).filter_by(**kwargs).first()
         if obj:
@@ -47,6 +48,7 @@ class BaseTable(db.Model):
             params.update(defaults or {})
             obj = cls(**params)
             return obj, True
+    """
 
     @classmethod
     def update_or_create(cls, session_obj, defaults=None, **kwargs):
@@ -92,8 +94,8 @@ class IntervalSchedule(BaseTable):
 
     def __str__(self):
         if self.every == 1:
-            return _('every {0.period_singular}').format(self)
-        return _('every {0.every} {0.period}').format(self)
+            return 'every {0.period_singular}'.format(self)
+        return 'every {0.every} {0.period}'.format(self)
 
     @property
     def period_singular(self):
@@ -150,10 +152,37 @@ class PeriodicTasks(BaseTable):
 
     @classmethod
     def changed(cls, session, instance):
+        print('===================================START===============================')
         if not instance.no_changes:
-            obj, _ = cls.update_or_create(session, defaults={'last_update': datetime.datetime.now()}, ident=1)
-            session.add(obj)
+            found = PeriodicTasks.query.filter_by(ident=1).first()
+            if not found:
+                print('CREATE NEW PeriodicTask')
+                found = PeriodicTasks()
+                found.last_update = datetime.datetime.now()
+                db.session.add(found)
 
+            else:
+                session.query(PeriodicTasks).filter_by(ident=1).update({'last_update': datetime.datetime.now()})
+            db.session.commit()
+
+        print('===================================END===============================')
+
+    """
+    @classmethod
+    def changed(cls, session, instance):
+        print('===================================START===============================')
+        print(instance)
+        print('CHANGE CALLED')
+        if not instance.no_changes:
+            print('SAVING CHANGES {}'.format(datetime.datetime.now()))
+            obj, created = cls.update_or_create(session, defaults={'last_update': datetime.datetime.now()}, ident=1)
+            print('Created: {}'.format(created))
+            print(obj)
+            obj.last_update = datetime.datetime.now()
+            session.add(obj)
+            session.commit()
+        print('===================================END===============================')
+    """
     @classmethod
     def last_change(cls, session):
         obj = cls.filter_by(session, ident=1).first()

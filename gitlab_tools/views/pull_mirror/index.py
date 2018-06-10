@@ -10,7 +10,7 @@ from gitlab_tools.forms.pull_mirror import EditForm, NewForm
 from gitlab_tools.tools.helpers import convert_url_for_user
 from gitlab_tools.tools.crypto import random_password
 from gitlab_tools.tools.GitRemote import GitRemote
-from gitlab_tools.models.celery_beat import PeriodicTask, CrontabSchedule
+from gitlab_tools.models.celery_beat import PeriodicTask, CrontabSchedule, PeriodicTasks
 from cron_descriptor.ExpressionParser import ExpressionParser
 from cron_descriptor.Options import Options
 from gitlab_tools.blueprints import pull_mirror_index
@@ -38,12 +38,13 @@ def process_group(group: int) -> Group:
     return found_group
 
 
-def process_cron_expression(pull_mirror: PullMirror) -> None:
+def process_cron_expression(pull_mirror: PullMirror) -> bool:
     """
 
     :param pull_mirror: 
     :return: 
     """
+    changed = False
     if pull_mirror.periodic_sync:
         expression_parser = ExpressionParser(pull_mirror.periodic_sync, Options())
         second, minute, hour, day_of_week, day_of_month, month_of_year, foo_ = expression_parser.parse()
@@ -66,15 +67,25 @@ def process_cron_expression(pull_mirror: PullMirror) -> None:
                 month_of_year=month_of_year
             )
             db.session.add(crontab_schedule)
+
+        if pull_mirror.periodic_task and pull_mirror.periodic_task.crontab == crontab_schedule:
+            # We have same config. ignore
+            return False
+
+        # Delete od periodic task
+        if pull_mirror.periodic_task:
+            db.session.delete(pull_mirror.periodic_task)
+
         periodic_task = PeriodicTask(
-            name="{} periodic task {}".format(type(pull_mirror).__name__, pull_mirror.periodic_sync),
-            task="sync_pull_mirror",
+            name="PullMirror (id:{}) periodic task {}".format(pull_mirror.id, pull_mirror.periodic_sync),
+            task="gitlab_tools.tasks.gitlab_tools.sync_pull_mirror",
             crontab=crontab_schedule,
             args=json.dumps([pull_mirror.id]),
             kwargs=json.dumps({})
         )
         db.session.add(periodic_task)
         pull_mirror.periodic_task = periodic_task
+        changed = True
     elif pull_mirror.periodic_task:
         # Find if any other PeriodicTask uses that CrontabSchedule
         if not PeriodicTask.query.filter(
@@ -86,8 +97,9 @@ def process_cron_expression(pull_mirror: PullMirror) -> None:
         db.session.delete(pull_mirror.periodic_task)
 
         pull_mirror.periodic_task = None
-
+        changed = True
     db.session.add(pull_mirror)
+    return changed
 
 
 @pull_mirror_index.route('/', methods=['GET'], defaults={'page': 1})
@@ -195,7 +207,8 @@ def edit_mirror(mirror_id: int):
         is_public=mirror_detail.is_public,
         is_force_update=mirror_detail.is_force_update,
         is_prune_mirrors=mirror_detail.is_prune_mirrors,
-        group=mirror_detail.group.gitlab_id
+        group=mirror_detail.group.gitlab_id,
+        periodic_sync=mirror_detail.periodic_sync
     )
     if flask.request.method == 'POST' and form.validate():
         project_mirror = GitRemote(form.project_mirror.data)
@@ -232,8 +245,10 @@ def edit_mirror(mirror_id: int):
         process_cron_expression(mirror_detail)
 
         db.session.add(mirror_detail)
+        print('ADD Mirror pre commit')
+        db.session.flush()
         db.session.commit()
-
+        print('ADD Mirror commit')
         if source.vcs_protocol == ProtocolEnum.SSH:
             # If source is SSH, create SSH Config for it also
             create_ssh_config.apply_async(
