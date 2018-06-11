@@ -36,8 +36,8 @@
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
                             <div class="form-group{{ ' has-error' if form.periodic_sync.errors else '' }}">
-                              <label class="sr-only" for="{{form.periodic_sync.id}}">{{_('Periodic sync (CRON expression)')}} *</label>
-                              {{form.periodic_sync(class_="form-control input-sm", **{'placeholder': _('Periodic sync (CRON expression)') + ' *', 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-content': '<br>'.join(form.periodic_sync.errors)})}}
+                              <label class="sr-only" for="{{form.periodic_sync.id}}">{{_('Periodic sync (CRON expression)')}}</label>
+                              {{form.periodic_sync(class_="form-control input-sm", **{'placeholder': _('Periodic sync (CRON expression)'), 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-content': '<br>'.join(form.periodic_sync.errors)})}}
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
