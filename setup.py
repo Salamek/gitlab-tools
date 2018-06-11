@@ -7,6 +7,7 @@ from setuptools import setup, find_packages
 
 sys_conf_dir = os.getenv("SYSCONFDIR", "/etc")
 
+
 def get_requirements(filename: str) -> list:
     return open(os.path.join(filename)).read().splitlines()
 
@@ -61,7 +62,7 @@ extra_files.extend(package_files('gitlab_tools/static/node_modules/jquery/dist')
 
 setup(
     name='gitlab-tools',
-    version='1.0.11',
+    version='1.0.12',
     description='GitLab Tools',
     long_description=open('README.md').read(),
     author='Adam Schubert',
