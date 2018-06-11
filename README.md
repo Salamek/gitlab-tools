@@ -3,6 +3,11 @@
 This application provides functionality not avaiable in GitLab (CE)
 Mainly useful for pull mirroring from GitHub
 
+[![Home](doc/img/home_thumb.png)](doc/img/home.png)
+* [Fingerprints screenshoot](doc/img/fingerprints.png)
+* [Pull mirrors screenshoot](doc/img/pull_mirrors.png)
+
+
 # Avaiable features
 
 |  Feature name |  Gitlab CE  |  Gitlab EE  |  Gitlab Tools  | Description | 
