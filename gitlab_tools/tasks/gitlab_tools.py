@@ -74,7 +74,7 @@ def save_pull_mirror(mirror_id: int) -> None:
             gitlab_project.merge_requests_enabled = mirror.is_merge_requests_enabled
             gitlab_project.wiki_enabled = mirror.is_wiki_enabled
             gitlab_project.snippets_enabled = mirror.is_snippets_enabled
-            gitlab_project.public = mirror.is_public
+            gitlab_project.visibility = mirror.visibility
             gitlab_project.namespace_id = mirror.group.gitlab_id  # !FIXME is this enough to move it to different group ?
             gitlab_project.save()
         else:
@@ -88,7 +88,7 @@ def save_pull_mirror(mirror_id: int) -> None:
                 'merge_requests_enabled': mirror.is_merge_requests_enabled,
                 'wiki_enabled': mirror.is_wiki_enabled,
                 'snippets_enabled': mirror.is_snippets_enabled,
-                'public': mirror.is_public,
+                'visibility': mirror.visibility,
                 'namespace_id': mirror.group.gitlab_id,
                 'jobs_enabled': mirror.is_jobs_enabled
             })

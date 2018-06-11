@@ -1,4 +1,4 @@
-"""empty message
+"""Add periodic_sync column to support periodic syncs
 
 Revision ID: 946211522c2f
 Revises: cad4d8aacceb

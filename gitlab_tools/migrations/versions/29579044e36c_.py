@@ -1,4 +1,4 @@
-"""empty message
+"""Add is_jobs_enabled option
 
 Revision ID: 29579044e36c
 Revises: 946211522c2f

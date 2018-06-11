@@ -1,4 +1,4 @@
-"""empty message
+"""Add tables needed for celery beat DatabaseScheduler
 
 Revision ID: 6ea24c49b7a1
 Revises: 19e8725e0581

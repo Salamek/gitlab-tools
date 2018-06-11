@@ -11,9 +11,21 @@
             <div class="panel-body">
                 {% if form.errors %}
                 <div class="alert alert-danger">
-                    There was some errors when proccesing a form.
-                    {% for field, errors in form.errors.items() %}
-                    {% endfor %}
+                    {{_("There was some errors when proccesing a form.")}}
+
+                    <ul>
+                        {% for field, errors in form.errors.items() %}
+                        <li>
+                            {{field}}:
+                            <ul>
+                                {% for error in errors %}
+                                <li>{{error}}</li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
                 </div>
                 {% endif %}
                 <form method="post" role="form"
@@ -42,7 +54,7 @@
                                 {{form.group(class_="form-control input-sm group-search", **{'placeholder': _('Group') +
                                 ' *', 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom",
                                 'data-content': '<br>'.join(form.group.errors), 'data-source':
-                                url_for('api.index.search_group'), 'data-selected-url': url_for('api.index.get_group',
+                                url_for('api.index.search_group'), 'data-selected-url': url_for('api.index.get_gitlab_group',
                                 group_id=form.group.data) if form.group.data})}}
                             </div>
                         </div>
@@ -64,6 +76,16 @@
                     </button>
                     <div class="collapse" id="advancedOptions">
                         <div class="well">
+                            <div class="row">
+                                <div class="col-xs-12 col-sm-12 col-md-12">
+                                    <div class="form-group{{ ' has-error' if form.group.errors else '' }}">
+                                        <label for="{{form.visibility.id}}">{{_('Visibility')}} *</label>
+                                        {{form.visibility(class_="form-control input-sm", **{'placeholder': _('Visibility') +
+                                        ' *', 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom",
+                                        'data-content': '<br>'.join(form.visibility.errors)})}}
+                                    </div>
+                                </div>
+                            </div>
                             <div class="checkbox">
                                 <label>
                                     {{form.is_no_create(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
@@ -124,13 +146,6 @@
                                     'data-trigger':"focus",
                                     'data-placement': "bottom", 'data-content': '<br>'.join(form.is_merge_requests_enabled.errors)})}}
                                     Merge requests enabled
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
-                                    {{form.is_public(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_public.errors)})}}
-                                    Create as public repository
                                 </label>
                             </div>
                             <div class="checkbox">

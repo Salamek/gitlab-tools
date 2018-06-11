@@ -1,9 +1,11 @@
+
 from flask_babel import gettext
-from wtforms import Form, StringField, validators, HiddenField, TextAreaField, BooleanField
+from wtforms import Form, StringField, validators, HiddenField, TextAreaField, BooleanField, SelectField
 from gitlab_tools.models.gitlab_tools import PullMirror
 from gitlab_tools.tools.GitRemote import GitRemote
 from cron_descriptor import ExpressionDescriptor, MissingFieldException, FormatException
 from gitlab_tools.forms.custom_fields import NonValidatingSelectField
+from gitlab_tools.tools.gitlab import check_project_visibility_in_group, VisibilityError
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
@@ -24,7 +26,11 @@ class NewForm(Form):
     is_wiki_enabled = BooleanField()
     is_snippets_enabled = BooleanField()
     is_merge_requests_enabled = BooleanField()
-    is_public = BooleanField()
+    visibility = SelectField(None, [validators.DataRequired()], coerce=str, choices=[
+        (PullMirror.VISIBILITY_PRIVATE, gettext('Private')),
+        (PullMirror.VISIBILITY_INTERNAL, gettext('Internal')),
+        (PullMirror.VISIBILITY_PUBLIC, gettext('Public'))
+    ])
     is_force_update = BooleanField()
     is_prune_mirrors = BooleanField()
     is_jobs_enabled = BooleanField()
@@ -51,6 +57,14 @@ class NewForm(Form):
         if not GitRemote.detect_vcs_type(self.project_mirror.data):
             self.project_mirror.errors.append(
                 gettext('Unknown VCS type or detection failed.')
+            )
+            return False
+
+        try:
+            check_project_visibility_in_group(self.visibility.data, self.group.data)
+        except VisibilityError as e:
+            self.visibility.errors.append(
+                gettext(str(e))
             )
             return False
 
@@ -84,5 +98,27 @@ class EditForm(NewForm):
                 gettext('Project mirror %(project_mirror)s already exists.', project_mirror=self.project_mirror.data)
             )
             return False
+
+        if not GitRemote.detect_vcs_type(self.project_mirror.data):
+            self.project_mirror.errors.append(
+                gettext('Unknown VCS type or detection failed.')
+            )
+            return False
+
+        try:
+            check_project_visibility_in_group(self.visibility.data, self.group.data)
+        except VisibilityError as e:
+            self.visibility.errors.append(
+                gettext(str(e))
+            )
+            return False
+
+        if self.periodic_sync.data:
+            try:
+                ExpressionDescriptor(self.periodic_sync.data, throw_exception_on_parse_error=True)
+            except (MissingFieldException, FormatException):
+                self.periodic_sync.errors.append(
+                    gettext('Wrong cron expression.')
+                )
 
         return True

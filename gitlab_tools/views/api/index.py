@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import gitlab
-from flask import jsonify, request, current_app, url_for
-from flask_login import current_user, login_required
+from flask import jsonify, request, url_for
+from flask_login import login_required
 from gitlab_tools.blueprints import api_index
 from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror, sync_push_mirror
 from gitlab_tools.models.gitlab_tools import PullMirror, PushMirror
+from gitlab_tools.tools.gitlab import get_group, get_project, get_gitlab_instance
 
 
 __author__ = "Adam Schubert"
@@ -66,13 +66,7 @@ def search_group():
     if not q:
         return jsonify({'message': 'q was not provided'}), 400
 
-    gl = gitlab.Gitlab(
-        current_app.config['GITLAB_URL'],
-        oauth_token=current_user.access_token,
-        api_version=current_app.config['GITLAB_API_VERSION']
-    )
-
-    gl.auth()
+    gl = get_gitlab_instance()
 
     params = {
         'search': q,
@@ -100,16 +94,8 @@ def search_group():
 
 @api_index.route('/groups/<int:group_id>', methods=['GET'])
 @login_required
-def get_group(group_id: int):
-    gl = gitlab.Gitlab(
-        current_app.config['GITLAB_URL'],
-        oauth_token=current_user.access_token,
-        api_version=current_app.config['GITLAB_API_VERSION']
-    )
-
-    gl.auth()
-
-    group = gl.groups.get(group_id)
+def get_gitlab_group(group_id: int):
+    group = get_group(group_id)
 
     return jsonify(group_fix_avatar(group.attributes)), 200
 
@@ -123,13 +109,7 @@ def search_project():
     if not q:
         return jsonify({'message': 'q was not provided'}), 400
 
-    gl = gitlab.Gitlab(
-        current_app.config['GITLAB_URL'],
-        oauth_token=current_user.access_token,
-        api_version=current_app.config['GITLAB_API_VERSION']
-    )
-
-    gl.auth()
+    gl = get_gitlab_instance()
 
     params = {
         'search': q,
@@ -157,15 +137,7 @@ def search_project():
 
 @api_index.route('/projects/<int:project_id>', methods=['GET'])
 @login_required
-def get_project(project_id: int):
-    gl = gitlab.Gitlab(
-        current_app.config['GITLAB_URL'],
-        oauth_token=current_user.access_token,
-        api_version=current_app.config['GITLAB_API_VERSION']
-    )
-
-    gl.auth()
-
-    project = gl.projects.get(project_id)
+def get_gitlab_project(project_id: int):
+    project = get_project(project_id)
 
     return jsonify(project.attributes), 200

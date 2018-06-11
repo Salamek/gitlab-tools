@@ -123,7 +123,7 @@ def new_mirror():
         is_wiki_enabled=False,
         is_snippets_enabled=False,
         is_merge_requests_enabled=False,
-        is_public=False,
+        visibility=PullMirror.VISIBILITY_PRIVATE,
         is_force_update=False,
         is_prune_mirrors=False,
         is_jobs_enabled=True
@@ -148,7 +148,7 @@ def new_mirror():
         mirror_new.is_snippets_enabled = form.is_snippets_enabled.data
         mirror_new.is_jobs_enabled = form.is_jobs_enabled.data
         mirror_new.is_merge_requests_enabled = form.is_merge_requests_enabled.data
-        mirror_new.is_public = form.is_public.data
+        mirror_new.visibility = form.visibility.data
         mirror_new.group = process_group(form.group.data)
         mirror_new.periodic_sync = form.periodic_sync.data
 
@@ -207,7 +207,7 @@ def edit_mirror(mirror_id: int):
         is_wiki_enabled=mirror_detail.is_wiki_enabled,
         is_snippets_enabled=mirror_detail.is_snippets_enabled,
         is_merge_requests_enabled=mirror_detail.is_merge_requests_enabled,
-        is_public=mirror_detail.is_public,
+        visibility=mirror_detail.visibility,
         is_force_update=mirror_detail.is_force_update,
         is_prune_mirrors=mirror_detail.is_prune_mirrors,
         group=mirror_detail.group.gitlab_id,
@@ -233,7 +233,7 @@ def edit_mirror(mirror_id: int):
         mirror_detail.is_snippets_enabled = form.is_snippets_enabled.data
         mirror_detail.is_jobs_enabled = form.is_jobs_enabled.data
         mirror_detail.is_merge_requests_enabled = form.is_merge_requests_enabled.data
-        mirror_detail.is_public = form.is_public.data
+        mirror_detail.visibility = form.visibility.data
         mirror_detail.group = process_group(form.group.data)
         mirror_detail.periodic_sync = form.periodic_sync.data
 

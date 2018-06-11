@@ -112,6 +112,10 @@ class Fingerprint(BaseTable):
 
 
 class PullMirror(Mirror):
+    VISIBILITY_PRIVATE = 'private'
+    VISIBILITY_INTERNAL = 'internal'
+    VISIBILITY_PUBLIC = 'public'
+
     __tablename__ = 'pull_mirror'
     id = db.Column(db.Integer, primary_key=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), index=True)
@@ -128,7 +132,7 @@ class PullMirror(Mirror):
     is_jobs_enabled = db.Column(db.Boolean, nullable=False)
     is_snippets_enabled = db.Column(db.Boolean)
     is_merge_requests_enabled = db.Column(db.Boolean)
-    is_public = db.Column(db.Boolean)
+    visibility = db.Column(db.String(255), nullable=False)
 
 
 class PushMirror(Mirror):
