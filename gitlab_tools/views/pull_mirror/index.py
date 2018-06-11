@@ -126,7 +126,7 @@ def new_mirror():
         is_public=False,
         is_force_update=False,
         is_prune_mirrors=False,
-        is_builds_enabled=True
+        is_jobs_enabled=True
     )
     if flask.request.method == 'POST' and form.validate():
         project_mirror = GitRemote(form.project_mirror.data)
@@ -146,7 +146,7 @@ def new_mirror():
         mirror_new.is_wall_enabled = form.is_wall_enabled.data
         mirror_new.is_wiki_enabled = form.is_wiki_enabled.data
         mirror_new.is_snippets_enabled = form.is_snippets_enabled.data
-        mirror_new.is_builds_enabled = form.is_builds_enabled.data
+        mirror_new.is_jobs_enabled = form.is_jobs_enabled.data
         mirror_new.is_merge_requests_enabled = form.is_merge_requests_enabled.data
         mirror_new.is_public = form.is_public.data
         mirror_new.group = process_group(form.group.data)
@@ -212,7 +212,7 @@ def edit_mirror(mirror_id: int):
         is_prune_mirrors=mirror_detail.is_prune_mirrors,
         group=mirror_detail.group.gitlab_id,
         periodic_sync=mirror_detail.periodic_sync,
-        is_builds_enabled=mirror_detail.is_builds_enabled
+        is_jobs_enabled=mirror_detail.is_jobs_enabled
     )
     if flask.request.method == 'POST' and form.validate():
         project_mirror = GitRemote(form.project_mirror.data)
@@ -231,7 +231,7 @@ def edit_mirror(mirror_id: int):
         mirror_detail.is_wall_enabled = form.is_wall_enabled.data
         mirror_detail.is_wiki_enabled = form.is_wiki_enabled.data
         mirror_detail.is_snippets_enabled = form.is_snippets_enabled.data
-        mirror_detail.is_builds_enabled = form.is_builds_enabled.data
+        mirror_detail.is_jobs_enabled = form.is_jobs_enabled.data
         mirror_detail.is_merge_requests_enabled = form.is_merge_requests_enabled.data
         mirror_detail.is_public = form.is_public.data
         mirror_detail.group = process_group(form.group.data)

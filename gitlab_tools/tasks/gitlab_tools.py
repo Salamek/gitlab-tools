@@ -69,7 +69,7 @@ def save_pull_mirror(mirror_id: int) -> None:
                 mirror.project_mirror
             )
             gitlab_project.issues_enabled = mirror.is_issues_enabled
-            gitlab_project.builds_enabled = mirror.is_builds_enabled
+            gitlab_project.jobs_enabled = mirror.is_jobs_enabled
             gitlab_project.wall_enabled = mirror.is_wall_enabled
             gitlab_project.merge_requests_enabled = mirror.is_merge_requests_enabled
             gitlab_project.wiki_enabled = mirror.is_wiki_enabled
@@ -90,7 +90,7 @@ def save_pull_mirror(mirror_id: int) -> None:
                 'snippets_enabled': mirror.is_snippets_enabled,
                 'public': mirror.is_public,
                 'namespace_id': mirror.group.gitlab_id,
-                'builds_enabled': mirror.is_builds_enabled
+                'jobs_enabled': mirror.is_jobs_enabled
             })
 
             # !FIXME BUG Trigger housekeeping right after creation to prevent ugly 404/500 project detail bug
