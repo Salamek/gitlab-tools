@@ -20,8 +20,14 @@
                         {% include 'url_info.html' %}
                         <div class="col-xs-12 col-sm-12 col-md-12">
                             <div class="form-group{{ ' has-error' if form.project_mirror.errors else '' }}">
-                              <label class="sr-only" for="{{form.project_mirror.id}}">{{_('Project mirror')}} *</label>
-                              {{form.project_mirror(class_="form-control input-sm check-signature", **{'placeholder': _('Project mirror') + ' *', 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-fingerprint-url': url_for('fingerprint.index.check_hostname_fingerprint'), 'data-fingerprint-add-url': url_for('fingerprint.index.add_hostname_fingerprint'), 'data-gitlab-url': config['GITLAB_URL'], 'data-content': '<br>'.join(form.project_mirror.errors)})}}
+                                <label class="sr-only" for="{{form.project_mirror.id}}">{{_('Project mirror')}}
+                                    *</label>
+                                {{form.project_mirror(class_="form-control input-sm check-signature", **{'placeholder':
+                                _('Project mirror') + ' *', 'data-toggle':"popover", 'data-trigger':"focus ",
+                                'data-placement': "bottom", 'data-fingerprint-url':
+                                url_for('fingerprint.index.check_hostname_fingerprint'), 'data-fingerprint-add-url':
+                                url_for('fingerprint.index.add_hostname_fingerprint'), 'data-gitlab-url':
+                                config['GITLAB_URL'], 'data-content': '<br>'.join(form.project_mirror.errors)})}}
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
@@ -30,14 +36,19 @@
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
                             <div class="form-group{{ ' has-error' if form.group.errors else '' }}">
-                            <label class="sr-only" for="{{form.group.id}}">{{_('Group')}} *</label>
-                                {{form.group(class_="form-control input-sm group-search", **{'placeholder': _('Group') + ' *', 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-content': '<br>'.join(form.group.errors), 'data-source': url_for('api.index.search_group'), 'data-selected-url': url_for('api.index.get_group', group_id=form.group.data) if form.group.data})}}
+                                <label class="sr-only" for="{{form.group.id}}">{{_('Group')}} *</label>
+                                {{form.group(class_="form-control input-sm group-search", **{'placeholder': _('Group') +
+                                ' *', 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom",
+                                'data-content': '<br>'.join(form.group.errors), 'data-source':
+                                url_for('api.index.search_group'), 'data-selected-url': url_for('api.index.get_group',
+                                group_id=form.group.data) if form.group.data})}}
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
                             <div class="form-group{{ ' has-error' if form.periodic_sync.errors else '' }}">
-                              <label class="sr-only" for="{{form.periodic_sync.id}}">{{_('Periodic sync (CRON expression)')}}</label>
-                              {{form.periodic_sync(class_="form-control input-sm", **{'placeholder': _('Periodic sync (CRON expression)'), 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom", 'data-content': '<br>'.join(form.periodic_sync.errors)})}}
+                                <label class="sr-only" for="{{form.periodic_sync.id}}">{{_('Periodic sync (CRON expression)')}}</label>
+                                {{form.periodic_sync(class_="form-control input-sm", **{'placeholder': _('Periodic sync (CRON expression)'), 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement':
+                                "bottom", 'data-content': '<br>'.join(form.periodic_sync.errors)})}}
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-12 col-md-12">
@@ -45,89 +56,106 @@
                             {{render_field(form.note, 'form-group', _('Note'))}}
                         </div>
                     </div>
-                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#advancedOptions" aria-expanded="false" aria-controls="advancedOptions">
-                      Advanced options
+                    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#advancedOptions"
+                            aria-expanded="false" aria-controls="advancedOptions">
+                        Advanced options
                     </button>
                     <div class="collapse" id="advancedOptions">
-                      <div class="well">
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_no_create(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_no_create.errors)})}}
-                                Do not resolve remote to GitLab
-                            </label>
+                        <div class="well">
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_no_create(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_no_create.errors)})}}
+                                    Do not resolve remote to GitLab
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_force_create(class_="", **{'data-toggle':"popover",
+                                    'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_force_create.errors)})}}
+                                    Create project in GitLab even if it already exists.
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_no_remote(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_no_remote.errors)})}}
+                                    This is a local only mirror.
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_issues_enabled(class_="", **{'data-toggle':"popover",
+                                    'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_issues_enabled.errors)})}}
+                                    Issues enabled
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_wall_enabled(class_="", **{'data-toggle':"popover",
+                                    'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_wall_enabled.errors)})}}
+                                    Wall enabled
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_wiki_enabled(class_="", **{'data-toggle':"popover",
+                                    'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_wiki_enabled.errors)})}}
+                                    Wiki enabled
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_snippets_enabled(class_="", **{'data-toggle':"popover",
+                                    'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_snippets_enabled.errors)})}}
+                                    Snippets enabled
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_merge_requests_enabled(class_="", **{'data-toggle':"popover",
+                                    'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_merge_requests_enabled.errors)})}}
+                                    Merge requests enabled
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_public(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_public.errors)})}}
+                                    Create as public repository
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_force_update(class_="", **{'data-toggle':"popover",
+                                    'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_force_update.errors)})}}
+                                    Enable force fetching and pushing.
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_prune_mirrors(class_="", **{'data-toggle':"popover",
+                                    'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_prune_mirrors.errors)})}}
+                                    Enable pruning mirror.
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    {{form.is_builds_enabled(class_="", **{'data-toggle':"popover",
+                                    'data-trigger':"focus",
+                                    'data-placement': "bottom", 'data-content': '<br>'.join(form.is_builds_enabled.errors)})}}
+                                    Enable CI builds.
+                                </label>
+                            </div>
                         </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_force_create(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_force_create.errors)})}}
-                                Create project in GitLab even if it already exists.
-                            </label>
-                        </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_no_remote(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_no_remote.errors)})}}
-                                This is a local only mirror.
-                            </label>
-                        </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_issues_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_issues_enabled.errors)})}}
-                                Issues enabled
-                            </label>
-                        </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_wall_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_wall_enabled.errors)})}}
-                                Wall enabled
-                            </label>
-                        </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_wiki_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_wiki_enabled.errors)})}}
-                                Wiki enabled
-                            </label>
-                        </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_snippets_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_snippets_enabled.errors)})}}
-                                Snippets enabled
-                            </label>
-                        </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_merge_requests_enabled(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_merge_requests_enabled.errors)})}}
-                                Merge requests enabled
-                            </label>
-                        </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_public(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_public.errors)})}}
-                                Create as public repository
-                            </label>
-                        </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_force_update(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_force_update.errors)})}}
-                                Enable force fetching and pushing.
-                            </label>
-                        </div>
-                        <div class="checkbox">
-                            <label>
-                                {{form.is_prune_mirrors(class_="", **{'data-toggle':"popover", 'data-trigger':"focus",
-                                'data-placement': "bottom", 'data-content': '<br>'.join(form.is_prune_mirrors.errors)})}}
-                                Enable pruning mirror.
-                            </label>
-                        </div>
-                      </div>
                     </div>
 
 

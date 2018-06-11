@@ -125,7 +125,8 @@ def new_mirror():
         is_merge_requests_enabled=False,
         is_public=False,
         is_force_update=False,
-        is_prune_mirrors=False
+        is_prune_mirrors=False,
+        is_builds_enabled=True
     )
     if flask.request.method == 'POST' and form.validate():
         project_mirror = GitRemote(form.project_mirror.data)
@@ -145,14 +146,15 @@ def new_mirror():
         mirror_new.is_wall_enabled = form.is_wall_enabled.data
         mirror_new.is_wiki_enabled = form.is_wiki_enabled.data
         mirror_new.is_snippets_enabled = form.is_snippets_enabled.data
+        mirror_new.is_builds_enabled = form.is_builds_enabled.data
         mirror_new.is_merge_requests_enabled = form.is_merge_requests_enabled.data
         mirror_new.is_public = form.is_public.data
         mirror_new.group = process_group(form.group.data)
+        mirror_new.periodic_sync = form.periodic_sync.data
 
         # Mirror
         mirror_new.is_force_update = form.is_force_update.data
         mirror_new.is_prune_mirrors = form.is_prune_mirrors.data
-        mirror_new.periodic_sync = form.periodic_sync.data
         mirror_new.is_deleted = False
         mirror_new.user = current_user
         mirror_new.foreign_vcs_type = source.vcs_type
@@ -209,7 +211,8 @@ def edit_mirror(mirror_id: int):
         is_force_update=mirror_detail.is_force_update,
         is_prune_mirrors=mirror_detail.is_prune_mirrors,
         group=mirror_detail.group.gitlab_id,
-        periodic_sync=mirror_detail.periodic_sync
+        periodic_sync=mirror_detail.periodic_sync,
+        is_builds_enabled=mirror_detail.is_builds_enabled
     )
     if flask.request.method == 'POST' and form.validate():
         project_mirror = GitRemote(form.project_mirror.data)
@@ -228,14 +231,15 @@ def edit_mirror(mirror_id: int):
         mirror_detail.is_wall_enabled = form.is_wall_enabled.data
         mirror_detail.is_wiki_enabled = form.is_wiki_enabled.data
         mirror_detail.is_snippets_enabled = form.is_snippets_enabled.data
+        mirror_detail.is_builds_enabled = form.is_builds_enabled.data
         mirror_detail.is_merge_requests_enabled = form.is_merge_requests_enabled.data
         mirror_detail.is_public = form.is_public.data
         mirror_detail.group = process_group(form.group.data)
+        mirror_detail.periodic_sync = form.periodic_sync.data
 
         # Mirror
         mirror_detail.is_force_update = form.is_force_update.data
         mirror_detail.is_prune_mirrors = form.is_prune_mirrors.data
-        mirror_detail.periodic_sync = form.periodic_sync.data
         mirror_detail.is_deleted = False
         mirror_detail.user = current_user
         mirror_detail.foreign_vcs_type = source.vcs_type

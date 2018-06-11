@@ -27,6 +27,7 @@ class NewForm(Form):
     is_public = BooleanField()
     is_force_update = BooleanField()
     is_prune_mirrors = BooleanField()
+    is_builds_enabled = BooleanField()
 
     def validate(self) -> bool:
         rv = Form.validate(self)

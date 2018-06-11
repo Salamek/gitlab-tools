@@ -125,6 +125,7 @@ class PullMirror(Mirror):
     is_issues_enabled = db.Column(db.Boolean)
     is_wall_enabled = db.Column(db.Boolean)
     is_wiki_enabled = db.Column(db.Boolean)
+    is_builds_enabled = db.Column(db.Boolean, nullable=False)
     is_snippets_enabled = db.Column(db.Boolean)
     is_merge_requests_enabled = db.Column(db.Boolean)
     is_public = db.Column(db.Boolean)
