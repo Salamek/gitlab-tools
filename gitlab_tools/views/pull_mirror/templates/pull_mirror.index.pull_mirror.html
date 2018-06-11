@@ -15,6 +15,7 @@
         <th>{{ _('Mirror') }}</th>
         <th>{{ _('Note') }}</th>
         <th>{{ _('Webhook') }}</th>
+        <th>{{ _('Periodic sync') }}</th>
         <th>{{ _('Last sync') }}</th>
         <th>{{ _('Created') }}</th>
         <th></th>
@@ -29,6 +30,7 @@
         <td>{{item.project_mirror}}</td>
         <td>{{item.note}}</td>
         <td>{{url_for('api.index.schedule_sync_pull_mirror', mirror_id=item.id, token=item.hook_token, _external=True)}}</td>
+        <td>{{item.periodic_sync|format_cron_syntax}}</td>
         <td>{{item.last_sync|format_datetime}}</td>
         <td>{{item.created|format_datetime}}</td>
         <td class="text-nowrap">

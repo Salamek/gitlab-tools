@@ -13,7 +13,9 @@ from flask import current_app, render_template, request, g
 from flask_babel import format_datetime, format_date
 from gitlab_tools.extensions import navigation, login_manager, babel, db
 from gitlab_tools.tools.formaters import format_bytes, fix_url, format_boolean, format_vcs
+from cron_descriptor import ExpressionDescriptor, Options
 from markupsafe import Markup
+from typing import Union
 
 from gitlab_tools.models.gitlab_tools import User
 
@@ -112,6 +114,15 @@ def format_vcs_filter(vcs_enum: int) -> str:
 @current_app.template_filter('format_boolean')
 def format_boolean_filter(bool_to_format: bool) -> Markup:
     return Markup(format_boolean(bool_to_format))
+
+
+@current_app.template_filter('format_cron_syntax')
+def format_cron_syntax_filter(cron_syntax: Union[str, None]) -> Union[str, None]:
+    if cron_syntax:
+        expression_descriptor = ExpressionDescriptor(cron_syntax)
+        return str(expression_descriptor)
+
+    return None
 
 
 # Template filters.
