@@ -34,10 +34,6 @@ class CeleryConfig(HardCoded):
     CELERY_TRACK_STARTED = True
     CELERY_DEFAULT_QUEUE = 'gitlab_tools'
 
-    CELERYBEAT_SCHEDULE = {
-        #'gitlab-tools-every-hour': dict(task='gitlab_tools.crawl_gitlab-tools', schedule=crontab(minute='0')),
-    }
-
 
 class CacheConfig(CeleryConfig):
     CACHE_TYPE = 'redis'
