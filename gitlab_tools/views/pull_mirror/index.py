@@ -162,7 +162,8 @@ def new_mirror():
         mirror_new.last_sync = None
         mirror_new.hook_token = random_password()
 
-        process_cron_expression(mirror_new)
+        if process_cron_expression(mirror_new):
+            PeriodicTasks.changed()
 
         db.session.add(mirror_new)
         db.session.commit()
@@ -242,13 +243,12 @@ def edit_mirror(mirror_id: int):
         mirror_detail.target = None  # We are getting target wia gitlab API
         mirror_detail.source = source.url
 
-        process_cron_expression(mirror_detail)
+        if process_cron_expression(mirror_detail):
+            PeriodicTasks.changed()
 
         db.session.add(mirror_detail)
-        print('ADD Mirror pre commit')
         db.session.flush()
         db.session.commit()
-        print('ADD Mirror commit')
         if source.vcs_protocol == ProtocolEnum.SSH:
             # If source is SSH, create SSH Config for it also
             create_ssh_config.apply_async(
