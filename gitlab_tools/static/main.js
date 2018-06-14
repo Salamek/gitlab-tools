@@ -177,7 +177,7 @@ $(function () {
         }
     };
 
-    var checkUrlFingerprint = function(check_url, add_url, fingerprint_url, success_callback)
+    var checkUrlFingerprint = function(check_url, add_url, fingerprint_url, success_callback, error_callback)
     {
         $.ajax({
             type: "POST",
@@ -217,11 +217,15 @@ $(function () {
                     }
                     else
                     {
+                        error_callback();
                         return;
                     }
                 }
             },
-            error: processAjaxError
+            error: function($xhr){
+                error_callback();
+                processAjaxError($xhr);
+            }
         });
     };
 
@@ -241,10 +245,17 @@ $(function () {
                 return;
             }
 
+            $loaderIcon = $('<i class="fa fa-spinner fa-spin"></i>');
+            $form.find('button[type="submit"]').prepend($loaderIcon)
             checkUrlFingerprint(gitlab_url, add_url, fingerprint_url, function(){
                 checkUrlFingerprint($input.val().trim(), add_url, fingerprint_url, function(){
+                    $loaderIcon.remove();
                     $form.unbind().submit();
+                }, function(){
+                    $loaderIcon.remove();
                 });
+            }, function(){
+                $loaderIcon.remove();
             });
         });
     });
