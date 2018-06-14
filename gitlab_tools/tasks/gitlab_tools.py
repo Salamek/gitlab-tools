@@ -78,20 +78,33 @@ def save_pull_mirror(mirror_id: int) -> None:
             gitlab_project.namespace_id = mirror.group.gitlab_id  # !FIXME is this enough to move it to different group ?
             gitlab_project.save()
         else:
-            gitlab_project = gl.projects.create({
-                'name': mirror.project_name,
-                'description': 'Mirror of {}.'.format(
-                    mirror.project_mirror
-                ),
-                'issues_enabled': mirror.is_issues_enabled,
-                'wall_enabled': mirror.is_wall_enabled,
-                'merge_requests_enabled': mirror.is_merge_requests_enabled,
-                'wiki_enabled': mirror.is_wiki_enabled,
-                'snippets_enabled': mirror.is_snippets_enabled,
-                'visibility': mirror.visibility,
-                'namespace_id': mirror.group.gitlab_id,
-                'jobs_enabled': mirror.is_jobs_enabled
-            })
+            try:
+                gitlab_project = gl.projects.create({
+                    'name': mirror.project_name,
+                    'description': 'Mirror of {}.'.format(
+                        mirror.project_mirror
+                    ),
+                    'issues_enabled': mirror.is_issues_enabled,
+                    'wall_enabled': mirror.is_wall_enabled,
+                    'merge_requests_enabled': mirror.is_merge_requests_enabled,
+                    'wiki_enabled': mirror.is_wiki_enabled,
+                    'snippets_enabled': mirror.is_snippets_enabled,
+                    'visibility': mirror.visibility,
+                    'namespace_id': mirror.group.gitlab_id,
+                    'jobs_enabled': mirror.is_jobs_enabled
+                })
+            except gitlab.exceptions.GitlabCreateError as e:
+                if e.response_code == 400:
+                    # Name already taken
+                    if not mirror.is_force_create:
+                        raise e
+
+                    # Force create enabled, lets find our project
+                    found_projects = gl.projects.list(search=mirror.project_name)
+                    for found_project in found_projects:
+                        if mirror.project_name in [found_project.name, found_project.path] and mirror.group.gitlab_id == int(found_project.namespace['id']):
+                            gitlab_project = gl.projects.get(found_project.id)
+                            break
 
             # !FIXME BUG Trigger housekeeping right after creation to prevent ugly 404/500 project detail bug
             # !FIXME BUG See https://gitlab.com/gitlab-org/gitlab-ce/issues/43825
