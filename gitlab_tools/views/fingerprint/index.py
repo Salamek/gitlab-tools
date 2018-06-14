@@ -53,7 +53,7 @@ def check_fingerprint_hostname(hostname):
 
     data_sign = json.dumps(data, sort_keys=True).encode()
     private_key = import_key(get_user_private_key_path(current_user, flask.current_app.config['USER']))
-    data['signature'] = base64.b64encode(sign_data(data_sign, private_key))
+    data['signature'] = base64.b64encode(sign_data(data_sign, private_key)).decode("ascii")
     return flask.jsonify(data), 200
 
 
