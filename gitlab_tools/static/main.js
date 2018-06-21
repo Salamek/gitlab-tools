@@ -290,4 +290,19 @@ $(function () {
     $('.nav-tabs a').on('shown.bs.tab', function (e) {
         window.location.hash = e.target.hash;
     });
+
+    $('#tracebackModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var traceback_url = button.data('traceback-url');
+        var modal = $(this);
+        $.ajax({
+            type: "GET",
+            dataType: 'json',
+            contentType: 'application/json',
+            url: traceback_url,
+            success: function(data){
+                modal.find('.modal-body pre').html(data.traceback)
+            }
+        });
+    });
  });

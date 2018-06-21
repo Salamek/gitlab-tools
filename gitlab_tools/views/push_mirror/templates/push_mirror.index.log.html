@@ -26,17 +26,45 @@
         <td>{{task_result.taskmeta.status}}</td>
         <td>{{task_result.taskmeta.result}}</td>
         <td>{{task_result.taskmeta.date_done|format_datetime}}</td>
-        <td>{{task_result.taskmeta.traceback}}</td>
-
         <td class="text-nowrap">
-            <a class="btn btn-xs btn-primary" href="" title="{{ _('Detail') }}"><i class="fa fa-eye" aria-hidden="true"></i></a>
+            <button type="button" {% if not task_result.taskmeta.traceback %}disabled="disabled"{% endif %} class="btn btn-xs btn-primary" data-toggle="modal" data-target="#tracebackModal" data-traceback-url="{{url_for('api.index.get_task_traceback', task_id=task_result.taskmeta.task_id)}}" title="{{ _('Traceback') }}"><i class="fa fa-eye" aria-hidden="true"></i></button>
         </td>
     </tr>
+    {% for task_result_children in task_result.children %}
+    <tr class="{{task_result_children|format_task_status_class}}" title="{{ _('Task %(task_id)s', task_id=task_result_children.taskmeta.task_id) }}">
+        <th scope="row"><i class="fa fa-arrow-right" title="{{_('Child of task %(parent_task_id)s', parent_task_id=task_result_children.parent.taskmeta.task_id)}}"></i> {{task_result_children.taskmeta.task_id}}</th>
+        <td>{{task_result_children.task_name}}</td>
+        <td>{{task_result_children.invoked_by|format_task_invoked_by}}</td>
+        <td>{{task_result_children.taskmeta.status}}</td>
+        <td>{{task_result_children.taskmeta.result}}</td>
+        <td>{{task_result_children.taskmeta.date_done|format_datetime}}</td>
+        <td class="text-nowrap">
+            <button type="button" {% if not task_result_children.taskmeta.traceback %}disabled="disabled"{% endif %} class="btn btn-xs btn-primary" data-toggle="modal" data-target="#tracebackModal" data-traceback-url="{{url_for('api.index.get_task_traceback', task_id=task_result_children.taskmeta.task_id)}}" title="{{ _('Traceback') }}"><i class="fa fa-eye" aria-hidden="true"></i></button>
+        </td>
+    </tr>
+    {% endfor %}
     {% endfor %}
     </tbody>
 </table>
 
 <div class="text-center">
 {{render_pagination(pagination)}}
+</div>
+<div class="modal fade" id="tracebackModal" tabindex="-1" role="dialog" aria-labelledby="tracebackModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="tracebackModalLabel">{{_('Traceback')}}</h4>
+      </div>
+      <div class="modal-body">
+        <pre>
+        </pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

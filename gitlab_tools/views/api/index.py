@@ -4,6 +4,7 @@ from flask_login import login_required
 from gitlab_tools.blueprints import api_index
 from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror, sync_push_mirror
 from gitlab_tools.models.gitlab_tools import PullMirror, PushMirror
+from gitlab_tools.models.celery import TaskMeta
 from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 from gitlab_tools.tools.gitlab import get_group, get_project, get_gitlab_instance
 from gitlab_tools.tools.celery import log_task_pending
@@ -147,3 +148,10 @@ def get_gitlab_project(project_id: int):
     project = get_project(project_id)
 
     return jsonify(project.attributes), 200
+
+
+@api_index.route('/task/<string:task_id>/traceback', methods=['GET'])
+@login_required
+def get_task_traceback(task_id: str):
+    task_meta = TaskMeta.query.filter_by(task_id=task_id).first_or_404()
+    return jsonify({'traceback': task_meta.traceback}), 200

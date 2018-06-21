@@ -14,7 +14,6 @@
         <th>{{ _('Result') }}</th>
         <th>{{ _('Date done') }}</th>
         <th>{{ _('Traceback') }}</th>
-        <th></th>
     </tr>
     </thead>
     <tbody>
@@ -26,10 +25,9 @@
         <td>{{task_result.taskmeta.status}}</td>
         <td>{{task_result.taskmeta.result}}</td>
         <td>{{task_result.taskmeta.date_done|format_datetime}}</td>
-        <td>{{task_result.taskmeta.traceback}}</td>
 
         <td class="text-nowrap">
-            <a class="btn btn-xs btn-primary" href="" title="{{ _('Detail') }}"><i class="fa fa-eye" aria-hidden="true"></i></a>
+            <button type="button" {% if not task_result.taskmeta.traceback %}disabled="disabled"{% endif %} class="btn btn-xs btn-primary" data-toggle="modal" data-target="#tracebackModal" data-traceback-url="{{url_for('api.index.get_task_traceback', task_id=task_result.taskmeta.task_id)}}" title="{{ _('Traceback') }}"><i class="fa fa-eye" aria-hidden="true"></i></button>
         </td>
     </tr>
     {% for task_result_children in task_result.children %}
@@ -40,10 +38,8 @@
         <td>{{task_result_children.taskmeta.status}}</td>
         <td>{{task_result_children.taskmeta.result}}</td>
         <td>{{task_result_children.taskmeta.date_done|format_datetime}}</td>
-        <td>{{task_result_children.taskmeta.traceback}}</td>
-
         <td class="text-nowrap">
-            <a class="btn btn-xs btn-primary" href="" title="{{ _('Detail') }}"><i class="fa fa-eye" aria-hidden="true"></i></a>
+            <button type="button" {% if not task_result_children.taskmeta.traceback %}disabled="disabled"{% endif %} class="btn btn-xs btn-primary" data-toggle="modal" data-target="#tracebackModal" data-traceback-url="{{url_for('api.index.get_task_traceback', task_id=task_result_children.taskmeta.task_id)}}" title="{{ _('Traceback') }}"><i class="fa fa-eye" aria-hidden="true"></i></button>
         </td>
     </tr>
     {% endfor %}
@@ -54,5 +50,22 @@
 
 <div class="text-center">
 {{render_pagination(pagination)}}
+</div>
+<div class="modal fade" id="tracebackModal" tabindex="-1" role="dialog" aria-labelledby="tracebackModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="tracebackModalLabel">{{_('Traceback')}}</h4>
+      </div>
+      <div class="modal-body">
+          <pre>
+          </pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
