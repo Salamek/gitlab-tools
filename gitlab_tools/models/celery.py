@@ -2,7 +2,9 @@ import datetime
 from sqlalchemy.orm import relationship
 from celery import schedules
 from gitlab_tools.extensions import db
+from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 from sqlalchemy.sql import func
+from celery import states
 
 
 class ConstraintError(Exception):
@@ -175,3 +177,30 @@ class PeriodicTask(BaseTable):
             return self.crontab.schedule
         if self.interval:
             return self.interval.schedule
+
+
+class TaskMeta(db.Model):
+    __tablename__ = 'celery_taskmeta'
+    __table_args__ = {'sqlite_autoincrement': True}
+    id = db.Column(db.Integer, db.Sequence('task_id_sequence'),
+                   primary_key=True, autoincrement=True)
+    task_id = db.Column(db.String(155), unique=True)
+    status = db.Column(db.String(50), default=states.PENDING)
+    result = db.Column(db.PickleType, nullable=True)
+    date_done = db.Column(db.DateTime, default=datetime.datetime.utcnow,
+                          onupdate=datetime.datetime.utcnow, nullable=True)
+    traceback = db.Column(db.Text, nullable=True)
+    task_result = relationship("TaskResult", backref="taskmeta", uselist=False)
+
+
+class TaskSet(db.Model):
+    """TaskSet result."""
+    __tablename__ = 'celery_tasksetmeta'
+    __table_args__ = {'sqlite_autoincrement': True}
+
+    id = db.Column(db.Integer, db.Sequence('taskset_id_sequence'),
+                   autoincrement=True, primary_key=True)
+    taskset_id = db.Column(db.String(155), unique=True)
+    result = db.Column(db.PickleType, nullable=True)
+    date_done = db.Column(db.DateTime, default=datetime.datetime.utcnow,
+                          nullable=True)

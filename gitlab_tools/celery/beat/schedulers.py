@@ -8,7 +8,7 @@ from celery.utils.encoding import safe_str
 from celery.utils.log import get_logger
 from celery.utils.time import is_naive
 
-from gitlab_tools.models.celery_beat import PeriodicTask, PeriodicTasks, CrontabSchedule, IntervalSchedule
+from gitlab_tools.models.celery import PeriodicTask, PeriodicTasks, CrontabSchedule, IntervalSchedule
 from gitlab_tools.extensions import db
 
 DEFAULT_MAX_INTERVAL = 5

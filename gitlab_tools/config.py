@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from celery.schedules import crontab
-import os
 import getpass
 
 
@@ -12,7 +10,7 @@ class HardCoded(object):
     extensions goes here.
     """
     ADMINS = ['adam.schubert@sg1-game.net']
-    DB_MODELS_IMPORTS = ('gitlab_tools', 'celery_beat')  # Like CELERY_IMPORTS in CeleryConfig.
+    DB_MODELS_IMPORTS = ('gitlab_tools', 'celery')  # Like CELERY_IMPORTS in CeleryConfig.
     ENVIRONMENT = property(lambda self: self.__class__.__name__)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SUPPORTED_LANGUAGES = {'cs': 'Čeština', 'en': 'English'}
@@ -33,6 +31,9 @@ class CeleryConfig(HardCoded):
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_TRACK_STARTED = True
     CELERY_DEFAULT_QUEUE = 'gitlab_tools'
+    CELERYBEAT_SCHEDULER = 'gitlab_tools.celery.beat.schedulers.DatabaseScheduler'
+    CELERY_RESULT_BACKEND = 'gitlab_tools.celery.result.rpc.RPCBackend'
+    CELERY_RESULT_BACKEND_QUEUE = 'gitlab_tools_result'
 
 
 class CacheConfig(CeleryConfig):
@@ -46,11 +47,9 @@ class Config(CacheConfig):
     TESTING = False
     SECRET_KEY = "i_don't_want_my_cookies_expiring_while_developing"
     SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/gitlab-tools.db'
-    REDIS_URL = 'redis://127.0.0.1/0'
-    CELERY_BROKER_URL = 'redis://127.0.0.1/0'
-    CELERY_RESULT_BACKEND = 'redis://127.0.0.1/0'
-    SOCKET_IO_MESSAGE_QUEUE = 'redis://127.0.0.1/0'
-    CACHE_REDIS_URL = 'redis://127.0.0.1/0'
+    CELERY_BROKER_URL = 'amqp://127.0.0.1:5672/'
+    CELERY_RESULT_BACKEND = 'db+postgresql://gitlab_tools:391569b0140b9f6ddd38c0de86475ac8@127.0.0.1/gitlab_tools'
+    CELERY_TASK_LOCK_BACKEND = 'redis://127.0.0.1/0'
     PORT = 5000
     HOST = '0.0.0.0'
     GITLAB_API_VERSION = 4
@@ -60,11 +59,9 @@ class Config(CacheConfig):
 class Testing(Config):
     TESTING = True
     CELERY_ALWAYS_EAGER = True
-    REDIS_URL = 'redis://127.0.0.1/1'
-    CELERY_BROKER_URL = 'redis://127.0.0.1/1'
-    CELERY_RESULT_BACKEND = 'redis://127.0.0.1/1'
-    SOCKET_IO_MESSAGE_QUEUE = 'redis://127.0.0.1/1'
-    CACHE_REDIS_URL = 'redis://127.0.0.1/1'
+    CELERY_BROKER_URL = 'amqp://127.0.0.1:5672/'
+    #CELERY_RESULT_BACKEND = 'rpc://127.0.0.1:5672/'
+    CELERY_TASK_LOCK_BACKEND = 'redis://127.0.0.1/0'
 
 
 class Production(Config):

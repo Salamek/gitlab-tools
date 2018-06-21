@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block body %}
+{% from 'macros.html' import render_pagination %}
+
+<h1>{{ _('Push Mirror %(mirror_name)s logs', mirror_name=push_mirror.project_mirror) }}</h1>
+
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>{{ _('Task ID') }}</th>
+        <th>{{ _('Task name') }}</th>
+        <th>{{ _('Invoked by') }}</th>
+        <th>{{ _('Status') }}</th>
+        <th>{{ _('Result') }}</th>
+        <th>{{ _('Date done') }}</th>
+        <th>{{ _('Traceback') }}</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for task_result in pagination.items %}
+    <tr class="{{task_result|format_task_status_class}}">
+        <th scope="row">{{task_result.taskmeta.task_id}}</th>
+        <td>{{task_result.task_name}}</td>
+        <td>{{task_result.invoked_by}}</td>
+        <td>{{task_result.taskmeta.status}}</td>
+        <td>{{task_result.taskmeta.result}}</td>
+        <td>{{task_result.taskmeta.date_done|format_datetime}}</td>
+        <td>{{task_result.taskmeta.traceback}}</td>
+
+        <td class="text-nowrap">
+            <a class="btn btn-xs btn-primary" href="" title="{{ _('Detail') }}"><i class="fa fa-eye" aria-hidden="true"></i></a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div class="text-center">
+{{render_pagination(pagination)}}
+</div>
+{% endblock %}

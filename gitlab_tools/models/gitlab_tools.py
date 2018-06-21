@@ -1,8 +1,9 @@
 import sys
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declared_attr
 from gitlab_tools.extensions import db
+from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
@@ -133,12 +134,14 @@ class PullMirror(Mirror):
     is_snippets_enabled = db.Column(db.Boolean)
     is_merge_requests_enabled = db.Column(db.Boolean)
     visibility = db.Column(db.String(255), nullable=False)
+    task_results = relationship("TaskResult", backref="pull_mirror", lazy='dynamic', order_by='desc(TaskResult.updated)')
 
 
 class PushMirror(Mirror):
     __tablename__ = 'push_mirror'
     id = db.Column(db.Integer, primary_key=True)
     project_mirror = db.Column(db.String(255))
+    task_results = relationship("TaskResult", backref="push_mirror", lazy='dynamic', order_by='desc(TaskResult.updated)')
 
 
 class Project(BaseTable):
@@ -161,3 +164,14 @@ class Group(BaseTable):
     name = db.Column(db.String(255))
     pull_mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="group", lazy='dynamic')
 
+
+class TaskResult(BaseTable):
+    __tablename__ = 'task_result'
+    id = db.Column(db.Integer, primary_key=True)
+    pull_mirror_id = db.Column(db.Integer, db.ForeignKey('pull_mirror.id'), index=True, nullable=True)
+    push_mirror_id = db.Column(db.Integer, db.ForeignKey('push_mirror.id'), index=True, nullable=True)
+    task_name = db.Column(db.String(255))
+    invoked_by = db.Column(db.Integer, default=InvokedByEnum.UNKNOWN)
+    taskmeta_id = db.Column(db.Integer, db.ForeignKey('celery_taskmeta.id'), index=True, nullable=False, unique=True)
+    parent_id = db.Column(db.Integer, db.ForeignKey('task_result.id'), index=True, nullable=True)
+    children = relationship("TaskResult", backref=backref('parent', remote_side=[id]))

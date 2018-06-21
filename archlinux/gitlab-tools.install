@@ -8,6 +8,8 @@ post_install() {
         useradd -m gitlab-tools
         systemctl enable redis
         systemctl restart redis
+        systemctl enable rabbitmq
+        systemctl restart rabbitmq
         gitlab-tools post_install --config_prod --user=gitlab-tools
         systemctl daemon-reload
         systemctl start gitlab-tools

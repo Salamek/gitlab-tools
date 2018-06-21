@@ -4,14 +4,16 @@ from flask_login import login_required
 from gitlab_tools.blueprints import api_index
 from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror, sync_push_mirror
 from gitlab_tools.models.gitlab_tools import PullMirror, PushMirror
+from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 from gitlab_tools.tools.gitlab import get_group, get_project, get_gitlab_instance
+from gitlab_tools.tools.celery import log_task_pending
 
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
 
 
-@api_index.route('/pull/sync/<int:mirror_id>', methods=['POST'])
+@api_index.route('/pull/sync/<int:mirror_id>', methods=['POST', 'GET'])
 def schedule_sync_pull_mirror(mirror_id: int):
     hook_token = request.args.get('token')
     if not hook_token:
@@ -22,16 +24,18 @@ def schedule_sync_pull_mirror(mirror_id: int):
         return jsonify({'message': 'Mirror not found'}), 404
 
     if found_mirror.hook_token != hook_token:
-        return jsonify({'message': 'Provided token was incorrect'}), 400
+        return jsonify({'message': 'Supplied token was incorrect'}), 400
 
     if not found_mirror.project_id:
         return jsonify({'message': 'Project mirror is not created, cannot be synced'}), 400
 
     task = sync_pull_mirror.delay(found_mirror.id)
+    log_task_pending(task, found_mirror, sync_pull_mirror, InvokedByEnum.HOOK)
+
     return jsonify({'message': 'Sync task started', 'uuid': task.id}), 200
 
 
-@api_index.route('/push/sync/<int:mirror_id>', methods=['POST'])
+@api_index.route('/push/sync/<int:mirror_id>', methods=['POST', 'GET'])
 def schedule_sync_push_mirror(mirror_id: int):
     hook_token = request.args.get('token')
     if not hook_token:
@@ -42,12 +46,14 @@ def schedule_sync_push_mirror(mirror_id: int):
         return jsonify({'message': 'Mirror not found'}), 404
 
     if found_mirror.hook_token != hook_token:
-        return jsonify({'message': 'Provided token was incorrect'}), 400
+        return jsonify({'message': 'Supplied token was incorrect'}), 400
 
     if not found_mirror.project_id:
         return jsonify({'message': 'Project mirror is not created, cannot be synced'}), 400
 
     task = sync_push_mirror.delay(found_mirror.id)
+    log_task_pending(task, found_mirror, sync_push_mirror, InvokedByEnum.HOOK)
+
     return jsonify({'message': 'Sync task started', 'uuid': task.id}), 200
 
 

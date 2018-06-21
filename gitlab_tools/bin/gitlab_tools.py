@@ -63,20 +63,21 @@ import subprocess
 import sys
 import urllib.parse
 from functools import wraps
+
 import flask
 import yaml
-
-from docopt import docopt
-from flask_script import Shell, Manager
-from flask_migrate import MigrateCommand, stamp
 from celery.app.log import Logging
 from celery.bin.celery import main as celery_main
-from gitlab_tools.extensions import db, celery
+from docopt import docopt
+from flask_migrate import MigrateCommand, stamp
+from flask_script import Shell, Manager
+
 from gitlab_tools.application import create_app, get_config
 from gitlab_tools.config import Config
-from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror
-from gitlab_tools.tools.helpers import get_home_dir, get_user_group_id, get_user_id, get_repository_storage, get_ssh_storage
+from gitlab_tools.extensions import db
 from gitlab_tools.tools.crypto import random_password
+from gitlab_tools.tools.helpers import get_home_dir, get_user_group_id, get_user_id, get_repository_storage, \
+    get_ssh_storage
 
 OPTIONS = docopt(__doc__)
 
@@ -493,7 +494,7 @@ def celerydev():
     setup_logging('celerydev')
     app = create_app(parse_options(), no_sql=True)
     Logging._setup = True  # Disable Celery from setting up logging, already done in setup_logging().
-    celery_args = ['celery', 'worker', '-B', '-s', '/tmp/celery.db', '--concurrency=5', '-S', 'gitlab_tools.beat.schedulers.DatabaseScheduler']
+    celery_args = ['celery', 'worker', '-B', '-s', '/tmp/celery.db', '--concurrency=5']
     with app.app_context():
         return celery_main(celery_args)
 
@@ -503,7 +504,7 @@ def celerybeat():
     setup_logging('celerybeat')
     app = create_app(parse_options())
     Logging._setup = True
-    celery_args = ['celery', 'beat', '-S', 'gitlab_tools.beat.schedulers.DatabaseScheduler', '-C', '--pidfile', OPTIONS['--pid'], '-s', OPTIONS['--schedule']]
+    celery_args = ['celery', 'beat', '-C', '--pidfile', OPTIONS['--pid'], '-s', OPTIONS['--schedule']]
     with app.app_context():
         return celery_main(celery_args)
 

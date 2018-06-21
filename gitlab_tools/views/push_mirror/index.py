@@ -2,13 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import flask
+from celery import chain
 from flask_login import current_user, login_required
-from gitlab_tools.models.gitlab_tools import db, PushMirror, Project
+from gitlab_tools.models.gitlab_tools import PushMirror, Project, TaskResult
+from gitlab_tools.extensions import db
 from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
+from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 from gitlab_tools.forms.push_mirror import EditForm, NewForm
 from gitlab_tools.tools.helpers import convert_url_for_user
 from gitlab_tools.tools.crypto import random_password
 from gitlab_tools.tools.GitRemote import GitRemote
+from gitlab_tools.tools.celery import log_task_pending
 from gitlab_tools.blueprints import push_mirror_index
 from gitlab_tools.tasks.gitlab_tools import sync_push_mirror, \
     delete_push_mirror, \
@@ -77,16 +81,22 @@ def new_mirror():
 
         if target.vcs_protocol == ProtocolEnum.SSH:
             # If target is SSH, create SSH Config for it also
-            create_ssh_config.apply_async(
-                (
+            task_result = chain(
+                create_ssh_config.si(
                     current_user.id,
                     target.hostname,
                     project_mirror.hostname
                 ),
-                link=save_push_mirror.si(mirror_new.id)
-            )
+                save_push_mirror.si(
+                    mirror_new.id
+                )
+            ).apply_async()
+
+            parent = log_task_pending(task_result.parent, mirror_new, create_ssh_config, InvokedByEnum.MANUAL)
+            log_task_pending(task_result, mirror_new, save_push_mirror, InvokedByEnum.MANUAL, parent)
         else:
-            save_push_mirror.delay(mirror_new.id)
+            task = save_push_mirror.delay(mirror_new.id)
+            log_task_pending(task, mirror_new, save_push_mirror, InvokedByEnum.MANUAL)
 
         flask.flash('New push mirror item was added successfully.', 'success')
         return flask.redirect(flask.url_for('push_mirror.index.get_mirror'))
@@ -130,19 +140,25 @@ def edit_mirror(mirror_id: int):
 
         db.session.add(mirror_detail)
         db.session.commit()
-
         if target.vcs_protocol == ProtocolEnum.SSH:
-            # If source is SSH, create SSH COnfig for it also
-            create_ssh_config.apply_async(
-                (
+            # If source is SSH, create SSH Config for it also
+
+            task_result = chain(
+                create_ssh_config.si(
                     current_user.id,
                     target.hostname,
                     project_mirror.hostname
                 ),
-                link=save_push_mirror.si(mirror_detail.id)
-            )
+                save_push_mirror.si(
+                    mirror_detail.id
+                )
+            ).apply_async()
+
+            parent = log_task_pending(task_result.parent, mirror_detail, create_ssh_config, InvokedByEnum.MANUAL)
+            log_task_pending(task_result, mirror_detail, save_push_mirror, InvokedByEnum.MANUAL, parent)
         else:
-            save_push_mirror.delay(mirror_detail.id)
+            task = save_push_mirror.delay(mirror_detail.id)
+            log_task_pending(task, mirror_detail, save_push_mirror, InvokedByEnum.MANUAL)
 
         flask.flash('Push mirror was saved successfully.', 'success')
         return flask.redirect(flask.url_for('push_mirror.index.get_mirror'))
@@ -159,6 +175,7 @@ def schedule_sync_mirror(mirror_id: int):
         flask.flash('Project mirror is not created, cannot be synced', 'danger')
         return flask.redirect(flask.url_for('push_mirror.index.get_mirror'))
     task = sync_push_mirror.delay(mirror_id)
+    log_task_pending(task, found_mirror, sync_push_mirror, InvokedByEnum.MANUAL)
 
     flask.flash('Sync has been started with UUID: {}'.format(task.id), 'success')
     return flask.redirect(flask.url_for('push_mirror.index.get_mirror'))
@@ -177,3 +194,18 @@ def schedule_delete_mirror(mirror_id: int):
     flask.flash('Push mirror was deleted successfully.', 'success')
 
     return flask.redirect(flask.url_for('push_mirror.index.get_mirror'))
+
+
+@push_mirror_index.route('/log/<int:mirror_id>', methods=['GET'], defaults={'page': 1})
+@push_mirror_index.route('/log/<int:mirror_id>/page/<int:page>', methods=['GET'])
+@login_required
+def log(mirror_id: int, page: int):
+    push_mirror = PushMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
+
+    pagination = TaskResult.query.filter_by(push_mirror=push_mirror, parent=None).order_by(
+        TaskResult.created.desc()).paginate(page, PER_PAGE)
+    return flask.render_template(
+        'push_mirror.index.log.html',
+        push_mirror=push_mirror,
+        pagination=pagination
+    )

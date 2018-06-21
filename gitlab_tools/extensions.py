@@ -14,7 +14,6 @@ from sqlalchemy.pool import Pool
 from raven.contrib.flask import Sentry
 from flask_babel import Babel
 from flask_celery import Celery
-from flask_redis import Redis
 from flask_login import LoginManager
 from flask_navigation import Navigation
 from flask_migrate import Migrate
@@ -45,6 +44,4 @@ babel = Babel()
 login_manager = LoginManager()
 navigation = Navigation()
 celery = Celery()
-redis = Redis()
 migrate = Migrate(directory=MIGRATE_ROOT_FOLDER)
-cache = Cache()

@@ -3,14 +3,17 @@
 
 import flask
 import json
+from celery import chain
 from flask_login import current_user, login_required
-from gitlab_tools.models.gitlab_tools import PullMirror, Group
+from gitlab_tools.models.gitlab_tools import PullMirror, Group, TaskResult
 from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
+from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 from gitlab_tools.forms.pull_mirror import EditForm, NewForm
 from gitlab_tools.tools.helpers import convert_url_for_user
 from gitlab_tools.tools.crypto import random_password
+from gitlab_tools.tools.celery import log_task_pending
 from gitlab_tools.tools.GitRemote import GitRemote
-from gitlab_tools.models.celery_beat import PeriodicTask, CrontabSchedule, PeriodicTasks
+from gitlab_tools.models.celery import PeriodicTask, CrontabSchedule, PeriodicTasks
 from cron_descriptor.ExpressionParser import ExpressionParser
 from cron_descriptor.Options import Options
 from gitlab_tools.blueprints import pull_mirror_index
@@ -78,7 +81,7 @@ def process_cron_expression(pull_mirror: PullMirror) -> bool:
 
         periodic_task = PeriodicTask(
             name="PullMirror (id:{}) periodic task {}".format(pull_mirror.id, pull_mirror.periodic_sync),
-            task="gitlab_tools.tasks.gitlab_tools.sync_pull_mirror",
+            task="gitlab_tools.tasks.gitlab_tools.sync_pull_mirror_cron",
             crontab=crontab_schedule,
             args=json.dumps([pull_mirror.id]),
             kwargs=json.dumps({})
@@ -172,16 +175,22 @@ def new_mirror():
 
         if source.vcs_protocol == ProtocolEnum.SSH:
             # If source is SSH, create SSH Config for it also
-            create_ssh_config.apply_async(
-                (
+            task_result = chain(
+                create_ssh_config.si(
                     current_user.id,
                     source.hostname,
                     project_mirror.hostname
                 ),
-                link=save_pull_mirror.si(mirror_new.id)
-            )
+                save_pull_mirror.si(
+                    mirror_new.id
+                )
+            ).apply_async()
+
+            parent = log_task_pending(task_result.parent, mirror_new, create_ssh_config, InvokedByEnum.MANUAL)
+            log_task_pending(task_result, mirror_new, save_pull_mirror, InvokedByEnum.MANUAL, parent)
         else:
-            save_pull_mirror.delay(mirror_new.id)
+            task = save_pull_mirror.delay(mirror_new.id)
+            log_task_pending(task, mirror_new, save_pull_mirror, InvokedByEnum.MANUAL)
 
         flask.flash('New pull mirror item was added successfully.', 'success')
         return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
@@ -253,18 +262,25 @@ def edit_mirror(mirror_id: int):
         db.session.add(mirror_detail)
         db.session.flush()
         db.session.commit()
+
         if source.vcs_protocol == ProtocolEnum.SSH:
             # If source is SSH, create SSH Config for it also
-            create_ssh_config.apply_async(
-                (
+            task_result = chain(
+                create_ssh_config.si(
                     current_user.id,
                     source.hostname,
                     project_mirror.hostname
                 ),
-                link=save_pull_mirror.si(mirror_detail.id)
-            )
+                save_pull_mirror.si(
+                    mirror_detail.id
+                )
+            ).apply_async()
+
+            parent = log_task_pending(task_result.parent, mirror_detail, create_ssh_config, InvokedByEnum.MANUAL)
+            log_task_pending(task_result, mirror_detail, save_pull_mirror, InvokedByEnum.MANUAL, parent)
         else:
-            save_pull_mirror.delay(mirror_detail.id)
+            task = save_pull_mirror.delay(mirror_detail.id)
+            log_task_pending(task, mirror_detail, save_pull_mirror, InvokedByEnum.MANUAL)
 
         flask.flash('Pull mirror was saved successfully.', 'success')
         return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
@@ -281,6 +297,7 @@ def schedule_sync_mirror(mirror_id: int):
         flask.flash('Project mirror is not created, cannot be synced', 'danger')
         return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
     task = sync_pull_mirror.delay(mirror_id)
+    log_task_pending(task, found_mirror, sync_pull_mirror, InvokedByEnum.MANUAL)
 
     flask.flash('Sync has been started with UUID: {}'.format(task.id), 'success')
     return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
@@ -299,3 +316,18 @@ def schedule_delete_mirror(mirror_id: int):
     flask.flash('Pull mirror was deleted successfully.', 'success')
 
     return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
+
+
+@pull_mirror_index.route('/log/<int:mirror_id>', methods=['GET'], defaults={'page': 1})
+@pull_mirror_index.route('/log/<int:mirror_id>/page/<int:page>', methods=['GET'])
+@login_required
+def log(mirror_id: int, page: int):
+    pull_mirror = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
+
+    pagination = TaskResult.query.filter_by(pull_mirror=pull_mirror, parent=None).order_by(
+        TaskResult.created.desc()).paginate(page, PER_PAGE)
+    return flask.render_template(
+        'pull_mirror.index.log.html',
+        pull_mirror=pull_mirror,
+        pagination=pagination
+    )

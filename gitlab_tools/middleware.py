@@ -9,15 +9,17 @@ import os
 from logging import getLogger
 from flask_login import current_user
 from celery.signals import worker_process_init
+from celery import states
 from flask import current_app, render_template, request, g
 from flask_babel import format_datetime, format_date
 from gitlab_tools.extensions import navigation, login_manager, babel, db
 from gitlab_tools.tools.formaters import format_bytes, fix_url, format_boolean, format_vcs
-from cron_descriptor import ExpressionDescriptor, Options
+from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
+from cron_descriptor import ExpressionDescriptor
 from markupsafe import Markup
 from typing import Union
 
-from gitlab_tools.models.gitlab_tools import User
+from gitlab_tools.models.gitlab_tools import User, TaskResult
 
 LOG = getLogger(__name__)
 
@@ -123,6 +125,33 @@ def format_cron_syntax_filter(cron_syntax: Union[str, None]) -> Union[str, None]
         return str(expression_descriptor)
 
     return None
+
+
+@current_app.template_filter('format_task_status_class')
+def format_task_status_class_filter(task_result: TaskResult=None) -> str:
+    if task_result:
+        return {
+            states.SUCCESS: 'success',
+            states.FAILURE: 'danger',
+            states.REVOKED: 'danger',
+            states.REJECTED: 'danger',
+            states.RETRY: 'warning',
+            states.PENDING: 'info',
+            states.RECEIVED: 'info',
+            states.STARTED: 'info',
+        }.get(task_result.taskmeta.status, 'warning')
+
+    return 'warning'
+
+
+@current_app.template_filter('format_task_invoked_by')
+def format_task_invoked_by_filter(invoked_by: int) -> str:
+    return {
+        InvokedByEnum.MANUAL: 'Manual',
+        InvokedByEnum.HOOK: 'Web hook',
+        InvokedByEnum.SCHEDULER: 'Scheduler',
+        InvokedByEnum.UNKNOWN: 'Unknown',
+    }.get(invoked_by, 'Unknown')
 
 
 # Template filters.

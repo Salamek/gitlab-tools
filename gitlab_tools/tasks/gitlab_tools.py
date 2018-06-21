@@ -7,7 +7,9 @@ import shutil
 from flask_celery import single_instance
 from gitlab_tools.models.gitlab_tools import PullMirror, User, PushMirror, Project
 from gitlab_tools.tools.GitRemote import GitRemote
+from gitlab_tools.tools.celery import log_task_pending
 from gitlab_tools.tools.Git import Git
+from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 from gitlab_tools.tools.helpers import get_repository_path, \
     get_namespace_path, \
     get_user_public_key_path, \
@@ -327,6 +329,27 @@ def save_push_mirror(push_mirror_id) -> None:
 
 
 @celery.task(bind=True)
+@single_instance(include_args=True)
+def sync_pull_mirror_cron(pull_mirror_id: int) -> None:
+    pull_mirror = PullMirror.query.filter_by(id=pull_mirror_id).first()
+
+    task = sync_pull_mirror.delay(pull_mirror_id)
+    log_task_pending(task, pull_mirror, sync_pull_mirror, InvokedByEnum.SCHEDULER)
+
+
+class MyBaseClassForTask(celery.Task):
+
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        # exc (Exception) - The exception raised by the task.
+        # args (Tuple) - Original arguments for the task that failed.
+        # kwargs (Dict) - Original keyword arguments for the task that failed.
+        print('{0!r} failed: {1!r}'.format(task_id, exc))
+
+    def on_success(self, retval, task_id, args, kwargs):
+        print('SUCCESS {} {} {} {}'.format(retval, task_id, args, kwargs))
+
+
+@celery.task(bind=True, base=MyBaseClassForTask)
 @single_instance(include_args=True)
 def sync_pull_mirror(pull_mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=pull_mirror_id).first()

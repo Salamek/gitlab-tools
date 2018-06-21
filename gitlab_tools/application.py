@@ -12,7 +12,7 @@ from gitlab_tools.config import Config
 from yaml import load
 
 import gitlab_tools as app_root
-from gitlab_tools.extensions import db, sentry, babel, login_manager, navigation, migrate, redis, celery, cache
+from gitlab_tools.extensions import db, sentry, babel, login_manager, navigation, migrate, celery
 
 APP_ROOT_FOLDER = os.path.abspath(os.path.dirname(app_root.__file__))
 TEMPLATE_FOLDER = os.path.join(APP_ROOT_FOLDER, 'templates')
@@ -103,9 +103,7 @@ def create_app(config_obj: Config, no_sql: bool=False) -> Flask:
     sentry.init_app(app)
     babel.init_app(app)
     navigation.init_app(app)
-    redis.init_app(app)
     celery.init_app(app)
-    cache.init_app(app)
 
     login_manager.init_app(app)
     login_manager.login_view = "sign.index.login"
