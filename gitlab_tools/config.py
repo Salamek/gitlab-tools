@@ -22,7 +22,7 @@ class CeleryConfig(HardCoded):
     CELERYD_PREFETCH_MULTIPLIER = 1
     CELERYD_TASK_SOFT_TIME_LIMIT = 20 * 60  # Raise exception if task takes too long.
     CELERYD_TASK_TIME_LIMIT = 30 * 60  # Kill worker if task takes way too long.
-    CELERY_ACCEPT_CONTENT = ['json']
+    CELERY_ACCEPT_CONTENT = ['json', 'pickle']
     CELERY_ACKS_LATE = True
     CELERY_DISABLE_RATE_LIMITS = True
     CELERY_IMPORTS = ('gitlab_tools', )
