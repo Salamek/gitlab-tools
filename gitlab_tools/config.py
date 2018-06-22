@@ -27,7 +27,7 @@ class CeleryConfig(HardCoded):
     CELERY_DISABLE_RATE_LIMITS = True
     CELERY_IMPORTS = ('gitlab_tools', )
     CELERY_RESULT_SERIALIZER = 'json'
-    CELERY_TASK_RESULT_EXPIRES = 10 * 60  # Dispose of Celery Beat results after 10 minutes.
+    CELERY_TASK_RESULT_EXPIRES = None
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_TRACK_STARTED = True
     CELERY_DEFAULT_QUEUE = 'gitlab_tools'
