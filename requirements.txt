@@ -1,6 +1,7 @@
 flask-login
 Flask-Navigation
 Flask-Babel
+Flask-Celery-Helper
 celery
 redis
 WTForms
