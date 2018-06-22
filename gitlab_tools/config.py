@@ -25,15 +25,13 @@ class CeleryConfig(HardCoded):
     CELERY_ACCEPT_CONTENT = ['json']
     CELERY_ACKS_LATE = True
     CELERY_DISABLE_RATE_LIMITS = True
-    CELERY_IMPORTS = ('gitlab_tools',)
+    CELERY_IMPORTS = ('gitlab_tools', )
     CELERY_RESULT_SERIALIZER = 'json'
     CELERY_TASK_RESULT_EXPIRES = 10 * 60  # Dispose of Celery Beat results after 10 minutes.
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_TRACK_STARTED = True
     CELERY_DEFAULT_QUEUE = 'gitlab_tools'
-    CELERYBEAT_SCHEDULER = 'gitlab_tools.celery.beat.schedulers.DatabaseScheduler'
-    CELERY_RESULT_BACKEND = 'gitlab_tools.celery.result.rpc.RPCBackend'
-    CELERY_RESULT_BACKEND_QUEUE = 'gitlab_tools_result'
+    CELERYBEAT_SCHEDULER = 'gitlab_tools.celery_beat.schedulers.DatabaseScheduler'
 
 
 class Config(CeleryConfig):
