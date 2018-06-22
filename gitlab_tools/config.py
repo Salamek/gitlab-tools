@@ -36,31 +36,28 @@ class CeleryConfig(HardCoded):
     CELERY_RESULT_BACKEND_QUEUE = 'gitlab_tools_result'
 
 
-class CacheConfig(CeleryConfig):
-    CACHE_TYPE = 'redis'
-    CACHE_KEY_PREFIX = 'gitlab_tools'
-
-
-class Config(CacheConfig):
+class Config(CeleryConfig):
     """Default Flask configuration inherited by all environments. Use this for development environments."""
     DEBUG = True
     TESTING = False
     SECRET_KEY = "i_don't_want_my_cookies_expiring_while_developing"
     SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/gitlab-tools.db'
     CELERY_BROKER_URL = 'amqp://127.0.0.1:5672/'
-    CELERY_RESULT_BACKEND = 'db+postgresql://gitlab_tools:391569b0140b9f6ddd38c0de86475ac8@127.0.0.1/gitlab_tools'
     CELERY_TASK_LOCK_BACKEND = 'redis://127.0.0.1/0'
     PORT = 5000
     HOST = '0.0.0.0'
     GITLAB_API_VERSION = 4
     USER = getpass.getuser()
 
+    @property
+    def CELERY_RESULT_BACKEND(self):
+        return 'db+{}'.format(self.SQLALCHEMY_DATABASE_URI)
+
 
 class Testing(Config):
     TESTING = True
     CELERY_ALWAYS_EAGER = True
     CELERY_BROKER_URL = 'amqp://127.0.0.1:5672/'
-    #CELERY_RESULT_BACKEND = 'rpc://127.0.0.1:5672/'
     CELERY_TASK_LOCK_BACKEND = 'redis://127.0.0.1/0'
 
 

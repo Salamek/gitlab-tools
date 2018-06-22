@@ -30,7 +30,7 @@ def get_config(config_class_string: str, yaml_files: list=None) -> Config:
     A class object to be fed into app.config.from_object().
     """
     config_module, config_class = config_class_string.rsplit('.', 1)
-    config_obj = getattr(import_module(config_module), config_class)
+    config_obj = getattr(import_module(config_module), config_class)()
 
     # Expand some options.
     db_fmt = 'gitlab_tools.models.{}'
