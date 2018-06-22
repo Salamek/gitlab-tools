@@ -6,7 +6,11 @@ from celery import schedules
 from celery.beat import ScheduleEntry, Scheduler
 from celery.utils.encoding import safe_str
 from celery.utils.log import get_logger
-from celery.utils.time import is_naive
+
+try:
+    from celery.utils.time import is_naive
+except ImportError:
+    from celery.utils.timeutils import is_naive
 
 from gitlab_tools.models.celery import PeriodicTask, PeriodicTasks, CrontabSchedule, IntervalSchedule
 from gitlab_tools.extensions import db
