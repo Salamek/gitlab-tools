@@ -17,7 +17,6 @@ from flask_celery import Celery
 from flask_login import LoginManager
 from flask_navigation import Navigation
 from flask_migrate import Migrate
-from flask_caching import Cache
 
 LOG = getLogger(__name__)
 APP_ROOT_FOLDER = os.path.abspath(os.path.dirname(app_root.__file__))
