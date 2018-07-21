@@ -86,7 +86,7 @@ After this you should have gitlab-tools running on your "server name"
 Install uwsgi
 
 ```
-$ apt isntall uwsgi uwsgi-plugin-python3
+$ apt install uwsgi uwsgi-plugin-python3
 ```
 
 Create uwsgi application configuration file at `/etc/uwsgi/apps-available/gitlab-tools.example.com.ini`:
