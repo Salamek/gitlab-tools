@@ -46,7 +46,7 @@ def get_group(group_id: int):
     gl = get_gitlab_instance()
     return gl.groups.get(group_id)
 
+
 def get_project(project_id: int):
     gl = get_gitlab_instance()
-
     return gl.projects.get(project_id)

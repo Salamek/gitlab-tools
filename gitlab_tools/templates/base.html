@@ -9,7 +9,7 @@
     <meta name="keywors" content="{{_('GitLab Tools')}}">
     <meta name="author" content="Adam Schubert">
 
-    <title>{{_('GitLab Tools')}}</title>
+    <title>{{_('GitLab Tools')}} {% block append_title %}{% endblock %}</title>
 
     <!-- Bootstrap core CSS -->
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='node_modules/font-awesome/css/font-awesome.min.css') }}">
