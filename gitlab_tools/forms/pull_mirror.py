@@ -60,6 +60,12 @@ class NewForm(Form):
             )
             return False
 
+        if not self.group.data:
+            self.group.errors.append(
+                gettext('You have to select GitLab group where mirrored project will be created.')
+            )
+            return False
+
         try:
             check_project_visibility_in_group(self.visibility.data, self.group.data)
         except VisibilityError as e:
