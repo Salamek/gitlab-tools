@@ -57,6 +57,11 @@
 </nav>
 
 <div class="container {{layout}}">
+    <noscript>
+        <div class="alert alert-danger">
+            {{_('This application requires JavaScript enabled to work properly!')}}
+        </div>
+    </noscript>
     {% for category, message in get_flashed_messages(with_categories=true) %}
     <div class="alert alert-{{category}}">{{ message |safe}}</div>
     {% endfor %}
