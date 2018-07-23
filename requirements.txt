@@ -1,18 +1,18 @@
-Flask-Login==0.4.1
+Flask-Login==0.4.*
 Flask-Navigation==0.2.0
-Flask-Babel==0.11.2
+Flask-Babel==0.11.*
 Flask-Celery-Helper>=1.1.0
-celery==4.2.1
-redis==2.10.6
-WTForms==2.2.1
-Flask-Migrate==2.1.1
-raven==6.9.0
-psycopg2==2.7.5
-requests==2.19.1
+celery>=3.1.23,<=4.2.*
+redis==2.10.*
+WTForms>=2.1.0, <=2.2.*
+Flask-Migrate>=1.7.0,<=2.1.*
+raven>=6.0.0, <=6.9.*
+psycopg2>=2.6.2, <=2.7.*
+requests>=2.12.4, <=2.19.*
 docopt==0.6.2
-PyYAML==3.13
-pycrypto==2.6.1
-python-gitlab==0.18
-GitPython==2.1.11
-paramiko==2.4.1
+PyYAML>=3.12,<=3.13.*
+pycrypto>=2.6.1
+python-gitlab>=0.18, <=1.5.*
+GitPython>=2.1.1,<=2.1.*
+paramiko>=2.0.0, <=2.4.1
 cron-descriptor==1.2.16
