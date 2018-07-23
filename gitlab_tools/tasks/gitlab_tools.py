@@ -195,6 +195,9 @@ def save_pull_mirror(mirror_id: int) -> None:
             git_remote_target.hostname,
             git_remote_target_original.hostname
         )
+        mirror.target = git_remote_target.url
+        db.session.add(mirror)
+        db.session.commit()
     else:
         git_remote_target = None
 
@@ -214,7 +217,7 @@ def save_pull_mirror(mirror_id: int) -> None:
         gl.http_post('/projects/{project_id}/housekeeping'.format(project_id=gitlab_project.id))
 
     # 5. Set last_sync date to mirror
-    mirror.target = git_remote_target.url
+
     mirror.last_sync = datetime.datetime.now()
     db.session.add(mirror)
     db.session.commit()
