@@ -22,6 +22,7 @@ depends=(
     'python-flask-wtf'
     'python-raven'
     'python-docopt'
+    'python-crypto'
     'python-flask-babel'
     'python-flask-navigation'
     'python-celery'
