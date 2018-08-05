@@ -18,7 +18,7 @@ Mainly useful for pull mirroring from GitHub
 
 # Installation
 
-## Debian and derivates
+## Debian and derivates (Debian 9 and Ubuntu 18.04 LTS are supported, other versions may also work...)
 
 Add repository by running these commands
 
