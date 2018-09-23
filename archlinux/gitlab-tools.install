@@ -6,10 +6,22 @@ pre_install() {
 ## arg 1:  the new package version
 post_install() {
         useradd -m gitlab-tools
-        systemctl enable redis
-        systemctl restart redis
-        systemctl enable rabbitmq
-        systemctl restart rabbitmq
+        if ! systemctl is-enabled --quiet redis; then
+            systemctl enable redis
+        fi
+        
+        if ! systemctl is-active --quiet redis; then
+            systemctl restart redis
+        fi
+        
+        if ! systemctl is-enabled --quiet rabbitmq; then
+            systemctl enable rabbitmq
+        fi
+        
+        if ! systemctl is-active --quiet rabbitmq; then
+            systemctl restart rabbitmq
+        fi
+        
         gitlab-tools post_install --config_prod --user=gitlab-tools
         systemctl daemon-reload
         systemctl start gitlab-tools
@@ -33,16 +45,15 @@ post_upgrade() {
         systemctl daemon-reload
 
         # Restart service only when is active or enabled
-        systemctl is-active --quiet gitlab-tools || systemctl is-enabled --quiet gitlab-tools
-        if [ $? -eq 0 ]; then
+        if systemctl is-active --quiet gitlab-tools || systemctl is-enabled --quiet gitlab-tools; then
             systemctl restart gitlab-tools
         fi
-        systemctl is-active --quiet gitlab-tools_celeryworker || systemctl is-enabled --quiet gitlab-tools_celeryworker
-        if [ $? -eq 0 ]; then
+        
+        if systemctl is-active --quiet gitlab-tools_celeryworker || systemctl is-enabled --quiet gitlab-tools_celeryworker; then
             systemctl restart gitlab-tools_celeryworker
         fi
-        systemctl is-active --quiet gitlab-tools_celerybeat || systemctl is-enabled --quiet gitlab-tools_celerybeat
-        if [ $? -eq 0 ]; then
+        
+        if systemctl is-active --quiet gitlab-tools_celerybeat || systemctl is-enabled --quiet gitlab-tools_celerybeat; then
             systemctl restart gitlab-tools_celerybeat
         fi
 }
