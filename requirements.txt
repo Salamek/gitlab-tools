@@ -15,4 +15,4 @@ pycrypto>=2.6.1
 python-gitlab>=0.18,<=1.5.*
 GitPython>=2.1.1,<=2.1.11
 paramiko>=2.0.0,<=2.4.1
-cron-descriptor==1.2.16
+cron-descriptor==1.2.20
