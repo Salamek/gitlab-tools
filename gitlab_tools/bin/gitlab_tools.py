@@ -116,7 +116,7 @@ def setup_logging(name: str=None, level: int=logging.DEBUG):
     formatter = CustomFormatter(fmt, datefmt)
 
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.ERROR if log_to_disk else logging.DEBUG)
+    console_handler.setLevel(level)
     console_handler.setFormatter(formatter)
 
     root = logging.getLogger()
@@ -501,8 +501,9 @@ def celerydev():
 
 @command
 def celerybeat():
-    setup_logging('celerybeat')
-    app = create_app(parse_options())
+    options = parse_options()
+    setup_logging('celerybeat', logging.DEBUG if options.DEBUG else logging.WARNING)
+    app = create_app(options)
     Logging._setup = True
     celery_args = ['celery', 'beat', '-C', '--pidfile', OPTIONS['--pid'], '-s', OPTIONS['--schedule']]
     with app.app_context():
@@ -511,8 +512,9 @@ def celerybeat():
 
 @command
 def celeryworker():
-    setup_logging('celeryworker{}'.format(OPTIONS['--name']))
-    app = create_app(parse_options(), no_sql=True)
+    options = parse_options()
+    setup_logging('celeryworker{}'.format(OPTIONS['--name']), logging.DEBUG if options.DEBUG else logging.WARNING)
+    app = create_app(options, no_sql=True)
     Logging._setup = True
     celery_args = ['celery', 'worker', '-n', OPTIONS['--name'], '-C', '--autoscale=10,1', '--without-gossip']
     with app.app_context():
