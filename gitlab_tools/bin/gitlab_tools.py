@@ -239,7 +239,7 @@ def list_routes() -> None:
             options = {}
             integer = 0
             for arg in rule.arguments:
-                options[arg] = integer
+                options[arg] = str(integer)
                 integer_replaces[str(integer)] = "[{0}]".format(arg)
                 integer = +1
 
