@@ -53,7 +53,7 @@ package:archlinux:
     - echo "[salamek]" >> /etc/pacman.conf
     - echo "Server = https://arch.salamek.cz/any" >> /etc/pacman.conf
     - echo "SigLevel = Optional" >> /etc/pacman.conf
-    - pacman -Syu python-pip gcc nodejs python-crypto sudo git python-gitlab redis python-paramiko openssh npm python-gitpython python-flask-celery-helper python-celery python-flask python-babel python-yaml python-flask-login python-flask-migrate python-flask-wtf python-raven python-docopt python-eventlet python-psycopg2 python-flask-babel python-flask-navigation python-cron-descriptor fakeroot systemd python-kombu rabbitmq --noconfirm
+    - pacman -Syu python-pip base gcc nodejs python-crypto sudo git python-gitlab redis python-paramiko openssh npm python-gitpython python-flask-celery-helper python-celery python-flask python-babel python-yaml python-flask-login python-flask-migrate python-flask-wtf python-raven python-docopt python-eventlet python-psycopg2 python-flask-babel python-flask-navigation python-cron-descriptor fakeroot systemd python-kombu rabbitmq --noconfirm
     - useradd -m -G users -s /bin/bash package
     - chown -R package:users archlinux
     - cd archlinux
