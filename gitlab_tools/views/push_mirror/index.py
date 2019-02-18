@@ -53,15 +53,16 @@ def new_mirror():
         is_prune_mirrors=False
     )
     if flask.request.method == 'POST' and form.validate():
-        project_mirror = GitRemote(form.project_mirror.data)
-        target = GitRemote(form.project_mirror.data)
+        project_mirror_str = form.project_mirror.data.strip()
+        project_mirror = GitRemote(project_mirror_str)
+        target = GitRemote(project_mirror_str)
         if target.vcs_protocol == ProtocolEnum.SSH:
             # If protocol is SSH we need to convert URL to use USER RSA pair
-            target = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
+            target = GitRemote(convert_url_for_user(project_mirror_str, current_user))
 
         mirror_new = PushMirror()
         # PushMirror
-        mirror_new.project_mirror = form.project_mirror.data
+        mirror_new.project_mirror = project_mirror_str
         mirror_new.project = process_project(form.project.data)
 
         # Mirror
@@ -118,14 +119,15 @@ def edit_mirror(mirror_id: int):
         project=mirror_detail.project.gitlab_id
     )
     if flask.request.method == 'POST' and form.validate():
-        project_mirror = GitRemote(form.project_mirror.data)
-        target = GitRemote(form.project_mirror.data)
+        project_mirror_str = form.project_mirror.data.strip()
+        project_mirror = GitRemote(project_mirror_str)
+        target = GitRemote(project_mirror_str)
         if target.vcs_protocol == ProtocolEnum.SSH:
             # If protocol is SSH we need to convert URL to use USER RSA pair
-            target = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
+            target = GitRemote(convert_url_for_user(project_mirror_str, current_user))
 
         # PullMirror
-        mirror_detail.project_mirror = form.project_mirror.data
+        mirror_detail.project_mirror = project_mirror_str
         mirror_detail.project = process_project(form.project.data)
 
         # Mirror

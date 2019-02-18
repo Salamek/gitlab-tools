@@ -132,16 +132,17 @@ def new_mirror():
         is_jobs_enabled=True
     )
     if flask.request.method == 'POST' and form.validate():
-        project_mirror = GitRemote(form.project_mirror.data)
-        source = GitRemote(form.project_mirror.data)
+        project_mirror_str = form.project_mirror.data.strip()
+        project_mirror = GitRemote(project_mirror_str)
+        source = GitRemote(project_mirror_str)
         if source.vcs_protocol == ProtocolEnum.SSH:
             # If protocol is SSH we need to convert URL to use USER RSA pair
-            source = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
+            source = GitRemote(convert_url_for_user(project_mirror_str, current_user))
 
         mirror_new = PullMirror()
         # PullMirror
         mirror_new.project_name = form.project_name.data
-        mirror_new.project_mirror = form.project_mirror.data
+        mirror_new.project_mirror = project_mirror_str
         mirror_new.is_no_create = form.is_no_create.data
         mirror_new.is_force_create = form.is_force_create.data
         mirror_new.is_no_remote = form.is_no_remote.data
@@ -224,15 +225,16 @@ def edit_mirror(mirror_id: int):
         is_jobs_enabled=mirror_detail.is_jobs_enabled
     )
     if flask.request.method == 'POST' and form.validate():
-        project_mirror = GitRemote(form.project_mirror.data)
-        source = GitRemote(form.project_mirror.data)
+        project_mirror_str = form.project_mirror.data.strip()
+        project_mirror = GitRemote(project_mirror_str)
+        source = GitRemote(project_mirror_str)
         if source.vcs_protocol == ProtocolEnum.SSH:
             # If protocol is SSH we need to convert URL to use USER RSA pair
-            source = GitRemote(convert_url_for_user(form.project_mirror.data, current_user))
+            source = GitRemote(convert_url_for_user(project_mirror_str, current_user))
 
         # PullMirror
         mirror_detail.project_name = form.project_name.data
-        mirror_detail.project_mirror = form.project_mirror.data
+        mirror_detail.project_mirror = project_mirror_str
         mirror_detail.is_no_create = form.is_no_create.data
         mirror_detail.is_force_create = form.is_force_create.data
         mirror_detail.is_no_remote = form.is_no_remote.data
