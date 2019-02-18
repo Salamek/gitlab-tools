@@ -7,7 +7,7 @@ backup=('etc/gitlab-tools/config.yml')
 license=('GPL-3.0')
 url='https://github.com/Salamek/gitlab-tools'
 install=gitlab-tools.install
-makedepends=('python-setuptools' 'yarn')
+makedepends=('python-setuptools' 'npm')
 depends=(
     'python'
     'systemd'
