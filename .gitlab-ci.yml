@@ -29,6 +29,7 @@ package:debian:
     - apt-get update -qy
     - apt-get install -y curl gnupg apt-transport-https
     - curl -sL https://apt.salamek.cz/apt/conf/salamek.gpg.key | apt-key add -
+    - curl -sL https://deb.nodesource.com/setup_11.x | bash -
     - echo "deb https://apt.salamek.cz/apt all main" | tee /etc/apt/sources.list.d/salamek.cz.list
     - apt-get update -qy
     - apt-get install -y nodejs python3-python-gitlab python3-paramiko python3-git python3-flask-celery-helper python3-dev python-pip redis-server python3-pip python3-stdeb python3-celery nodejs git python3-markupsafe python3-psycopg2 python3-dateutil python3-docopt python3-yaml python3-wtforms python3-raven python3-flask-migrate python3-flask-babel python3-flask-navigation python3-cron-descriptor python3-flask-login python3-kombu rabbitmq-server
