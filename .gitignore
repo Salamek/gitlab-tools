@@ -2,4 +2,4 @@ gitlab_tools/static/node_modules
 *.pyc
 .idea/*
 __pycache__/
-
+venv
