@@ -46,7 +46,7 @@ prepare() {
 
 build() {
   cd "${srcdir}/${pkgname}/gitlab_tools/static"
-  yarn install
+  npm install
 }
 
 package() {

@@ -1,11 +1,12 @@
 {
+  "description": "Gitlab Tools npm",
+  "license": "GPL-3.0",
+  "repository": "https://github.com/Salamek/gitlab-tools",
   "dependencies": {
-    "bootstrap": "twbs/bootstrap#~3.3.7",
-    "font-awesome": "FortAwesome/Font-Awesome#~4.7.0",
-    "jquery": "jquery/jquery-dist#~3.2.1",
-    "select2": "ivaynberg/select2#^4.0.5"
-  },
-  "engines": {
-    "yarn": ">= 1.0.0"
+    "bootstrap": "^3.3.7",
+    "font-awesome": "^4.7.0",
+    "jquery": "^3.2.1",
+    "select2": "^4.0.6-rc.1",
+    "select2-bootstrap-theme": "0.1.0-beta.10"
   }
 }
