@@ -169,9 +169,9 @@ Link this file to `/etc/nginx/sites-enabled` by running
 $ ln -s /etc/nginx/sites-available/gitlab-tools.example.com /etc/nginx/sites-enabled/
 ```
 
-And restart uwsgi
+And restart nginx
 ```bash
-$ systemctl restart uwsgi
+$ systemctl restart nginx
 ```
 
 Now you should have gitlab-tools accessible at `server_name`
