@@ -68,6 +68,7 @@ def get_remote_server_key(ip: str, port: int=22) -> paramiko.pkey.PKey:
     my_socket.connect((ip, port))
 
     my_transport = paramiko.Transport(my_socket)
+    my_transport.banner_timeout = 30
     my_transport.start_client()
     ssh_key = my_transport.get_remote_server_key()
 
