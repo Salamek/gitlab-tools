@@ -15,4 +15,5 @@ pycrypto>=2.6.1
 python-gitlab>=0.18,<=1.5.*
 GitPython>=2.1.1,<=2.1.11
 paramiko>=2.4.2
+Flask-Script==2.0.6
 cron-descriptor==1.2.21

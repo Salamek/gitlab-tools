@@ -20,6 +20,7 @@ depends=(
     'python-flask-login'
     'python-flask-migrate'
     'python-flask-wtf'
+    'python-flask-script'
     'python-raven'
     'python-docopt'
     'python-crypto'
