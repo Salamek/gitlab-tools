@@ -12,7 +12,7 @@ __date__ = "$26.7.2017 19:33:05$"
 
 
 class NewForm(Form):
-    project_name = StringField(None, [validators.Regexp('^[a-zA-Z0-9_-]+( \w+)*$', message='Project name cannot contain special characters')])
+    project_name = StringField(None, [validators.Regexp('^[a-zA-Z0-9._-]+( \w+)*$', message='Project name cannot contain special characters')])
     project_mirror = StringField(None, [validators.Length(min=1, max=255)])
     periodic_sync = StringField(None, [validators.Optional()])
     note = TextAreaField(None, [validators.Optional()])
