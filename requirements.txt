@@ -11,9 +11,11 @@ psycopg2>=2.6.2,<=2.7.5
 requests>=2.20.0
 docopt==0.6.2
 PyYAML>=3.12,<=3.13.*
-pycrypto>=2.6.1
+pycryptodome==3.14.1
 python-gitlab>=0.18,<=1.5.*
-GitPython>=2.1.1,<=2.1.11
+GitPython==2.1.15
+gitdb2==2.0.6
+gitdb==0.6.4
 paramiko>=2.4.2
 Flask-Script==2.0.6
 cron-descriptor==1.2.21
