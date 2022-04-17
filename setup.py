@@ -97,7 +97,7 @@ else:
 
 setup(
     name='gitlab-tools',
-    version='1.1.12',
+    version='1.1.13',
     description='GitLab Tools',
     long_description=long_description,
     long_description_context_type='text/markdown',
