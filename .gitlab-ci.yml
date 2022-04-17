@@ -23,7 +23,7 @@ package:debian:
     - wget -O- https://repository.salamek.cz/deb/salamek.gpg | tee /usr/share/keyrings/salamek-archive-keyring.gpg
     - echo "deb     [signed-by=/usr/share/keyrings/salamek-archive-keyring.gpg] https://repository.salamek.cz/deb/pub all main" | tee /etc/apt/sources.list.d/salamek.cz.list
     - apt-get update -qy
-    - apt-get install -y nodejs python3-python-gitlab python3-paramiko python3-git python3-flask-celery-tools python3-dev redis-server python3-pip python3-stdeb python3-celery nodejs git python3-markupsafe python3-psycopg2 python3-dateutil python3-docopt python3-yaml python3-wtforms python3-raven python3-flask-migrate python3-flask-babel python3-flask-navigation python3-cron-descriptor python3-flask-login python3-kombu rabbitmq-server
+    - apt-get install -y nodejs npm python3-python-gitlab python3-paramiko python3-git python3-flask-celery-tools python3-dev redis-server python3-pip python3-stdeb python3-celery nodejs git python3-markupsafe python3-psycopg2 python3-dateutil python3-docopt python3-yaml python3-wtforms python3-raven python3-flask-migrate python3-flask-babel python3-flask-navigation python3-cron-descriptor python3-flask-login python3-kombu rabbitmq-server
     - rm -rf "./deb_dist"
     - cd gitlab_tools/static
     - npm install
