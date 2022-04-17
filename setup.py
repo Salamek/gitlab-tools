@@ -61,7 +61,7 @@ extra_files.extend(package_files('gitlab_tools/static/node_modules/jquery/dist')
 install_requires = [
     'redis==3.5.*',
     'WTForms==2.2.1',
-    'psycopg2==2.8.6',
+    'psycopg2-binary==2.8.6',
     'pycryptodomex>=3.9.7',
     'python-gitlab>=0.18,<=1.5.*',
     'GitPython>=3.1.14',
