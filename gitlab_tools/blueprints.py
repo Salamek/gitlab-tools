@@ -9,7 +9,7 @@ URL paths are defined here as well.
 from flask import Blueprint
 
 
-def _factory(partial_module_string: str, url_prefix: str=None) -> Blueprint:
+def _factory(name: str, partial_module_string: str, url_prefix: str = None) -> Blueprint:
     """Generates blueprint objects for view modules.
 
     Positional arguments:
@@ -20,20 +20,19 @@ def _factory(partial_module_string: str, url_prefix: str=None) -> Blueprint:
     Returns:
     Blueprint instance for a view module.
     """
-    name = partial_module_string
     import_name = 'gitlab_tools.views.{}'.format(partial_module_string)
     template_folder = 'templates'
     blueprint = Blueprint(name, import_name, template_folder=template_folder, url_prefix=url_prefix)
     return blueprint
 
 
-home_index = _factory('home.index')
-sign_index = _factory('sign.index', '/sign')
-api_index = _factory('api.index', '/api')
+home_index = _factory('home_index', 'home.index')
+sign_index = _factory('sign_index', 'sign.index', '/sign')
+api_index = _factory('api_index', 'api.index', '/api')
 
-pull_mirror_index = _factory('pull_mirror.index', '/pull-mirror')
-push_mirror_index = _factory('push_mirror.index', '/push-mirror')
-fingerprint_index = _factory('fingerprint.index', '/fingerprint')
+pull_mirror_index = _factory('pull_mirror_index', 'pull_mirror.index', '/pull-mirror')
+push_mirror_index = _factory('push_mirror_index', 'push_mirror.index', '/push-mirror')
+fingerprint_index = _factory('fingerprint_index', 'fingerprint.index', '/fingerprint')
 
 
 all_blueprints = (

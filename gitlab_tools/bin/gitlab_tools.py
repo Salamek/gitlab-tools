@@ -14,7 +14,7 @@ Command details:
                         application context.
     create_all          Only create database tables if they don't exist and
                         then exit
-    migrations          Migrations
+    db                  Migrations
     list_routes         List all available routes
     post_install        Post install script
     celerybeat          Run a Celery Beat periodic task scheduler.
@@ -29,8 +29,7 @@ Usage:
     gitlab-tools shell [--config_prod]
     gitlab-tools create_all [--config_prod]
     gitlab-tools post_install [--config_prod] [--user=USER]
-    gitlab-tools migrations (upgrade|current|migrate|history|heads|show|stamp|downgrade|init|revision|merge|branches|edit) [--config_prod]
-    gitlab-tools migrations stamp <revision> [--config_prod] [-h] [-d DIRECTORY] [--sql] [--tag TAG]
+    gitlab-tools db [<action>] [<param1>] [--config_prod]
     gitlab-tools celerydev [-l DIR] [--config_prod]
     gitlab-tools celerybeat [-s FILE] [--pid=FILE] [-l DIR] [--config_prod]
     gitlab-tools celeryworker [-n NUM] [-l DIR] [--config_prod]
@@ -67,14 +66,14 @@ from functools import wraps
 import flask
 import yaml
 from celery.app.log import Logging
-from celery.bin.celery import main as celery_main
+from celery.utils.nodenames import default_nodename, host_format, node_format
 from docopt import docopt
-from flask_migrate import MigrateCommand, stamp
-from flask_script import Shell, Manager
+from flask_migrate import stamp
+
 
 from gitlab_tools.application import create_app, get_config
 from gitlab_tools.config import Config
-from gitlab_tools.extensions import db
+from gitlab_tools.extensions import db, celery
 from gitlab_tools.tools.crypto import random_password
 from gitlab_tools.tools.helpers import get_home_dir, get_user_group_id, get_user_id, get_repository_storage, \
     get_ssh_storage
@@ -162,7 +161,7 @@ def parse_options() -> Config:
     return config_obj
 
 
-def command(func):
+def command(name: str = None):
     """Decorator that registers the chosen command/function.
 
     If a function is decorated with @command but that function name is not a valid "command" according to the docstring,
@@ -183,20 +182,27 @@ def command(func):
     Positional arguments:
     func -- the function to decorate
     """
-    @wraps(func)
-    def wrapped():
-        return func()
 
-    # Register chosen function.
-    if func.__name__ not in OPTIONS:
-        raise KeyError('Cannot register {}, not mentioned in docstring/docopt.'.format(func.__name__))
-    if OPTIONS[func.__name__]:
-        command.chosen = func
+    def function_wrap(func):
 
-    return wrapped
+        @wraps(func)
+        def wrapped():
+            return func()
+
+        command_name = name if name else func.__name__
+
+        # Register chosen function.
+        if command_name not in OPTIONS:
+            raise KeyError('Cannot register {}, not mentioned in docstring/docopt.'.format(command_name))
+        if OPTIONS[command_name]:
+            command.chosen = func
+
+        return wrapped
+
+    return function_wrap
 
 
-@command
+@command()
 def server() -> None:
     options = parse_options()
     setup_logging('server', logging.DEBUG if options.DEBUG else logging.WARNING)
@@ -205,15 +211,7 @@ def server() -> None:
     app.run(host=app.config['HOST'], port=int(app.config['PORT']), debug=app.config['DEBUG'])
 
 
-@command
-def shell() -> None:
-    setup_logging('shell')
-    app = create_app(parse_options())
-    app.app_context().push()
-    Shell(make_context=lambda: dict(app=app, db=db)).run(no_ipython=False, no_bpython=False)
-
-
-@command
+@command()
 def create_all() -> None:
     setup_logging('create_all')
     app = create_app(parse_options())
@@ -227,7 +225,7 @@ def create_all() -> None:
         log.info('Created table: {}'.format(table))
 
 
-@command
+@command()
 def list_routes() -> None:
     output = []
     app = create_app(parse_options())
@@ -254,7 +252,7 @@ def list_routes() -> None:
             print(line)
 
 
-@command
+@command()
 def post_install() -> None:
     if not os.geteuid() == 0:
         sys.exit('Script must be run as root')
@@ -265,7 +263,7 @@ def post_install() -> None:
     configuration = {}
     if os.path.isfile(config_path):
         with open(config_path) as f:
-            loaded_data = yaml.load(f)
+            loaded_data = yaml.load(f, Loader=yaml.SafeLoader)
             if isinstance(loaded_data, dict):
                 configuration.update(loaded_data)
 
@@ -305,7 +303,7 @@ def post_install() -> None:
         yaml.dump(configuration, f, default_flow_style=False, allow_unicode=True)
 
 
-@command
+@command()
 def setup() -> None:
     if not os.geteuid() == 0:
         sys.exit('Script must be run as root')
@@ -489,44 +487,70 @@ def setup() -> None:
         subprocess.call(['systemctl', 'restart', 'gitlab-tools'])
 
 
-@command
+@command()
 def celerydev():
-    setup_logging('celerydev')
-    app = create_app(parse_options(), no_sql=True)
-    Logging._setup = True  # Disable Celery from setting up logging, already done in setup_logging().
-    celery_args = ['celery', 'worker', '-B', '-s', '/tmp/celery.db', '--concurrency=5']
+    options = parse_options()
+    setup_logging('celerydev', logging.DEBUG if options.DEBUG else logging.WARNING)
+    Logging._setup = True
+    app = create_app(options, no_sql=True)
     with app.app_context():
-        return celery_main(celery_args)
+        hostname = OPTIONS['--name'] if OPTIONS['--name'] else host_format(default_nodename(None))
+        worker = celery.Worker(
+            hostname=hostname, pool_cls=None, loglevel='WARNING',
+            logfile=None,  # node format handled by celery.app.log.setup
+            pidfile=node_format(None, hostname),
+            statedb=node_format(None, hostname),  # ctx.obj.app.conf.worker_state_db
+            no_color=False,
+            concurrency=5,
+            schedule='/tmp/celery.db',
+            beat=True
+
+        )
+        worker.start()
+        return worker.exitcode
 
 
-@command
+@command()
 def celerybeat():
     options = parse_options()
     setup_logging('celerybeat', logging.DEBUG if options.DEBUG else logging.WARNING)
-    app = create_app(options)
     Logging._setup = True
-    celery_args = ['celery', 'beat', '-C', '--pidfile', OPTIONS['--pid'], '-s', OPTIONS['--schedule']]
+    app = create_app(options, no_sql=True)
     with app.app_context():
-        return celery_main(celery_args)
+        return celery.Beat(
+            logfile=None,
+            pidfile=OPTIONS['--pid'],
+            schedule=OPTIONS['--schedule']
+        ).run()
 
 
-@command
+@command()
 def celeryworker():
     options = parse_options()
     setup_logging('celeryworker{}'.format(OPTIONS['--name']), logging.DEBUG if options.DEBUG else logging.WARNING)
-    app = create_app(options, no_sql=True)
     Logging._setup = True
-    celery_args = ['celery', 'worker', '-n', OPTIONS['--name'], '-C', '--autoscale=10,1', '--without-gossip']
+    app = create_app(options, no_sql=True)
     with app.app_context():
-        return celery_main(celery_args)
+        hostname = OPTIONS['--name'] if OPTIONS['--name'] else host_format(default_nodename(None))
+        worker = celery.Worker(
+            hostname=hostname, pool_cls=None, loglevel='WARNING',
+            logfile=None,  # node format handled by celery.app.log.setup
+            pidfile=node_format(None, hostname),
+            statedb=node_format(None, hostname),  # ctx.obj.app.conf.worker_state_db
+            no_color=False,
+            autoscale='10,1',
+            without_gossip=True
+
+        )
+        worker.start()
+        return worker.exitcode
 
 
-@command
-def migrations() -> None:
-    app = create_app(parse_options())
-    manager = Manager(app)
-    manager.add_command('migrations', MigrateCommand)
-    manager.run()
+@command(name='db')
+def _db():
+    from flask.cli import FlaskGroup
+    cli = FlaskGroup(create_app=lambda: create_app(parse_options()))
+    cli.main(args=sys.argv[1:])
 
 
 def main() -> None:

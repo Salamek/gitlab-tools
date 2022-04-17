@@ -15,7 +15,6 @@ from raven.contrib.flask import Sentry
 from flask_babel import Babel
 from flask_celery import Celery
 from flask_login import LoginManager
-from flask_navigation import Navigation
 from flask_migrate import Migrate
 
 LOG = getLogger(__name__)
@@ -41,6 +40,5 @@ db = SQLAlchemy()
 sentry = Sentry()
 babel = Babel()
 login_manager = LoginManager()
-navigation = Navigation()
 celery = Celery()
 migrate = Migrate(directory=MIGRATE_ROOT_FOLDER)

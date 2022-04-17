@@ -2,7 +2,7 @@ import os
 import flask
 import gitlab
 import datetime
-from Crypto.PublicKey import RSA
+from Cryptodome.PublicKey import RSA
 import shutil
 from flask_celery import single_instance
 from gitlab_tools.models.gitlab_tools import PullMirror, User, PushMirror, Project
@@ -26,7 +26,7 @@ LOG = getLogger(__name__)
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def save_pull_mirror(mirror_id: int) -> None:
+def save_pull_mirror(self, mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=mirror_id).first()
     gl = None  # !FIXME this is here cos hotfix on the end of script
     gitlab_project = None  # !FIXME this is here cos hotfix on the end of script
@@ -225,7 +225,7 @@ def save_pull_mirror(mirror_id: int) -> None:
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def save_push_mirror(push_mirror_id) -> None:
+def save_push_mirror(self, push_mirror_id) -> None:
     mirror = PushMirror.query.filter_by(id=push_mirror_id).first()
     gl = gitlab.Gitlab(
         flask.current_app.config['GITLAB_URL'],
@@ -286,7 +286,7 @@ def save_push_mirror(push_mirror_id) -> None:
     # Create hook
     gitlab_project.hooks.create({
         'url': flask.url_for(
-            'api.index.schedule_sync_push_mirror',
+            'api_index.schedule_sync_push_mirror',
             mirror_id=mirror.id,
             token=mirror.hook_token,
             _external=True
@@ -333,28 +333,16 @@ def save_push_mirror(push_mirror_id) -> None:
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def sync_pull_mirror_cron(pull_mirror_id: int) -> None:
+def sync_pull_mirror_cron(self, pull_mirror_id: int) -> None:
     pull_mirror = PullMirror.query.filter_by(id=pull_mirror_id).first()
 
     task = sync_pull_mirror.delay(pull_mirror_id)
     log_task_pending(task, pull_mirror, sync_pull_mirror, InvokedByEnum.SCHEDULER)
 
 
-class MyBaseClassForTask(celery.Task):
-
-    def on_failure(self, exc, task_id, args, kwargs, einfo):
-        # exc (Exception) - The exception raised by the task.
-        # args (Tuple) - Original arguments for the task that failed.
-        # kwargs (Dict) - Original keyword arguments for the task that failed.
-        print('{0!r} failed: {1!r}'.format(task_id, exc))
-
-    def on_success(self, retval, task_id, args, kwargs):
-        print('SUCCESS {} {} {} {}'.format(retval, task_id, args, kwargs))
-
-
-@celery.task(bind=True, base=MyBaseClassForTask)
+@celery.task(bind=True)
 @single_instance(include_args=True)
-def sync_pull_mirror(pull_mirror_id: int) -> None:
+def sync_pull_mirror(self, pull_mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=pull_mirror_id).first()
 
     if not mirror.source:
@@ -376,7 +364,7 @@ def sync_pull_mirror(pull_mirror_id: int) -> None:
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def sync_push_mirror(push_mirror_id: int) -> None:
+def sync_push_mirror(self, push_mirror_id: int) -> None:
     mirror = PushMirror.query.filter_by(id=push_mirror_id).first()
 
     if not mirror.source:
@@ -398,7 +386,7 @@ def sync_push_mirror(push_mirror_id: int) -> None:
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def delete_pull_mirror(pull_mirror_id: int) -> None:
+def delete_pull_mirror(self, pull_mirror_id: int) -> None:
     mirror = PullMirror.query.filter_by(id=pull_mirror_id, is_deleted=True).first()
     if mirror:
         # Check if project clone exists
@@ -418,7 +406,7 @@ def delete_pull_mirror(pull_mirror_id: int) -> None:
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def delete_push_mirror(push_mirror_id: int) -> None:
+def delete_push_mirror(self, push_mirror_id: int) -> None:
     mirror = PushMirror.query.filter_by(id=push_mirror_id, is_deleted=True).first()
     if mirror:
         # Check if project clone exists
@@ -438,7 +426,7 @@ def delete_push_mirror(push_mirror_id: int) -> None:
 
 @celery.task(bind=True)
 @single_instance(include_args=True)
-def create_rsa_pair(user_id: int) -> None:
+def create_rsa_pair(self, user_id: int) -> None:
     user = User.query.filter_by(id=user_id, is_rsa_pair_set=False).first()
     if user:
         # check if priv and pub keys exists
@@ -460,7 +448,7 @@ def create_rsa_pair(user_id: int) -> None:
 
 @celery.task(bind=True)
 @single_instance()
-def create_ssh_config(user_id: int, host: str, hostname: str) -> None:
+def create_ssh_config(self, user_id: int, host: str, hostname: str) -> None:
     user = User.query.filter_by(id=user_id).first()
     if not user:
         raise Exception('User {} not found'.format(user_id))

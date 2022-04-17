@@ -114,7 +114,7 @@ def new_fingerprint():
     )
     if flask.request.method == 'POST' and form.validate():
         flask.flash('New fingerprint was added.', 'success')
-        return flask.redirect(flask.url_for('fingerprint.index.get_fingerprint'))
+        return flask.redirect(flask.url_for('fingerprint_index.get_fingerprint'))
 
     return flask.render_template('fingerprint.index.new.html', form=form)
 
@@ -132,7 +132,7 @@ def delete_fingerprint(hostname: str):
     host_keys.save(known_hosts_path)
     flask.flash('Fingerprint was deleted successfully.', 'success')
 
-    return flask.redirect(flask.url_for('fingerprint.index.get_fingerprint'))
+    return flask.redirect(flask.url_for('fingerprint_index.get_fingerprint'))
 
 
 @fingerprint_index.route('/fingerprint-check', methods=['POST'])

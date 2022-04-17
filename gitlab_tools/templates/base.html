@@ -32,22 +32,31 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="{{ url_for('home.index.get_home') }}">Gitlab Tools</a>
+            <a class="navbar-brand" href="{{ url_for('home_index.get_home') }}">Gitlab Tools</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                {% for item in nav.top %}
-                    <li class="{{ 'active' if item.is_active else '' }}">
-                        <a href="{{ item.url }}">{{item.label}}</a>
+                {% if current_user.is_authenticated %}
+                    <li class="{{ 'active' if False else '' }}">
+                        <a href="{{url_for('home_index.get_home')}}">Home</a>
                     </li>
-                {% endfor %}
+                    <li class="{{ 'active' if False else '' }}">
+                        <a href="{{url_for('pull_mirror_index.get_mirror')}}">Pull mirrors</a>
+                    </li>
+                    <li class="{{ 'active' if False else '' }}">
+                        <a href="{{url_for('push_mirror_index.get_mirror')}}">Push mirrors</a>
+                    </li>
+                    <li class="{{ 'active' if False else '' }}">
+                        <a href="{{url_for('fingerprint_index.get_fingerprint')}}">Fingerprints</a>
+                    </li>
+                {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <li>
                 {% if current_user.is_authenticated %}
-                    <a href="{{url_for('sign.index.logout')}}" data-confirm-message="Are you sure you want to log out ?" class="confirm bg-danger"><img src="{{current_user.avatar_url}}" width="22" height="22" alt="{{current_user.name}}">Logged as {{current_user.name}} (Log out)</a>
+                    <a href="{{url_for('sign_index.logout')}}" data-confirm-message="Are you sure you want to log out ?" class="confirm bg-danger"><img src="{{current_user.avatar_url}}" width="22" height="22" alt="{{current_user.name}}">Logged as {{current_user.name}} (Log out)</a>
                 {% else %}
-                    <a href="{{url_for('sign.index.login')}}">Log in</a>
+                    <a href="{{url_for('sign_index.login')}}">Log in</a>
                 {% endif %}
                 </li>
             </ul>

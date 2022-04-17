@@ -4,7 +4,7 @@
 
 <h1>{{ _('Fingerprints') }}</h1>
 
-<a class="btn btn-success" href="{{url_for('fingerprint.index.new_fingerprint')}}"><i class="fa fa-plus" aria-hidden="true"></i> {{ _('Add') }}</a>
+<a class="btn btn-success" href="{{url_for('fingerprint_index.new_fingerprint')}}"><i class="fa fa-plus" aria-hidden="true"></i> {{ _('Add') }}</a>
 
 <table class="table table-hover">
     <thead>
@@ -51,7 +51,7 @@
             </table>
         </td>
         <td>
-            <a class="btn btn-xs btn-danger confirm" data-confirm-message="{{_('Are you sure you want to delete this fingerprint ?')}}" href="{{url_for('fingerprint.index.delete_fingerprint', hostname=item['hostname'])}}" title="{{ _('Delete') }}"><i class="fa fa-trash" aria-hidden="true"></i></a>
+            <a class="btn btn-xs btn-danger confirm" data-confirm-message="{{_('Are you sure you want to delete this fingerprint ?')}}" href="{{url_for('fingerprint_index.delete_fingerprint', hostname=item['hostname'])}}" title="{{ _('Delete') }}"><i class="fa fa-trash" aria-hidden="true"></i></a>
         </td>
     </tr>
     {% endfor %}

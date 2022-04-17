@@ -9,10 +9,10 @@ from flask import Flask, url_for, request
 from flask_babel import gettext
 from gitlab_tools.blueprints import all_blueprints
 from gitlab_tools.config import Config
-from yaml import load
+from yaml import load, SafeLoader
 
 import gitlab_tools as app_root
-from gitlab_tools.extensions import db, sentry, babel, login_manager, navigation, migrate, celery
+from gitlab_tools.extensions import db, sentry, babel, login_manager, migrate, celery
 
 APP_ROOT_FOLDER = os.path.abspath(os.path.dirname(app_root.__file__))
 TEMPLATE_FOLDER = os.path.join(APP_ROOT_FOLDER, 'templates')
@@ -51,7 +51,7 @@ def get_config(config_class_string: str, yaml_files: list=None) -> Config:
     additional_dict = dict()
     for y in yaml_files:
         with open(y) as f:
-            loaded_data = load(f.read())
+            loaded_data = load(f.read(), Loader=SafeLoader)
             if isinstance(loaded_data, dict):
                 additional_dict.update(loaded_data)
             else:
@@ -102,15 +102,14 @@ def create_app(config_obj: Config, no_sql: bool=False) -> Flask:
     migrate.init_app(app, db)
     sentry.init_app(app)
     babel.init_app(app)
-    navigation.init_app(app)
     celery.init_app(app)
 
     login_manager.init_app(app)
-    login_manager.login_view = "sign.index.login"
+    login_manager.login_view = "sign_index.login"
     login_manager.login_message_category = "info"
     login_manager.localize_callback = gettext
 
-    login_manager.refresh_view = "sign.index.login"
+    login_manager.refresh_view = "sign_index.login"
     login_manager.needs_refresh_message = (
         u"To protect your account, please reauthenticate to access this page."
     )

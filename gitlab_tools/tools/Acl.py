@@ -4,12 +4,6 @@ from flask import jsonify
 from typing import List
 from gitlab_tools.models.gitlab_tools import Role, User
 
-"""
-    if current_user.role not in [Role.ADMIN]:
-        flask.flash('You need to be administrator for this action', 'danger')
-        return flask.redirect(flask.url_for('user.login'))
-"""
-
 
 class Acl(object):
 
