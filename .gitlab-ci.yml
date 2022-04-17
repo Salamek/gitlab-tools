@@ -73,7 +73,6 @@ repoupdate:
     - scp deb_dist/*.deb www-data@repository:/var/www/repository.salamek.cz/cache/deb/priv/all
     - ssh www-data@repository '/var/www/repository.salamek.cz/deb-priv-update.sh'
   dependencies:
-    - package:archlinux
     - package:debian
   tags:
     - docker
