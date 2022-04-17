@@ -27,10 +27,10 @@ $ wget -O - https://repository.salamek.cz/deb/salamek.gpg.key|sudo apt-key add -
 $ echo "deb     https://repository.salamek.cz/deb/pub all main" | sudo tee /etc/apt/sources.list.d/salamek.cz.list
 ```
 
-And then you can install a package python3-gitlab-tools
+And then you can install a package gitlab-tools
 
 ```bash
-$ apt update && apt install python3-gitlab-tools
+$ apt update && apt install gitlab-tools
 ```
 
 ## Archlinux
