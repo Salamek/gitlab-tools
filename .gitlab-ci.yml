@@ -9,7 +9,7 @@ test:debian:
   script:
     - apt-get update -qy
     - apt-get install -y python3-dev python3-pip
-    - pip3 install -r requirements.txt
+    - pip3 install .
     - python3 setup.py test
   tags:
     - debian
@@ -18,7 +18,7 @@ test:archlinux:
   stage: test
   script:
     - pacman -Sy base python-pip --noconfirm gcc
-    - pip install -r requirements.txt
+    - pip install .
     - python setup.py test
   tags:
     - archlinux
@@ -28,11 +28,12 @@ package:debian:
   script:
     - apt-get update -qy
     - apt-get install -y curl gnupg apt-transport-https
-    - curl -sL https://apt.salamek.cz/apt/conf/salamek.gpg.key | apt-key add -
+    - apt-get install -y curl gnupg apt-transport-https wget
+    - wget -O- https://repository.salamek.cz/deb/salamek.gpg | tee /usr/share/keyrings/salamek-archive-keyring.gpg
+    - echo "deb     [signed-by=/usr/share/keyrings/salamek-archive-keyring.gpg] https://granad:6f3cbaf2007d63818be375f9bff12f0e@repository.salamek.cz/deb/priv all main" | tee /etc/apt/sources.list.d/private-salamek.cz.list
     - curl -sL https://deb.nodesource.com/setup_11.x | bash -
-    - echo "deb https://apt.salamek.cz/apt all main" | tee /etc/apt/sources.list.d/salamek.cz.list
     - apt-get update -qy
-    - apt-get install -y nodejs python3-python-gitlab python3-paramiko python3-git python3-flask-celery-helper python3-dev python-pip redis-server python3-pip python3-stdeb python3-celery nodejs git python3-markupsafe python3-psycopg2 python3-dateutil python3-docopt python3-yaml python3-wtforms python3-raven python3-flask-migrate python3-flask-babel python3-flask-navigation python3-cron-descriptor python3-flask-login python3-kombu rabbitmq-server
+    - apt-get install -y nodejs python3-python-gitlab python3-paramiko python3-git python3-flask-celery-tools python3-dev python-pip redis-server python3-pip python3-stdeb python3-celery nodejs git python3-markupsafe python3-psycopg2 python3-dateutil python3-docopt python3-yaml python3-wtforms python3-raven python3-flask-migrate python3-flask-babel python3-flask-navigation python3-cron-descriptor python3-flask-login python3-kombu rabbitmq-server
     - rm -rf "./deb_dist"
     - cd gitlab_tools/static
     - npm install
@@ -51,9 +52,9 @@ package:archlinux:
   stage: package
   script:
     - echo "[salamek]" >> /etc/pacman.conf
-    - echo "Server = https://arch.salamek.cz/any" >> /etc/pacman.conf
+    - echo "Server = https://repository.salamek.cz/arch/pub/any" >> /etc/pacman.conf
     - echo "SigLevel = Optional" >> /etc/pacman.conf
-    - pacman -Syu python-pip base gcc nodejs python-crypto sudo git python-gitlab redis python-paramiko openssh npm python-gitpython python-flask-celery-helper python-celery python-flask python-babel python-yaml python-flask-login python-flask-migrate python-flask-wtf python-raven python-docopt python-eventlet python-psycopg2 python-flask-babel python-flask-navigation python-cron-descriptor fakeroot systemd python-kombu rabbitmq --noconfirm
+    - pacman -Syu python-pip base gcc nodejs python-crypto sudo git python-gitlab redis python-paramiko openssh npm python-gitpython python-flask-celery-tools python-celery python-flask python-babel python-yaml python-flask-login python-flask-migrate python-flask-wtf python-raven python-docopt python-eventlet python-psycopg2 python-flask-babel python-flask-navigation python-cron-descriptor fakeroot systemd python-kombu rabbitmq --noconfirm
     - useradd -m -G users -s /bin/bash package
     - chown -R package:users archlinux
     - cd archlinux
