@@ -1,7 +1,6 @@
 stages:
   - test
   - package
-  - packagetest
   - deploy
 
 test:debian:
@@ -38,23 +37,6 @@ package:debian:
       - deb_dist/*.deb
     expire_in: 1d
 
-
-packagetest:debian:
-  stage: packagetest
-  script:
-    - apt-get update -qy
-    - apt-get install -y curl gnupg apt-transport-https
-    - curl -sL https://apt.salamek.cz/apt/conf/salamek.gpg.key | apt-key add -
-    - echo "deb     https://apt.salamek.cz/apt all main" | tee /etc/apt/sources.list.d/salamek.cz.list
-    - apt-get update -qy
-    - cd deb_dist
-    - apt install ./*.deb -qy
-  tags:
-    - virtualbox-debian
-  dependencies:
-    - package:debian
-  only:
-    - tags
 
 repoupdate:
   stage: deploy
