@@ -27,7 +27,7 @@ package:debian:
     - cd gitlab_tools/static
     - npm install
     - cd -
-    - export DEB_BUILD_OPTIONS=nocheck
+    #- export DEB_BUILD_OPTIONS=nocheck
     - python3 setup.py --command-packages=stdeb.command bdist_deb
   tags:
     - debian
