@@ -14,14 +14,6 @@ test:debian:
   tags:
     - debian
 
-test:archlinux:
-  stage: test
-  script:
-    - pacman -Sy base python-pip --noconfirm gcc
-    - pip install .
-    - python setup.py test
-  tags:
-    - archlinux
 
 package:debian:
   stage: package
@@ -48,24 +40,6 @@ package:debian:
       - deb_dist/*.deb
     expire_in: 1d
 
-package:archlinux:
-  stage: package
-  script:
-    - echo "[salamek]" >> /etc/pacman.conf
-    - echo "Server = https://repository.salamek.cz/arch/pub/any" >> /etc/pacman.conf
-    - echo "SigLevel = Optional" >> /etc/pacman.conf
-    - pacman -Syu python-pip base gcc nodejs python-crypto sudo git python-gitlab redis python-paramiko openssh npm python-gitpython python-flask-celery-tools python-celery python-flask python-babel python-yaml python-flask-login python-flask-migrate python-flask-wtf python-raven python-docopt python-eventlet python-psycopg2 python-flask-babel python-flask-navigation python-cron-descriptor fakeroot systemd python-kombu rabbitmq --noconfirm
-    - useradd -m -G users -s /bin/bash package
-    - chown -R package:users archlinux
-    - cd archlinux
-    - sudo -H -u package makepkg -f
-  tags:
-    - archlinux
-
-  artifacts:
-    paths:
-      - archlinux/gitlab-tools*
-    expire_in: 1d
 
 packagetest:debian:
   stage: packagetest
@@ -84,22 +58,6 @@ packagetest:debian:
   only:
     - tags
 
-packagetest:archlinux:
-  stage: packagetest
-  script:
-    - echo "[salamek]" >> /etc/pacman.conf
-    - echo "Server = https://arch.salamek.cz/any" >> /etc/pacman.conf
-    - echo "SigLevel = Optional" >> /etc/pacman.conf
-    - pacman -Sy
-    - cd archlinux
-    - pacman -U gitlab-tools*.pkg.tar.xz --noconfirm
-  tags:
-    - virtualbox-archlinux
-  dependencies:
-    - package:archlinux
-  only:
-    - tags
-
 repoupdate:
   stage: deploy
   variables:
@@ -111,12 +69,9 @@ repoupdate:
     - mkdir -p ~/.ssh
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
   script:
-    - ssh www-data@salamek.cz 'rm -rf /var/www/arch.salamek.cz/www/any/gitlab-tools*.pkg.tar.xz'
-    - ssh www-data@salamek.cz 'rm -rf /var/www/apt.salamek.cz/cache/gitlab-tools*.deb'
-    - scp archlinux/gitlab-tools*.pkg.tar.xz www-data@salamek.cz:/var/www/arch.salamek.cz/www/any
-    - scp deb_dist/*.deb www-data@salamek.cz:/var/www/apt.salamek.cz/cache
-    - ssh www-data@salamek.cz '/var/www/arch.salamek.cz/update_repo.sh'
-    - ssh www-data@salamek.cz '/var/www/apt.salamek.cz/update_repo.sh'
+    - ssh www-data@repository 'rm -rf /var/www/repository.salamek.cz/cache/deb/priv/all/gitlab-tools*.deb'
+    - scp deb_dist/*.deb www-data@repository:/var/www/repository.salamek.cz/cache/deb/priv/all
+    - ssh www-data@repository '/var/www/repository.salamek.cz/deb-priv-update.sh'
   dependencies:
     - package:archlinux
     - package:debian
