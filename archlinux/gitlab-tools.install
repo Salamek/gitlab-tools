@@ -41,7 +41,7 @@ pre_upgrade() {
 ## arg 1:  the new package version
 ## arg 2:  the old package version
 post_upgrade() {
-        gitlab-tools migrations upgrade
+        gitlab-tools db upgrade
         systemctl daemon-reload
 
         # Restart service only when is active or enabled
