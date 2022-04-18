@@ -16,7 +16,7 @@ This application provides functionality not avaiable in GitLab (CE) Mainly usefu
 
 # Installation
 
-## Debian and derivates (Debian 9 and Ubuntu 18.04 LTS are supported, other versions may also work...)
+## Debian and derivates (Debian 11 and Ubuntu 20.04.4 LTS are supported, other versions may also work...)
 
 Add repository by running these commands
 
