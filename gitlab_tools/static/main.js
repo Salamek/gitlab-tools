@@ -1,4 +1,3 @@
-
 $(function () {
     $('.select').select2();
 
