@@ -68,6 +68,7 @@ install_requires = [
     'paramiko>=2.7.2',
     'cron-descriptor==1.2.24',
     'python-dateutil~=2.8.1',
+    'markupsafe==2.0.1',
     
     
     'Flask-Babel>=0.12.2',

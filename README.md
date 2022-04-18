@@ -1,20 +1,18 @@
 # GitLab Tools
 
-This application provides functionality not avaiable in GitLab (CE)
-Mainly useful for pull mirroring from GitHub
+This application provides functionality not avaiable in GitLab (CE) Mainly useful for pull mirroring from GitHub
 
 [![Home](doc/img/home_thumb.png)](doc/img/home.png)
-* [Fingerprints screenshoot](doc/img/fingerprints.png)
-* [Pull mirrors screenshoot](doc/img/pull_mirrors.png)
 
+- [Fingerprints screenshoot](doc/img/fingerprints.png)
+- [Pull mirrors screenshoot](doc/img/pull_mirrors.png)
 
 # Avaiable features
 
-|  Feature name |  Gitlab CE  |  Gitlab EE  |  Gitlab Tools  | Description | 
-|:--------------|:-----------:|:-----------:|:--------------:|:-----------:|
-|  Pull mirror [(doc)](https://github.com/Salamek/gitlab-tools/wiki/1.-Pull-mirror-configuration-guide)  |      No     |     Yes     |       Yes      | Allows to automaticaly mirror your Git or SVN repositories to GitLab by hook trigger or periodicaly |
-|  Push mirror [(doc)](https://github.com/Salamek/gitlab-tools/wiki/2.-Push-mirror-configuration-guide)  |  Yes(10.8)  |     Yes     |       Yes      | Allows to automaticaly mirror your GitLab repository to any remote Git repository |
-
+| Feature name | Gitlab CE | Gitlab EE | Gitlab Tools | Description |
+| :-- | :-: | :-: | :-: | :-: |
+| Pull mirror [(doc)](https://github.com/Salamek/gitlab-tools/wiki/1.-Pull-mirror-configuration-guide) | No | Yes | Yes | Allows to automaticaly mirror your Git or SVN repositories to GitLab by hook trigger or periodicaly |
+| Push mirror [(doc)](https://github.com/Salamek/gitlab-tools/wiki/2.-Push-mirror-configuration-guide) | Yes(10.8) | Yes | Yes | Allows to automaticaly mirror your GitLab repository to any remote Git repository |
 
 # Installation
 
@@ -49,6 +47,10 @@ and then install by running
 $ pacman -Sy gitlab-tools
 ```
 
+## Docker
+
+You can create your docker-compose stack to run this application on docker. You can visit [cenk1cenk2/docker-gitlab-tools](https://github.com/cenk1cenk2/docker-gitlab-tools) for more information on the container.
+
 # Setup
 
 After successful installation you will need to run setup to configure your installation:
@@ -61,21 +63,21 @@ This will start simple setup utility where you can/must configure
 
 1. gitlab-tools user (default: gitlab-tools, should be created after install)
 2. Database type to use, PostgreSQL is recommended database to use (you can use other database types only on your own risk)
-    1. Database host (PostgreSQL, MySQL) or path (Only SQLite)
-    2. Database name (PostgreSQL, MySQL)
-    3. Database user (PostgreSQL, MySQL)
-    4. Database password (PostgreSQL, MySQL)
+   1. Database host (PostgreSQL, MySQL) or path (Only SQLite)
+   2. Database name (PostgreSQL, MySQL)
+   3. Database user (PostgreSQL, MySQL)
+   4. Database password (PostgreSQL, MySQL)
 3. Webserver configuration (Host and port makes sense only when using integrated web server controlled by gitlab-tools service)
 4. Server name (eg.: https://gitlab-tools.example.com or IP:PORT when using integrated webserver)
 5. GitLab API configuration (you can follow this guide till point 7. https://docs.gitlab.com/ee/integration/gitlab.html) redirect url is https://gitlab-tools.example.com/sign/in/do where example.com is your server domain
-    1. Gitlab APP ID: Application Id
-    2. Gitlab APP SECRET: Secret
+   1. Gitlab APP ID: Application Id
+   2. Gitlab APP SECRET: Secret
 6. Save new configuration ? -> y (this will create config file in /etc/gitlab-tools/config.yml)
 7. Recreate database ? -> y (this will create new empty database)
 8. Restart services to load new configuration ? -> y this will restart all gitlab-tools services:
-    1. gitlab-tools: Controlling integrated webserver, disable this one if you want to use uwsgi or so.
-    2. gitlab-tools_celeryworker: Controlling backround workers, must be enabled and running to perform mirroring
-    3. gitlab-tools_celerybeat: Controlling celery scheduler
+   1. gitlab-tools: Controlling integrated webserver, disable this one if you want to use uwsgi or so.
+   2. gitlab-tools_celeryworker: Controlling backround workers, must be enabled and running to perform mirroring
+   3. gitlab-tools_celerybeat: Controlling celery scheduler
 
 This creates/updates config file in /etc/gitlab-tools/config.yml, you can modify this file manualy
 
@@ -90,6 +92,7 @@ $ apt install uwsgi uwsgi-plugin-python3
 ```
 
 Create uwsgi application configuration file at `/etc/uwsgi/apps-available/gitlab-tools.example.com.ini`:
+
 ```ini
 [uwsgi]
 uid = gitlab-tools
@@ -103,16 +106,19 @@ buffer-size = 32768
 ```
 
 Link this config file to `/etc/uwsgi/apps-enabled` by running
+
 ```bash
 $ ln -s /etc/uwsgi/apps-available/gitlab-tools.example.com.ini /etc/uwsgi/apps-enabled/
 ```
 
 Restart uwsgi to load new configuration
+
 ```bash
 $ systemctl restart uwsgi
 ```
 
 Now you should have `/tmp/gitlab-tools.sock` socket file created, check that by running
+
 ```bash
 $ file /tmp/gitlab-tools.sock
 ```
@@ -120,6 +126,7 @@ $ file /tmp/gitlab-tools.sock
 # Webserver NGINX
 
 Install nginx by running
+
 ```
 apt install nginx
 ```
@@ -165,11 +172,13 @@ server {
 ```
 
 Link this file to `/etc/nginx/sites-enabled` by running
+
 ```bash
 $ ln -s /etc/nginx/sites-available/gitlab-tools.example.com /etc/nginx/sites-enabled/
 ```
 
 And restart nginx
+
 ```bash
 $ systemctl restart nginx
 ```
@@ -177,4 +186,5 @@ $ systemctl restart nginx
 Now you should have gitlab-tools accessible at `server_name`
 
 # Mirrors
+
 This project is also mirrored on GitLab https://gitlab.com/Salamek/gitlab-tools
