@@ -110,7 +110,7 @@ def new_mirror():
 def edit_mirror(mirror_id: int):
     mirror_detail = PushMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     form = EditForm(
-        flask.request.form,
+        flask.request.form if flask.request.method == 'POST' else None,
         id=mirror_detail.id,
         project_mirror=mirror_detail.project_mirror,
         note=mirror_detail.note,
