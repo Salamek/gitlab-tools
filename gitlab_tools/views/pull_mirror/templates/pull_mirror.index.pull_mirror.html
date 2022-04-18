@@ -4,7 +4,7 @@
 
 <h1>{{ _('Pull Mirrors') }}</h1>
 
-<a class="btn btn-success" href="{{url_for('pull_mirror.index.new_mirror')}}"><i class="fa fa-plus" aria-hidden="true"></i> {{ _('Add') }}</a>
+<a class="btn btn-success" href="{{url_for('pull_mirror_index.new_mirror')}}"><i class="fa fa-plus" aria-hidden="true"></i> {{ _('Add') }}</a>
 
 <table class="table table-hover">
     <thead>
@@ -22,7 +22,7 @@
     </thead>
     <tbody>
     {% for item in pagination.items %}
-    {% set webhook_url = url_for('api.index.schedule_sync_pull_mirror', mirror_id=item.id, token=item.hook_token, _external=True) %}
+    {% set webhook_url = url_for('api_index.schedule_sync_pull_mirror', mirror_id=item.id, token=item.hook_token, _external=True) %}
     <tr class="{{item.task_results.first()|format_task_status_class}}" title="{{item.note}}">
         <th scope="row">{{item.id}}</th>
         <td>{{item.foreign_vcs_type|format_vcs}}</td>
@@ -34,11 +34,11 @@
         <td>{{item.created|format_datetime}}</td>
         <td class="text-nowrap">
             {% if item.project_id %}
-                <a class="btn btn-xs btn-default" href="{{url_for('pull_mirror.index.schedule_sync_mirror', mirror_id=item.id)}}"><i class="fa fa-map-signs" aria-hidden="true"></i> {{ _('Trigger sync') }}</a>
+                <a class="btn btn-xs btn-default" href="{{url_for('pull_mirror_index.schedule_sync_mirror', mirror_id=item.id)}}"><i class="fa fa-map-signs" aria-hidden="true"></i> {{ _('Trigger sync') }}</a>
             {% endif %}
-            <a class="btn btn-xs btn-info" href="{{url_for('pull_mirror.index.log', mirror_id=item.id)}}" title="{{ _('Log') }}"><i class="fa fa-file" aria-hidden="true"></i></a>
-            <a class="btn btn-xs btn-primary" href="{{url_for('pull_mirror.index.edit_mirror', mirror_id=item.id)}}" title="{{ _('Edit') }}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
-            <a class="btn btn-xs btn-danger confirm" data-confirm-message="{{_('Are you sure you want to delete this mirror ?')}}" href="{{url_for('pull_mirror.index.schedule_delete_mirror', mirror_id=item.id)}}" title="{{ _('Delete') }}"><i class="fa fa-trash" aria-hidden="true"></i></a>
+            <a class="btn btn-xs btn-info" href="{{url_for('pull_mirror_index.log', mirror_id=item.id)}}" title="{{ _('Log') }}"><i class="fa fa-file" aria-hidden="true"></i></a>
+            <a class="btn btn-xs btn-primary" href="{{url_for('pull_mirror_index.edit_mirror', mirror_id=item.id)}}" title="{{ _('Edit') }}"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+            <a class="btn btn-xs btn-danger confirm" data-confirm-message="{{_('Are you sure you want to delete this mirror ?')}}" href="{{url_for('pull_mirror_index.schedule_delete_mirror', mirror_id=item.id)}}" title="{{ _('Delete') }}"><i class="fa fa-trash" aria-hidden="true"></i></a>
         </td>
     </tr>
     {% endfor %}

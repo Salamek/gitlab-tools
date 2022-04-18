@@ -1,2 +1,2 @@
-flask_navigation python3-flask-navigation
+psycopg2-binary python3-psycopg2
 raven python3-raven

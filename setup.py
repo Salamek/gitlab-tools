@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 import os
-import re
-import sys
+import pathlib
 
 from setuptools import setup, find_packages
 
 sys_conf_dir = os.getenv("SYSCONFDIR", "/etc")
 
 
-def get_requirements(filename: str) -> list:
-    return open(os.path.join(filename)).read().splitlines()
+current_directory = os.path.dirname(os.path.abspath(__file__))
+
+here = pathlib.Path(__file__).parent.resolve()
+os_name = pathlib.Path('/etc/issue').read_text(encoding="utf-8")
+long_description = (here / "README.md").read_text(encoding="utf-8")
 
 
 def package_files(directory: str) -> list:
@@ -18,6 +20,7 @@ def package_files(directory: str) -> list:
         for filename in filenames:
             paths.append(os.path.join('..', path, filename))
     return paths
+
 
 classes = """
     Development Status :: 4 - Beta
@@ -33,11 +36,6 @@ classes = """
     Operating System :: OS Independent
 """
 classifiers = [s.strip() for s in classes.split('\n') if s]
-
-
-install_requires = get_requirements('requirements.txt')
-if sys.version_info < (3, 0):
-    install_requires.append('futures')
 
 
 extra_files = [
@@ -60,11 +58,49 @@ extra_files.extend(package_files('gitlab_tools/static/node_modules/font-awesome/
 extra_files.extend(package_files('gitlab_tools/static/node_modules/jquery/dist'))
 
 
+install_requires = [
+    'redis==3.5.*',
+    'WTForms==2.2.1',
+    'psycopg2-binary==2.8.6',
+    'pycryptodomex>=3.9.7',
+    'python-gitlab>=0.18,<=1.5.*',
+    'GitPython>=3.1.14',
+    'paramiko>=2.7.2',
+    'cron-descriptor==1.2.24',
+    'python-dateutil~=2.8.1',
+    
+    
+    'Flask-Babel>=0.12.2',
+    'Flask-Script~=2.0.6',
+    'flask-migrate~=2.6.0',
+    'pyyaml~=5.3.1',
+    'docopt~=0.6.2',
+    'celery~=5.0.0',
+    'blinker~=1.4',
+    'Flask-Celery-Tools',
+    'raven',
+]
+
+if os_name.startswith('Debian'):
+    # Older versions for debian
+    install_requires.extend([
+        'flask~=1.1.2',
+        'requests~=2.25.1',
+        'Flask-Login==0.5.*',
+    ])
+else:
+    install_requires.extend([
+        'flask~=2.0.3',
+        'requests~=2.27.1',
+        'Flask-Login==0.6.*'
+    ])
+
 setup(
     name='gitlab-tools',
-    version='1.1.12',
+    version='1.2.3',
     description='GitLab Tools',
-    long_description=open('README.md').read(),
+    long_description=long_description,
+    long_description_context_type='text/markdown',
     author='Adam Schubert',
     author_email='adam.schubert@sg1-game.net',
     url='https://gitlab.salamek.cz/sadam/gitlab-tools.git',

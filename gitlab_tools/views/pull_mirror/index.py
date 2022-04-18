@@ -194,7 +194,7 @@ def new_mirror():
             log_task_pending(task, mirror_new, save_pull_mirror, InvokedByEnum.MANUAL)
 
         flask.flash('New pull mirror item was added successfully.', 'success')
-        return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
+        return flask.redirect(flask.url_for('pull_mirror_index.get_mirror'))
 
     return flask.render_template('pull_mirror.index.new.html', form=form)
 
@@ -285,7 +285,7 @@ def edit_mirror(mirror_id: int):
             log_task_pending(task, mirror_detail, save_pull_mirror, InvokedByEnum.MANUAL)
 
         flask.flash('Pull mirror was saved successfully.', 'success')
-        return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
+        return flask.redirect(flask.url_for('pull_mirror_index.get_mirror'))
 
     return flask.render_template('pull_mirror.index.edit.html', form=form, mirror_detail=mirror_detail)
 
@@ -297,12 +297,12 @@ def schedule_sync_mirror(mirror_id: int):
     found_mirror = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     if not found_mirror.project_id:
         flask.flash('Project mirror is not created, cannot be synced', 'danger')
-        return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
+        return flask.redirect(flask.url_for('pull_mirror_index.get_mirror'))
     task = sync_pull_mirror.delay(mirror_id)
     log_task_pending(task, found_mirror, sync_pull_mirror, InvokedByEnum.MANUAL)
 
     flask.flash('Sync has been started with UUID: {}'.format(task.id), 'success')
-    return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
+    return flask.redirect(flask.url_for('pull_mirror_index.get_mirror'))
 
 
 @pull_mirror_index.route('/delete/<int:mirror_id>', methods=['GET'])
@@ -317,7 +317,7 @@ def schedule_delete_mirror(mirror_id: int):
 
     flask.flash('Pull mirror was deleted successfully.', 'success')
 
-    return flask.redirect(flask.url_for('pull_mirror.index.get_mirror'))
+    return flask.redirect(flask.url_for('pull_mirror_index.get_mirror'))
 
 
 @pull_mirror_index.route('/log/<int:mirror_id>', methods=['GET'], defaults={'page': 1})

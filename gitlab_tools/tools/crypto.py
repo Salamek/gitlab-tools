@@ -6,9 +6,11 @@ import time
 import sys
 import string
 
-import Crypto.PublicKey.RSA as RSA
-from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA256
+
+import Cryptodome.PublicKey.RSA as RSA
+from Cryptodome.Signature import PKCS1_v1_5
+from Cryptodome.Hash import SHA256
+
 
 
 def sign_data(data: bytes, private_key: RSA):

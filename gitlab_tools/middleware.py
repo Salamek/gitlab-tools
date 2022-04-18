@@ -12,7 +12,7 @@ from celery.signals import worker_process_init
 from celery import states
 from flask import current_app, render_template, request, g
 from flask_babel import format_datetime, format_date
-from gitlab_tools.extensions import navigation, login_manager, babel, db
+from gitlab_tools.extensions import login_manager, babel, db
 from gitlab_tools.tools.formaters import format_bytes, fix_url, format_boolean, format_vcs
 from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 from cron_descriptor import ExpressionDescriptor
@@ -77,16 +77,7 @@ def get_timezone():
 
 @current_app.before_request
 def before_request():
-    menu_items = []
-
-    if current_user.is_authenticated:
-        menu_items.append(navigation.Item('Home', 'home.index.get_home'))
-        menu_items.append(navigation.Item('Pull mirrors', 'pull_mirror.index.get_mirror'))
-        menu_items.append(navigation.Item('Push mirrors', 'push_mirror.index.get_mirror'))
-        menu_items.append(navigation.Item('Fingerprints', 'fingerprint.index.get_fingerprint'))
-
-    navigation.Bar('top', menu_items)
-
+    pass
 
 @current_app.template_filter('format_bytes')
 def format_bytes_filter(num: int) -> str:

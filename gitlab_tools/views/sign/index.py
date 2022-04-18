@@ -38,7 +38,7 @@ def request_login():
         os.path.join(flask.current_app.config['GITLAB_URL'], 'oauth', 'authorize'),
         urllib.parse.urlencode({
             'client_id': flask.current_app.config['GITLAB_APP_ID'],
-            'redirect_uri': flask.url_for('sign.index.do_login', _external=True),
+            'redirect_uri': flask.url_for('sign_index.do_login', _external=True),
             'response_type': 'code',
             'state': state
         })
@@ -70,7 +70,7 @@ def do_login():
                 'client_secret': flask.current_app.config['GITLAB_APP_SECRET'],
                 'code': code,
                 'grant_type': 'authorization_code',
-                'redirect_uri': flask.url_for('sign.index.do_login', _external=True)
+                'redirect_uri': flask.url_for('sign_index.do_login', _external=True)
             }
         )
         r.raise_for_status()
@@ -106,7 +106,7 @@ def do_login():
 
         login_user(found_user, remember=True)
         flask.flash('You has been logged in successfully', 'success')
-        return flask.redirect(flask.url_for('home.index.get_home'))
+        return flask.redirect(flask.url_for('home_index.get_home'))
     except requests.exceptions.HTTPError as e:
         db.session.rollback()
         flask.flash('Login failed: {}'.format(str(e)), 'danger')
@@ -117,4 +117,4 @@ def do_login():
 @login_required
 def logout():
     logout_user()
-    return flask.redirect(flask.url_for('sign.index.login'))
+    return flask.redirect(flask.url_for('sign_index.login'))
