@@ -49,7 +49,7 @@ $ pacman -Sy gitlab-tools
 
 ## Docker
 
-You can create your docker-compose stack to run this application on docker. You can visit [https://github.com/cenk1cenk2/docker-gitlab-tools](cenk1cenk2/docker-gitlab-tools) for more information on the container.
+You can create your docker-compose stack to run this application on docker. You can visit [cenk1cenk2/docker-gitlab-tools](https://github.com/cenk1cenk2/docker-gitlab-tools) for more information on the container.
 
 # Setup
 
