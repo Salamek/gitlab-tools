@@ -27,7 +27,7 @@
         <td>{{task_result.taskmeta.result}}</td>
         <td>{{task_result.taskmeta.date_done|format_datetime}}</td>
         <td class="text-nowrap">
-            <button type="button" {% if not task_result.taskmeta.traceback %}disabled="disabled"{% endif %} class="btn btn-xs btn-primary" data-toggle="modal" data-target="#tracebackModal" data-traceback-url="{{url_for('api.index.get_task_traceback', task_id=task_result.taskmeta.task_id)}}" title="{{ _('Traceback') }}"><i class="fa fa-eye" aria-hidden="true"></i></button>
+            <button type="button" {% if not task_result.taskmeta.traceback %}disabled="disabled"{% endif %} class="btn btn-xs btn-primary" data-toggle="modal" data-target="#tracebackModal" data-traceback-url="{{url_for('api_index.get_task_traceback', task_id=task_result.taskmeta.task_id)}}" title="{{ _('Traceback') }}"><i class="fa fa-eye" aria-hidden="true"></i></button>
         </td>
     </tr>
     {% for task_result_children in task_result.children %}
@@ -39,7 +39,7 @@
         <td>{{task_result_children.taskmeta.result}}</td>
         <td>{{task_result_children.taskmeta.date_done|format_datetime}}</td>
         <td class="text-nowrap">
-            <button type="button" {% if not task_result_children.taskmeta.traceback %}disabled="disabled"{% endif %} class="btn btn-xs btn-primary" data-toggle="modal" data-target="#tracebackModal" data-traceback-url="{{url_for('api.index.get_task_traceback', task_id=task_result_children.taskmeta.task_id)}}" title="{{ _('Traceback') }}"><i class="fa fa-eye" aria-hidden="true"></i></button>
+            <button type="button" {% if not task_result_children.taskmeta.traceback %}disabled="disabled"{% endif %} class="btn btn-xs btn-primary" data-toggle="modal" data-target="#tracebackModal" data-traceback-url="{{url_for('api_index.get_task_traceback', task_id=task_result_children.taskmeta.task_id)}}" title="{{ _('Traceback') }}"><i class="fa fa-eye" aria-hidden="true"></i></button>
         </td>
     </tr>
     {% endfor %}

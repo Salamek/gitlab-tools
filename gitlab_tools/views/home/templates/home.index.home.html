@@ -4,7 +4,7 @@
 
 <h1>{{ _('GitLab Tools') }}</h1>
 
-<h2>{{_('Your public key')}} <a href="{{url_for('home.index.get_new_rsa_key')}}" class="btn btn-xs btn-danger confirm" data-confirm-message="{{_("This action will make all services using a old key inoperable")}}">{{_("Request new key")}}</a></h2>
+<h2>{{_('Your public key')}} <a href="{{url_for('home_index.get_new_rsa_key')}}" class="btn btn-xs btn-danger confirm" data-confirm-message="{{_("This action will make all services using a old key inoperable")}}">{{_("Request new key")}}</a></h2>
 {% if private_key %}
     <pre>{{private_key.get_name()}} {{private_key.get_base64()}}</pre>
     <h3>{{_('MD5 Fingerprint')}}

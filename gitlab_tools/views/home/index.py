@@ -51,4 +51,4 @@ def get_new_rsa_key():
 
     create_rsa_pair.delay(current_user.id)
     flask.flash('New RSA pair key has been requested!', 'success')
-    return flask.redirect(flask.url_for('home.index.get_home'))
+    return flask.redirect(flask.url_for('home_index.get_home'))

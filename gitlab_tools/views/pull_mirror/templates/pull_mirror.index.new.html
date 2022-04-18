@@ -27,7 +27,7 @@
 
                 </div>
                 {% endif %}
-                <form method="post" role="form" action="{{url_for('pull_mirror.index.new_mirror')}}">
+                <form method="post" role="form" action="{{url_for('pull_mirror_index.new_mirror')}}">
                     <div class="row">
                         {% include 'url_info.html' %}
                         <div class="col-xs-12 col-sm-12 col-md-12">
@@ -37,8 +37,8 @@
                                 {{form.project_mirror(class_="form-control input-sm check-signature", **{'placeholder':
                                 _('Project mirror') + ' *', 'data-toggle':"popover", 'data-trigger':"focus ",
                                 'data-placement': "bottom", 'data-fingerprint-url':
-                                url_for('fingerprint.index.check_hostname_fingerprint'), 'data-fingerprint-add-url':
-                                url_for('fingerprint.index.add_hostname_fingerprint'), 'data-gitlab-url':
+                                url_for('fingerprint_index.check_hostname_fingerprint'), 'data-fingerprint-add-url':
+                                url_for('fingerprint_index.add_hostname_fingerprint'), 'data-gitlab-url':
                                 config['GITLAB_URL'], 'data-content': '<br>'.join(form.project_mirror.errors)})}}
                             </div>
                         </div>
@@ -52,7 +52,7 @@
                                 {{form.group(class_="form-control input-sm group-search", **{'placeholder': _('Group') +
                                 ' *', 'data-toggle':"popover", 'data-trigger':"focus ", 'data-placement': "bottom",
                                 'data-content': '<br>'.join(form.group.errors), 'data-source':
-                                url_for('api.index.search_group'), 'data-selected-url': url_for('api.index.get_gitlab_group',
+                                url_for('api_index.search_group'), 'data-selected-url': url_for('api_index.get_gitlab_group',
                                 group_id=form.group.data) if form.group.data})}}
                             </div>
                         </div>
