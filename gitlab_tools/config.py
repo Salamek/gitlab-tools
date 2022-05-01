@@ -31,7 +31,7 @@ class CeleryConfig(HardCoded):
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_TRACK_STARTED = True
     CELERY_DEFAULT_QUEUE = 'gitlab_tools'
-    CELERYBEAT_SCHEDULER = 'gitlab_tools.celery_beat.schedulers.DatabaseScheduler'
+    CELERY_BEAT_SCHEDULER = 'gitlab_tools.celery_beat.schedulers.DatabaseScheduler'
 
 
 class Config(CeleryConfig):
