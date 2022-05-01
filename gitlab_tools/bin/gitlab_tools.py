@@ -515,7 +515,7 @@ def celerybeat():
     options = parse_options()
     setup_logging('celerybeat', logging.DEBUG if options.DEBUG else logging.WARNING)
     Logging._setup = True
-    app = create_app(options, no_sql=True)
+    app = create_app(options)
     with app.app_context():
         return celery.Beat(
             logfile=None,
