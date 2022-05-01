@@ -4,7 +4,7 @@ from multiprocessing.util import Finalize
 from celery import current_app
 from celery import schedules
 from celery.beat import ScheduleEntry, Scheduler
-from celery.utils.encoding import safe_str
+from kombu.utils.encoding import safe_str, safe_repr
 from celery.utils.log import get_logger
 
 try:
@@ -12,8 +12,8 @@ try:
 except ImportError:
     from celery.utils.timeutils import is_naive
 
-from gitlab_tools.models.celery import PeriodicTask, PeriodicTasks, CrontabSchedule, IntervalSchedule
-from gitlab_tools.extensions import db
+from backuptron.models.celery import PeriodicTask, PeriodicTasks, CrontabSchedule, IntervalSchedule
+from backuptron.extensions import db
 
 DEFAULT_MAX_INTERVAL = 5
 
@@ -120,8 +120,9 @@ class ModelEntry(ScheduleEntry):
         return cls(model)
 
     def __repr__(self):
-        return '<ModelEntry: {0} {1}(*{2}, **{3}) {{4}}>'.format(
-            safe_str(self.name), self.task, self.args, self.kwargs, self.schedule,
+        return '<ModelEntry: {0} {1}(*{2}, **{3}) {4}>'.format(
+            safe_str(self.name), self.task, safe_repr(self.args),
+            safe_repr(self.kwargs), self.schedule,
         )
 
 
