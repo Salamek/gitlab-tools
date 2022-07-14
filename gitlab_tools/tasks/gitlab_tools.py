@@ -130,7 +130,14 @@ def save_pull_mirror(self, mirror_id: int) -> None:
         key = None
         if mirror.user.gitlab_deploy_key_id:
             try:
-                key = gl.deploykeys.get(mirror.user.gitlab_deploy_key_id)
+                try:
+                    key = gl.deploykeys.get(mirror.user.gitlab_deploy_key_id)
+                except AttributeError:
+                    # python-gitlab > 1.5 has no get on DeployKeysManager
+                    for key_item in gl.deploykeys.list():
+                        if key_item.id == mirror.user.gitlab_deploy_key_id:
+                            key = key_item
+                            break
             except gitlab.exceptions.GitlabError as e:
                 if e.response_code == 404:
                     key = None
