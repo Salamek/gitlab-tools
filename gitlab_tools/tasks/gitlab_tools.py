@@ -32,8 +32,6 @@ LOG = getLogger(__name__)
 @single_instance(include_args=True)
 def save_pull_mirror(self, mirror_id: int) -> None:  # pylint: disable=unused-argument, too-many-locals, too-many-statements, too-many-branches
     mirror = PullMirror.query.filter_by(id=mirror_id).first()
-    gl = None  # !FIXME this is here cos hotfix on the end of script
-    gitlab_project = None  # !FIXME this is here cos hotfix on the end of script
     if not mirror.is_no_create and not mirror.is_no_remote:
 
         gl = gitlab.Gitlab(
@@ -112,10 +110,6 @@ def save_pull_mirror(self, mirror_id: int) -> None:  # pylint: disable=unused-ar
                                 mirror.group.gitlab_id == int(found_project.namespace['id']):
                             gitlab_project = gl.projects.get(found_project.id)
                             break
-
-            # !FIXME BUG Trigger housekeeping right after creation to prevent ugly 404/500 project detail bug
-            # !FIXME BUG See https://gitlab.com/gitlab-org/gitlab-ce/issues/43825
-            gl.http_post('/projects/{project_id}/housekeeping'.format(project_id=gitlab_project.id))
 
             found_project = Project.query.filter_by(gitlab_id=gitlab_project.id).first()
             if not found_project:
@@ -221,11 +215,6 @@ def save_pull_mirror(self, mirror_id: int) -> None:  # pylint: disable=unused-ar
     git_remote_source = GitRemote(mirror.source, mirror.is_force_update, mirror.is_prune_mirrors)
 
     Git.create_mirror(namespace_path, str(mirror.id), git_remote_source, git_remote_target)
-
-    if gl and gitlab_project:
-        # !FIXME BUG Trigger housekeeping right after mirror sync to reload homepage of project
-        # !FIXME BUG Somehow i'm unable to reproduce this in simple script :/ to report this bug
-        gl.http_post('/projects/{project_id}/housekeeping'.format(project_id=gitlab_project.id))
 
     # 5. Set last_sync date to mirror
 
