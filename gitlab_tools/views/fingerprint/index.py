@@ -210,7 +210,7 @@ def add_hostname_fingerprint() -> Tuple[flask.Response, int]:
             'message': 'Signature is older than 2 hours, please generate a new one'
         }), 403
 
-    # Everything looks "hunky dory" lets continue
+    # Everything looks "hunky-dory" lets continue
     known_hosts_path = get_user_known_hosts_path(current_user, flask.current_app.config['USER'])
 
     found = check_hostname(hostname, known_hosts_path)[0]
