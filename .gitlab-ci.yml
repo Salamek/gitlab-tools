@@ -9,7 +9,7 @@ test:debian:
     - apt-get update -qy
     - apt-get install -y python3-dev python3-pip
     - pip3 install .
-    - python3 setup.py test
+    - tox -e py39
   tags:
     - debian
 
