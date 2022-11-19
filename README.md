@@ -72,6 +72,7 @@ This will start simple setup utility where you can/must configure
 5. GitLab API configuration (you can follow this guide till point 7. https://docs.gitlab.com/ee/integration/gitlab.html) redirect url is https://gitlab-tools.example.com/sign/in/do where example.com is your server domain
    1. Gitlab APP ID: Application Id
    2. Gitlab APP SECRET: Secret
+   3. Gitlab SSH: hostname and port where is your gitlab SSH port exposed in format gitlab.com:22
 6. Save new configuration ? -> y (this will create config file in /etc/gitlab-tools/config.yml)
 7. Recreate database ? -> y (this will create new empty database)
 8. Restart services to load new configuration ? -> y this will restart all gitlab-tools services:
