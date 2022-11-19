@@ -1,9 +1,9 @@
 
 from flask_babel import gettext
 from wtforms import Form, StringField, validators, HiddenField, TextAreaField, BooleanField, SelectField
+from cron_descriptor import ExpressionDescriptor, MissingFieldException, FormatException
 from gitlab_tools.models.gitlab_tools import PullMirror
 from gitlab_tools.tools.GitRemote import GitRemote
-from cron_descriptor import ExpressionDescriptor, MissingFieldException, FormatException
 from gitlab_tools.forms.custom_fields import NonValidatingSelectField
 from gitlab_tools.tools.gitlab import check_project_visibility_in_group, VisibilityError, check_project_exists
 
@@ -12,7 +12,15 @@ __date__ = "$26.7.2017 19:33:05$"
 
 
 class NewForm(Form):
-    project_name = StringField(None, [validators.Regexp('^[a-zA-Z0-9._-]+( \w+)*$', message='Project name cannot contain special characters')])
+    project_name = StringField(
+        None,
+        [
+            validators.Regexp(
+                r'^[a-zA-Z0-9._-]+( \w+)*$',
+                message='Project name cannot contain special characters'
+            )
+        ]
+    )
     project_mirror = StringField(None, [validators.Length(min=1, max=255)])
     periodic_sync = StringField(None, [validators.Optional()])
     note = TextAreaField(None, [validators.Optional()])
@@ -35,7 +43,7 @@ class NewForm(Form):
     is_prune_mirrors = BooleanField()
     is_jobs_enabled = BooleanField()
 
-    def validate(self) -> bool:
+    def validate(self) -> bool:  # pylint: disable=too-many-return-statements
         rv = Form.validate(self)
         if not rv:
             return False
@@ -54,7 +62,7 @@ class NewForm(Form):
             )
             return False
 
-        if not GitRemote.detect_vcs_type(self.project_mirror.data):
+        if not GitRemote(self.project_mirror.data).vcs_type:
             self.project_mirror.errors.append(
                 gettext('Unknown VCS type or detection failed.')
             )
@@ -78,7 +86,8 @@ class NewForm(Form):
             if not self.is_force_create.data:
                 self.project_name.errors.append(
                     gettext(
-                        'Project with name %(project_name)s already exists in selected group and "Create project in GitLab even if it already exists." is not checked in "Advanced options"',
+                        'Project with name %(project_name)s already exists in selected group and '
+                        '"Create project in GitLab even if it already exists." is not checked in "Advanced options"',
                         project_name=self.project_name.data
                     )
                 )
@@ -98,26 +107,34 @@ class NewForm(Form):
 class EditForm(NewForm):
     id = HiddenField()
 
-    def validate(self) -> bool:
+    def validate(self) -> bool:  # pylint: disable=too-many-return-statements
         rv = Form.validate(self)
         if not rv:
             return False
 
         current_pull_mirror = PullMirror.query.filter(PullMirror.id == self.id.data).first()
 
-        project_name_exists = PullMirror.query.filter(PullMirror.project_name == self.project_name.data, PullMirror.id != current_pull_mirror.id).first()
+        project_name_exists = PullMirror.query.filter(
+            PullMirror.project_name == self.project_name.data,
+            PullMirror.id != current_pull_mirror.id
+        ).first()
         if project_name_exists:
-            self.project_name.errors.append(gettext('Project name %(project_name)s already exists.', project_name=self.project_name.data))
+            self.project_name.errors.append(
+                gettext('Project name %(project_name)s already exists.', project_name=self.project_name.data)
+            )
             return False
 
-        project_mirror_exists = PullMirror.query.filter(PullMirror.project_mirror == self.project_mirror.data, PullMirror.id != current_pull_mirror.id).first()
+        project_mirror_exists = PullMirror.query.filter(
+            PullMirror.project_mirror == self.project_mirror.data,
+            PullMirror.id != current_pull_mirror.id
+        ).first()
         if project_mirror_exists:
             self.project_mirror.errors.append(
                 gettext('Project mirror %(project_mirror)s already exists.', project_mirror=self.project_mirror.data)
             )
             return False
 
-        if not GitRemote.detect_vcs_type(self.project_mirror.data):
+        if not GitRemote(self.project_mirror.data).vcs_type:
             self.project_mirror.errors.append(
                 gettext('Unknown VCS type or detection failed.')
             )
@@ -135,7 +152,8 @@ class EditForm(NewForm):
             if not self.is_force_create.data:
                 self.project_name.errors.append(
                     gettext(
-                        'Project with name %(project_name)s already exists in selected group and "Create project in GitLab even if it already exists." is not checked in "Advanced options"',
+                        'Project with name %(project_name)s already exists in selected group and '
+                        '"Create project in GitLab even if it already exists." is not checked in "Advanced options"',
                         project_name=self.project_name.data
                     )
                 )

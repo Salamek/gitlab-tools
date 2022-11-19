@@ -6,7 +6,6 @@ Create Date: 2018-06-22 17:56:53.940104
 
 """
 from alembic import op
-import sqlalchemy as sa
 from sqlalchemy.schema import Sequence, CreateSequence, DropSequence
 
 

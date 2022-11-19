@@ -1,17 +1,15 @@
 import datetime
 from sqlalchemy.orm import relationship
-from celery import schedules
-from gitlab_tools.extensions import db
-from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 from sqlalchemy.sql import func
-from celery import states
+from celery import schedules, states
+from gitlab_tools.extensions import db
 
 
 class ConstraintError(Exception):
     pass
 
 
-class BaseTable(db.Model):
+class BaseTable(db.Model):  # type: ignore
     __abstract__ = True
     updated = db.Column(db.DateTime, default=func.now(), onupdate=func.current_timestamp())
     created = db.Column(db.DateTime, default=func.now())
@@ -30,11 +28,11 @@ class BaseTable(db.Model):
         obj = session_obj.query(cls).filter_by(**kwargs).first()
         if obj:
             return obj, False
-        else:
-            params = dict((k, v) for k, v in kwargs.items())
-            params.update(defaults or {})
-            obj = cls(**params)
-            return obj, True
+
+        params = dict((k, v) for k, v in kwargs.items())
+        params.update(defaults or {})
+        obj = cls(**params)
+        return obj, True
 
     @classmethod
     def update_or_create(cls, session_obj, defaults=None, **kwargs):
@@ -75,8 +73,8 @@ class IntervalSchedule(BaseTable):
         obj = cls.filter_by(session, every=every, period=period).first()
         if obj is None:
             return cls(every=every, period=period)
-        else:
-            return obj
+
+        return obj
 
     def __str__(self):
         if self.every == 1:
@@ -126,8 +124,7 @@ class CrontabSchedule(BaseTable):
         obj = cls.filter_by(session, **spec).first()
         if obj is None:
             return cls(**spec)
-        else:
-            return obj
+        return obj
 
 
 class PeriodicTasks(BaseTable):
@@ -177,6 +174,8 @@ class PeriodicTask(BaseTable):
             return self.crontab.schedule
         if self.interval:
             return self.interval.schedule
+
+        return None
 
 
 class TaskMeta(db.Model):

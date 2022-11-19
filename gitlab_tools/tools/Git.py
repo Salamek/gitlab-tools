@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # nosec: B404
 import logging
 from git import Repo
 from gitlab_tools.tools.Svn import Svn
@@ -7,7 +7,7 @@ from gitlab_tools.enums.VcsEnum import VcsEnum
 from gitlab_tools.tools.GitRemote import GitRemote
 
 
-class Git(object):
+class Git:
 
     @staticmethod
     def sync_mirror(namespace_path: str, temp_name: str, source: GitRemote, target: GitRemote=None):
@@ -62,13 +62,13 @@ class Git(object):
                 repo.remotes.gitlab.set_url(target.url)
         else:
             # Project not found, we can clone
-            logging.info('Creating mirror for {}'.format(source.url))
+            logging.info('Creating mirror for %s', source.url)
 
             # 3. Pull
             # 4. Push
 
             if source.vcs_type == VcsEnum.SVN:
-                subprocess.Popen(
+                subprocess.Popen(  # nosec: B607, B603
                     ['git', 'svn', 'clone', Svn.fix_url(source.url), project_path],
                     cwd=namespace_path
                 ).communicate()

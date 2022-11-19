@@ -16,7 +16,7 @@ long_description = (here / "README.md").read_text(encoding="utf-8")
 
 def package_files(directory: str) -> list:
     paths = []
-    for (path, directories, filenames) in os.walk(directory):
+    for (path, _, filenames) in os.walk(directory):
         for filename in filenames:
             paths.append(os.path.join('..', path, filename))
     return paths
@@ -69,8 +69,7 @@ install_requires = [
     'cron-descriptor==1.2.24',
     'python-dateutil~=2.8.1',
     'markupsafe==2.0.1',
-    
-    
+
     'Flask-Babel>=0.12.2',
     'Flask-Script~=2.0.6',
     'flask-migrate~=2.6.0',
@@ -99,9 +98,10 @@ else:
 setup(
     name='gitlab-tools',
     version='1.2.9',
+    python_requires='>=3.7',
     description='GitLab Tools',
     long_description=long_description,
-    long_description_context_type='text/markdown',
+    long_description_content_type='text/markdown',
     author='Adam Schubert',
     author_email='adam.schubert@sg1-game.net',
     url='https://gitlab.salamek.cz/sadam/gitlab-tools.git',
@@ -110,7 +110,9 @@ setup(
     packages=find_packages(exclude=['tests', 'tests.*']),
     install_requires=install_requires,
     test_suite="tests",
-    tests_require=install_requires,
+    tests_require=[
+        'tox'
+    ],
     package_data={'gitlab_tools': extra_files},
     entry_points={
         'console_scripts': [

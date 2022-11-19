@@ -1,24 +1,22 @@
-import hashlib
-import socket
-import paramiko
 import random
 import time
 import sys
 import string
-
+import hashlib
+import socket
+import paramiko
 
 import Cryptodome.PublicKey.RSA as RSA
 from Cryptodome.Signature import PKCS1_v1_5
 from Cryptodome.Hash import SHA256
 
 
-
-def sign_data(data: bytes, private_key: RSA):
+def sign_data(data: bytes, private_key: RSA) -> bytes:
     """
     Signs message
-    :param data: message to sign 
+    :param data: message to sign
     :param private_key: private key to use
-    :return: 
+    :return: bytes
     """
     signer = PKCS1_v1_5.new(private_key)
     digest = SHA256.new()
@@ -28,16 +26,20 @@ def sign_data(data: bytes, private_key: RSA):
 
 def verify_data(data: bytes, signature: bytes, public_key: RSA) -> bool:
     """
-    Verifies message 
+    Verifies message
     :param data: Message to verify
     :param signature: signature of message to verify
     :param public_key: public key to use
-    :return: 
+    :return: bool
     """
     signer = PKCS1_v1_5.new(public_key)
     digest = SHA256.new()
     digest.update(data)
-    return signer.verify(digest, signature)
+    try:
+        signer.verify(digest, signature)  # pylint: disable=not-callable
+        return True
+    except ValueError:
+        return False
 
 
 def import_key(key_path: str) -> RSA:
@@ -51,7 +53,7 @@ def random_password() -> str:
     :return: 64 len string
     """
     return hashlib.sha256('{}_{}_{}'.format(
-        random.randint(0, sys.maxsize),
+        random.randint(0, sys.maxsize),  # nosec: B311
         round(time.time() * 1000),
         ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(20))
     ).encode('UTF-8')).hexdigest()
@@ -82,7 +84,7 @@ def calculate_fingerprint(pkey: paramiko.pkey.PKey, algorithm: str='md5') -> byt
     """
     Calculates fingerprint for PKey
     :param pkey: pkey
-    :param algorithm: algoright to use 
+    :param algorithm: algoright to use
     :return: fingerprint
     """
 

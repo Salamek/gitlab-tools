@@ -1,5 +1,5 @@
 
-class VcsEnum(object):
+class VcsEnum:
     GIT = 1
     BAZAAR = 2
     SVN = 3

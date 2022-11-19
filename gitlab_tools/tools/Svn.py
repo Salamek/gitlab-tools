@@ -1,6 +1,6 @@
 
 
-class Svn(object):
+class Svn:
 
     @staticmethod
     def fix_url(url: str) -> str:
@@ -10,3 +10,5 @@ class Svn(object):
 
         if 'svn+https://' in url:
             return url.replace('svn+https://', 'https://')
+
+        return url

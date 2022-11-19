@@ -9,7 +9,7 @@ __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
 
 
-class BaseTable(db.Model):
+class BaseTable(db.Model):  # type: ignore
     __abstract__ = True
     updated = db.Column(db.DateTime, default=func.now(), onupdate=func.current_timestamp())
     created = db.Column(db.DateTime, default=func.now())
@@ -19,11 +19,11 @@ class Mirror(BaseTable):
     __abstract__ = True
 
     @declared_attr
-    def user_id(self):
+    def user_id(self) -> db.Column:
         return db.Column(db.Integer, db.ForeignKey('user.id'), index=True)
 
     @declared_attr
-    def project_id(self):
+    def project_id(self) -> db.Column:
         return db.Column(db.Integer, db.ForeignKey('project.id'), index=True)
 
     source = db.Column(db.String(255), nullable=True)
@@ -57,27 +57,30 @@ class User(BaseTable):
     pull_mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="user", lazy='dynamic')
     push_mirrors = relationship("PushMirror", order_by="PushMirror.id", backref="user", lazy='dynamic')
 
-    def is_active(self):
+    @property
+    def is_active(self) -> bool:
         return True
 
-    def is_authenticated(self):
+    @property
+    def is_authenticated(self) -> bool:
         return True
 
-    def is_anonymous(self):
+    @property
+    def is_anonymous(self) -> bool:
         return False
 
-    def get_id(self):
+    def get_id(self) -> int:
         try:
             if isinstance(self.id, str):
+                return int(self.id)
+            if isinstance(self.id, int):
                 return self.id
-            elif isinstance(self.id, int):
-                return self.id
-            else:
-                return self.id
-        except AttributeError:
-            raise NotImplementedError('No `id` attribute - override `get_id`')
 
-    def __eq__(self, other):
+            return self.id
+        except AttributeError as e:
+            raise NotImplementedError('No `id` attribute - override `get_id`') from e
+
+    def __eq__(self, other) -> bool:
         """
         Checks the equality of two `UserMixin` objects using `get_id`.
         """
@@ -85,7 +88,7 @@ class User(BaseTable):
             return self.get_id() == other.get_id()
         return NotImplemented
 
-    def __ne__(self, other):
+    def __ne__(self, other) -> bool:
         """
         Checks the inequality of two `UserMixin` objects using `get_id`.
         """

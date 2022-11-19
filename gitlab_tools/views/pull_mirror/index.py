@@ -1,10 +1,12 @@
 
 # -*- coding: utf-8 -*-
-
-import flask
 import json
+from typing import Tuple, Union
+import flask
 from celery import chain
 from flask_login import current_user, login_required
+from cron_descriptor.ExpressionParser import ExpressionParser
+from cron_descriptor.Options import Options
 from gitlab_tools.models.gitlab_tools import PullMirror, Group, TaskResult
 from gitlab_tools.enums.ProtocolEnum import ProtocolEnum
 from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
@@ -14,8 +16,6 @@ from gitlab_tools.tools.crypto import random_password
 from gitlab_tools.tools.celery import log_task_pending
 from gitlab_tools.tools.GitRemote import GitRemote
 from gitlab_tools.models.celery import PeriodicTask, CrontabSchedule, PeriodicTasks
-from cron_descriptor.ExpressionParser import ExpressionParser
-from cron_descriptor.Options import Options
 from gitlab_tools.blueprints import pull_mirror_index
 from gitlab_tools.extensions import db
 from gitlab_tools.tasks.gitlab_tools import sync_pull_mirror, \
@@ -44,13 +44,13 @@ def process_group(group: int) -> Group:
 def process_cron_expression(pull_mirror: PullMirror) -> bool:
     """
 
-    :param pull_mirror: 
-    :return: 
+    :param pull_mirror: PullMirror
+    :return: bool
     """
     changed = False
     if pull_mirror.periodic_sync:
         expression_parser = ExpressionParser(pull_mirror.periodic_sync, Options())
-        second, minute, hour, day_of_week, day_of_month, month_of_year, foo_ = expression_parser.parse()
+        _, minute, hour, day_of_week, day_of_month, month_of_year, _ = expression_parser.parse()
 
         parameters = dict(
             minute=minute,
@@ -108,14 +108,17 @@ def process_cron_expression(pull_mirror: PullMirror) -> bool:
 @pull_mirror_index.route('/', methods=['GET'], defaults={'page': 1})
 @pull_mirror_index.route('/page/<int:page>', methods=['GET'])
 @login_required
-def get_mirror(page: int):
-    pagination = PullMirror.query.filter_by(is_deleted=False, user=current_user).order_by(PullMirror.created.desc()).paginate(page, PER_PAGE)
-    return flask.render_template('pull_mirror.index.pull_mirror.html', pagination=pagination)
+def get_mirror(page: int) -> Tuple[str, int]:
+    pagination = PullMirror.query.filter_by(
+        is_deleted=False,
+        user=current_user
+    ).order_by(PullMirror.created.desc()).paginate(page, PER_PAGE)
+    return flask.render_template('pull_mirror.index.pull_mirror.html', pagination=pagination), 200
 
 
 @pull_mirror_index.route('/new', methods=['GET', 'POST'])
 @login_required
-def new_mirror():
+def new_mirror() -> Union[flask.Response, str]:
     form = NewForm(
         flask.request.form,
         is_no_create=False,
@@ -135,7 +138,7 @@ def new_mirror():
         project_mirror_str = form.project_mirror.data.strip()
         project_mirror = GitRemote(project_mirror_str)
         source = GitRemote(project_mirror_str)
-        if source.vcs_protocol == ProtocolEnum.SSH:
+        if source.protocol == ProtocolEnum.SSH:
             # If protocol is SSH we need to convert URL to use USER RSA pair
             source = GitRemote(convert_url_for_user(project_mirror_str, current_user))
 
@@ -174,13 +177,13 @@ def new_mirror():
         db.session.add(mirror_new)
         db.session.commit()
 
-        if source.vcs_protocol == ProtocolEnum.SSH:
+        if source.protocol == ProtocolEnum.SSH:
             # If source is SSH, create SSH Config for it also
             task_result = chain(
                 create_ssh_config.si(
                     current_user.id,
                     source.hostname,
-                    project_mirror.hostname
+                    project_mirror.url
                 ),
                 save_pull_mirror.si(
                     mirror_new.id
@@ -201,7 +204,7 @@ def new_mirror():
 
 @pull_mirror_index.route('/edit/<int:mirror_id>', methods=['GET', 'POST'])
 @login_required
-def edit_mirror(mirror_id: int):
+def edit_mirror(mirror_id: int) -> Union[flask.Response, str]:
     mirror_detail = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     form = EditForm(
         flask.request.form if flask.request.method == 'POST' else None,
@@ -228,7 +231,7 @@ def edit_mirror(mirror_id: int):
         project_mirror_str = form.project_mirror.data.strip()
         project_mirror = GitRemote(project_mirror_str)
         source = GitRemote(project_mirror_str)
-        if source.vcs_protocol == ProtocolEnum.SSH:
+        if source.protocol == ProtocolEnum.SSH:
             # If protocol is SSH we need to convert URL to use USER RSA pair
             source = GitRemote(convert_url_for_user(project_mirror_str, current_user))
 
@@ -265,13 +268,13 @@ def edit_mirror(mirror_id: int):
         db.session.flush()
         db.session.commit()
 
-        if source.vcs_protocol == ProtocolEnum.SSH:
+        if source.protocol == ProtocolEnum.SSH:
             # If source is SSH, create SSH Config for it also
             task_result = chain(
                 create_ssh_config.si(
                     current_user.id,
                     source.hostname,
-                    project_mirror.hostname
+                    project_mirror.url
                 ),
                 save_pull_mirror.si(
                     mirror_detail.id
@@ -292,7 +295,7 @@ def edit_mirror(mirror_id: int):
 
 @pull_mirror_index.route('/sync/<int:mirror_id>', methods=['GET'])
 @login_required
-def schedule_sync_mirror(mirror_id: int):
+def schedule_sync_mirror(mirror_id: int) -> flask.Response:
     # Check if mirror exists or throw 404
     found_mirror = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     if not found_mirror.project_id:
@@ -307,7 +310,7 @@ def schedule_sync_mirror(mirror_id: int):
 
 @pull_mirror_index.route('/delete/<int:mirror_id>', methods=['GET'])
 @login_required
-def schedule_delete_mirror(mirror_id: int):
+def schedule_delete_mirror(mirror_id: int) -> flask.Response:
     mirror_detail = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
     mirror_detail.is_deleted = True
     db.session.add(mirror_detail)
@@ -323,7 +326,7 @@ def schedule_delete_mirror(mirror_id: int):
 @pull_mirror_index.route('/log/<int:mirror_id>', methods=['GET'], defaults={'page': 1})
 @pull_mirror_index.route('/log/<int:mirror_id>/page/<int:page>', methods=['GET'])
 @login_required
-def log(mirror_id: int, page: int):
+def log(mirror_id: int, page: int) -> Tuple[str, int]:
     pull_mirror = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
 
     pagination = TaskResult.query.filter_by(pull_mirror=pull_mirror, parent=None).order_by(
@@ -332,4 +335,4 @@ def log(mirror_id: int, page: int):
         'pull_mirror.index.log.html',
         pull_mirror=pull_mirror,
         pagination=pagination
-    )
+    ), 200

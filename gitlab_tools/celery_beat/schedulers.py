@@ -1,10 +1,10 @@
 import json
+from typing import Tuple
 from multiprocessing.util import Finalize
-
+from kombu.utils.encoding import safe_str, safe_repr
 from celery import current_app
 from celery import schedules
 from celery.beat import ScheduleEntry, Scheduler
-from kombu.utils.encoding import safe_str, safe_repr
 from celery.utils.log import get_logger
 
 try:
@@ -12,8 +12,8 @@ try:
 except ImportError:
     from celery.utils.timeutils import is_naive
 
-from backuptron.models.celery import PeriodicTask, PeriodicTasks, CrontabSchedule, IntervalSchedule
-from backuptron.extensions import db
+from gitlab_tools.models.celery import PeriodicTask, PeriodicTasks, CrontabSchedule, IntervalSchedule
+from gitlab_tools.extensions import db
 
 DEFAULT_MAX_INTERVAL = 5
 
@@ -31,6 +31,7 @@ class ModelEntry(ScheduleEntry):
     save_fields = ['last_run_at', 'total_run_count', 'no_changes']
 
     def __init__(self, model, session=None):
+        super().__init__()
         self.app = current_app
         self.session = session or db.session
         self.name = model.name
@@ -46,15 +47,15 @@ class ModelEntry(ScheduleEntry):
         orig = self.last_run_at = model.last_run_at
         if not is_naive(self.last_run_at):
             self.last_run_at = self.last_run_at.replace(tzinfo=None)
-        assert orig.hour == self.last_run_at.hour  # timezone sanity
+        assert orig.hour == self.last_run_at.hour  # nosec: B101 timezone sanity
 
-    def _disable(self, model):
+    def _disable(self, model) -> None:
         model.no_changes = True
         model.enabled = False
         self.session.add(model)
         self.session.commit()
 
-    def is_due(self):
+    def is_due(self) -> Tuple[bool, float]:
         if not self.model.enabled:
             return False, 5.0   # 5 second delay for re-enable.
         return self.schedule.is_due(self.last_run_at)
@@ -98,7 +99,7 @@ class ModelEntry(ScheduleEntry):
         raise ValueError('Cannot convert schedule type {0!r} to model'.format(schedule))
 
     @classmethod
-    def from_entry(cls, name, session, skip_fields=('relative', 'options'), **entry):
+    def from_entry(cls, name: str, session, skip_fields=('relative', 'options'), **entry):
         """
         PeriodicTask
         :param session:
@@ -136,11 +137,11 @@ class DatabaseScheduler(Scheduler):
     _last_timestamp = None
     _initial_read = False
 
-    def __init__(self, session=None, *args, **kwargs):
-        self.session = session or db.session
+    def __init__(self, *args, **kwargs):
+        self.session = kwargs.get('session') or db.session
         self._dirty = set()
         self._finalize = Finalize(self, self.sync, exitpriority=5)
-        super(DatabaseScheduler, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.max_interval = (kwargs.get('max_interval') or
                              self.app.conf.CELERYBEAT_MAX_LOOP_INTERVAL or
                              DEFAULT_MAX_INTERVAL)
@@ -192,7 +193,7 @@ class DatabaseScheduler(Scheduler):
             try:
 
                 s[name] = self.Entry.from_entry(name, self.session, **entry)
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-except
                 error(ADD_ENTRY_ERROR, name, exc, entry)
         self.schedule.update(s)
 

@@ -28,7 +28,7 @@ class NewForm(Form):
             )
             return False
 
-        if not GitRemote.detect_vcs_type(self.project_mirror.data):
+        if not GitRemote(self.project_mirror.data).vcs_type:
             self.project_mirror.errors.append(
                 gettext('Unknown VCS type or detection failed.')
             )
@@ -45,7 +45,10 @@ class EditForm(NewForm):
         if not rv:
             return False
 
-        project_mirror_exists = PushMirror.query.filter(PushMirror.project_mirror == self.project_mirror.data, PushMirror.id != self.id.data).first()
+        project_mirror_exists = PushMirror.query.filter(
+            PushMirror.project_mirror == self.project_mirror.data,
+            PushMirror.id != self.id.data
+        ).first()
         if project_mirror_exists:
             self.project_mirror.errors.append(
                 gettext('Project mirror %(project_mirror)s already exists.', project_mirror=self.project_mirror.data)

@@ -40,7 +40,10 @@ def process_project(gitlab_id: int) -> Project:
 @push_mirror_index.route('/page/<int:page>', methods=['GET'])
 @login_required
 def get_mirror(page: int):
-    pagination = PushMirror.query.filter_by(is_deleted=False, user=current_user).order_by(PushMirror.created.desc()).paginate(page, PER_PAGE)
+    pagination = PushMirror.query.filter_by(
+        is_deleted=False,
+        user=current_user
+    ).order_by(PushMirror.created.desc()).paginate(page, PER_PAGE)
     return flask.render_template('push_mirror.index.push_mirror.html', pagination=pagination)
 
 
@@ -56,7 +59,7 @@ def new_mirror():
         project_mirror_str = form.project_mirror.data.strip()
         project_mirror = GitRemote(project_mirror_str)
         target = GitRemote(project_mirror_str)
-        if target.vcs_protocol == ProtocolEnum.SSH:
+        if target.protocol == ProtocolEnum.SSH:
             # If protocol is SSH we need to convert URL to use USER RSA pair
             target = GitRemote(convert_url_for_user(project_mirror_str, current_user))
 
@@ -80,13 +83,13 @@ def new_mirror():
         db.session.add(mirror_new)
         db.session.commit()
 
-        if target.vcs_protocol == ProtocolEnum.SSH:
+        if target.protocol == ProtocolEnum.SSH:
             # If target is SSH, create SSH Config for it also
             task_result = chain(
                 create_ssh_config.si(
                     current_user.id,
                     target.hostname,
-                    project_mirror.hostname
+                    project_mirror.url
                 ),
                 save_push_mirror.si(
                     mirror_new.id
@@ -122,7 +125,7 @@ def edit_mirror(mirror_id: int):
         project_mirror_str = form.project_mirror.data.strip()
         project_mirror = GitRemote(project_mirror_str)
         target = GitRemote(project_mirror_str)
-        if target.vcs_protocol == ProtocolEnum.SSH:
+        if target.protocol == ProtocolEnum.SSH:
             # If protocol is SSH we need to convert URL to use USER RSA pair
             target = GitRemote(convert_url_for_user(project_mirror_str, current_user))
 
@@ -142,14 +145,14 @@ def edit_mirror(mirror_id: int):
 
         db.session.add(mirror_detail)
         db.session.commit()
-        if target.vcs_protocol == ProtocolEnum.SSH:
+        if target.protocol == ProtocolEnum.SSH:
             # If source is SSH, create SSH Config for it also
 
             task_result = chain(
                 create_ssh_config.si(
                     current_user.id,
                     target.hostname,
-                    project_mirror.hostname
+                    project_mirror.url
                 ),
                 save_push_mirror.si(
                     mirror_detail.id

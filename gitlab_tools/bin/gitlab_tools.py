@@ -58,8 +58,9 @@ import logging
 import logging.handlers
 import os
 import signal
-import subprocess
+import subprocess  # nosec B404
 import sys
+import tempfile
 import urllib.parse
 from functools import wraps
 
@@ -86,7 +87,7 @@ class CustomFormatter(logging.Formatter):
 
     def format(self, record):
         record.levelletter = self.LEVEL_MAP[record.levelno]
-        return super(CustomFormatter, self).format(record)
+        return super().format(record)
 
 
 def setup_logging(name: str=None, level: int=logging.DEBUG):
@@ -132,10 +133,10 @@ def setup_logging(name: str=None, level: int=logging.DEBUG):
 def log_messages(app):
     """Log messages common to Tornado and devserver."""
     log = logging.getLogger(__name__)
-    log.info('Server is running at http://{}:{}/'.format(app.config['HOST'], app.config['PORT']))
-    log.info('Flask version: {}'.format(flask.__version__))
-    log.info('DEBUG: {}'.format(app.config['DEBUG']))
-    log.info('STATIC_FOLDER: {}'.format(app.static_folder))
+    log.info('Server is running at http://%s:%s/', app.config['HOST'], app.config['PORT'])
+    log.info('Flask version: %s', flask.__version__)
+    log.info('DEBUG: %s', app.config['DEBUG'])
+    log.info('STATIC_FOLDER: %s', app.static_folder)
 
 
 def parse_options() -> Config:
@@ -222,7 +223,7 @@ def create_all() -> None:
         tables_after = set(db.engine.table_names())
     created_tables = tables_after - tables_before
     for table in created_tables:
-        log.info('Created table: {}'.format(table))
+        log.info('Created table: %s', table)
 
 
 @command()
@@ -293,7 +294,7 @@ def post_install() -> None:
 
     # Set port and host
     if 'HOST' not in configuration or not configuration['HOST']:
-        configuration['HOST'] = '0.0.0.0'
+        configuration['HOST'] = '0.0.0.0'  # nosec B104
 
     if 'PORT' not in configuration or not configuration['PORT']:
         configuration['PORT'] = 80
@@ -305,6 +306,9 @@ def post_install() -> None:
 
 @command()
 def setup() -> None:
+    # !FIXME this should be fixed...
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-statements
     if not os.geteuid() == 0:
         sys.exit('Script must be run as root')
 
@@ -314,7 +318,7 @@ def setup() -> None:
     configuration = {}
     if os.path.isfile(config_path):
         with open(config_path) as f:
-            loaded_data = yaml.load(f)
+            loaded_data = yaml.safe_load(f)
             if isinstance(loaded_data, dict):
                 configuration.update(loaded_data)
 
@@ -336,8 +340,10 @@ def setup() -> None:
             database_path = database_path_default
 
         database_location = input('Location [{}]: '.format(database_path)) or database_path
+        database_config_uri = 'sqlite:///{}'.format(database_location)
 
-        app.config['SQLALCHEMY_DATABASE_URI'] = configuration['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///{}'.format(database_location)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_config_uri
+        configuration['SQLALCHEMY_DATABASE_URI'] = database_config_uri
 
     def database_mysql():
         print('MySQL configuration:')
@@ -350,7 +356,10 @@ def setup() -> None:
     def database_login(database_type):
 
         connection_info = urllib.parse.urlparse(
-            configuration.get('SQLALCHEMY_DATABASE_URI', '{}://gitlab-tools:password@127.0.0.1/gitlab-tools'.format(database_type))
+            configuration.get(
+                'SQLALCHEMY_DATABASE_URI',
+                '{}://gitlab-tools:password@127.0.0.1/gitlab-tools'.format(database_type)
+            )
         )
 
         if connection_info.scheme == database_type:
@@ -434,16 +443,21 @@ def setup() -> None:
     configuration['HOST'] = input('Host (for integrated web server - when used) [{}]: '.format(webserver_host)) or webserver_host
     configuration['PORT'] = input('Port (for integrated web server - when used) [{}]: '.format(webserver_port)) or webserver_port
     server_name = '{}:{}'.format(configuration['HOST'], configuration['PORT'])
-    configuration['SERVER_NAME'] = input('Server name (on what domain or ip+port is this application available) [{}]: '.format(server_name)) or server_name
+    configuration['SERVER_NAME'] = input(
+        'Server name (on what domain or ip+port is this application available) [{}]: '.format(server_name)
+    ) or server_name
 
     print('Gitlab configuration:')
-    default_gitlab_url = configuration.get('GITLAB_URL')
+    default_gitlab_url = configuration.get('GITLAB_URL', 'https://gitlab.com')
     default_gitlab_app_id = configuration.get('GITLAB_APP_ID')
     default_gitlab_app_secret = configuration.get('GITLAB_APP_SECRET')
+    default_gitlab_ssh = configuration.get('GITLAB_SSH', 'gitlab.com:22')
     configuration['GITLAB_URL'] = input('Gitlab URL [{}]:'.format(default_gitlab_url)) or default_gitlab_url
-
+    configuration['GITLAB_SSH'] = input('Gitlab URL [{}]:'.format(default_gitlab_ssh)) or default_gitlab_ssh
     configuration['GITLAB_APP_ID'] = input('Gitlab APP ID [{}]:'.format(default_gitlab_app_id)) or default_gitlab_app_id
-    configuration['GITLAB_APP_SECRET'] = input('Gitlab APP SECRET [{}]:'.format(default_gitlab_app_secret)) or default_gitlab_app_secret
+    configuration['GITLAB_APP_SECRET'] = input(
+        'Gitlab APP SECRET [{}]:'.format(default_gitlab_app_secret)
+    ) or default_gitlab_app_secret
 
     print('Save new configuration ?')
 
@@ -482,9 +496,9 @@ def setup() -> None:
 
     restart_services = input('Restart services to load new configuration ? (y/n) [n]: ') or 'n'
     if restart_services == 'y':
-        subprocess.call(['systemctl', 'restart', 'gitlab-tools_celeryworker'])
-        subprocess.call(['systemctl', 'restart', 'gitlab-tools_celerybeat'])
-        subprocess.call(['systemctl', 'restart', 'gitlab-tools'])
+        subprocess.call(['systemctl', 'restart', 'gitlab-tools_celeryworker'])  # nosec B607, B603
+        subprocess.call(['systemctl', 'restart', 'gitlab-tools_celerybeat'])  # nosec B607, B603
+        subprocess.call(['systemctl', 'restart', 'gitlab-tools'])  # nosec B607, B603
 
 
 @command()
@@ -502,7 +516,7 @@ def celerydev():
             statedb=node_format(None, hostname),  # ctx.obj.app.conf.worker_state_db
             no_color=False,
             concurrency=5,
-            schedule='/tmp/celery.db',
+            schedule=os.path.join(tempfile.gettempdir(), 'celery.db'),
             beat=True
 
         )
@@ -548,7 +562,7 @@ def celeryworker():
 
 @command(name='db')
 def _db():
-    from flask.cli import FlaskGroup
+    from flask.cli import FlaskGroup # pylint: disable=import-outside-toplevel
     cli = FlaskGroup(create_app=lambda: create_app(parse_options()))
     cli.main(args=sys.argv[1:])
 

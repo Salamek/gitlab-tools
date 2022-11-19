@@ -1,5 +1,6 @@
-import flask
 import os
+from typing import Tuple
+import flask
 import paramiko
 from flask_login import current_user, login_required
 from gitlab_tools.extensions import db
@@ -16,7 +17,7 @@ __date__ = "$26.7.2017 19:33:05$"
 
 @home_index.route('/', methods=['GET'])
 @login_required
-def get_home():
+def get_home() -> Tuple[str, int]:
     pull_mirrors_count = PullMirror.query.filter_by(is_deleted=False).count()
     push_mirrors_count = PushMirror.query.filter_by(is_deleted=False).count()
     private_key_path = get_user_private_key_path(current_user, flask.current_app.config['USER'])
@@ -38,14 +39,14 @@ def get_home():
         private_key=private_key,
         fingerprint_md5=fingerprint_md5,
         fingerprint_sha256=fingerprint_sha256
-    )
+    ), 200
 
 
 @home_index.route('/new-rsa-key', methods=['GET'])
-def get_new_rsa_key():
+def get_new_rsa_key() -> flask.Response:
 
-    current_user.is_rsa_pair_set = False
-    current_user.gitlab_deploy_key_id = None
+    current_user.is_rsa_pair_set = False  # pylint: disable=assigning-non-slot
+    current_user.gitlab_deploy_key_id = None  # pylint: disable=assigning-non-slot
     db.session.add(current_user)
     db.session.commit()
 

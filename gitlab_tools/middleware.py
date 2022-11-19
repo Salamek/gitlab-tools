@@ -6,19 +6,17 @@ To be imported by the application.current_app() factory.
 """
 
 import os
+from typing import Optional, Union
 from logging import getLogger
-from flask_login import current_user
 from celery.signals import worker_process_init
 from celery import states
+from cron_descriptor import ExpressionDescriptor
+from markupsafe import Markup
 from flask import current_app, render_template, request, g
 from flask_babel import format_datetime, format_date
 from gitlab_tools.extensions import login_manager, babel, db
 from gitlab_tools.tools.formaters import format_bytes, fix_url, format_boolean, format_vcs
 from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
-from cron_descriptor import ExpressionDescriptor
-from markupsafe import Markup
-from typing import Union
-
 from gitlab_tools.models.gitlab_tools import User, TaskResult
 
 LOG = getLogger(__name__)
@@ -35,7 +33,7 @@ def celery_worker_init_db(**_) -> None:
     exceptions to be raised by workers.
     Based on http://stackoverflow.com/a/14146403/1198943
     """
-    LOG.debug('Initializing SQLAlchemy for PID {}.'.format(os.getpid()))
+    LOG.debug('Initializing SQLAlchemy for PID %s.', os.getpid())
     db.init_app(current_app)
 
 
@@ -69,10 +67,12 @@ def get_locale():
 
 
 @babel.timezoneselector
-def get_timezone():
+def get_timezone() -> Optional[str]:
     user = g.get('user', None)
     if user is not None:
         return user.timezone
+
+    return None
 
 
 @current_app.before_request

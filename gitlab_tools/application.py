@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from typing import Any
 import decimal
 import os
 from importlib import import_module
-
+from yaml import load, SafeLoader
 import flask.json
 from flask import Flask, url_for, request
 from flask_babel import gettext
 from gitlab_tools.blueprints import all_blueprints
 from gitlab_tools.config import Config
-from yaml import load, SafeLoader
 
 import gitlab_tools as app_root
 from gitlab_tools.extensions import db, sentry, babel, login_manager, migrate, celery
@@ -64,11 +64,11 @@ def get_config(config_class_string: str, yaml_files: list=None) -> Config:
     return config_obj
 
 
-def create_app(config_obj: Config, no_sql: bool=False) -> Flask:
+def create_app(config_obj: Config, no_sql: bool = False) -> Flask:
 
     """Create an application."""
     app = Flask(__name__, template_folder=TEMPLATE_FOLDER, static_folder=STATIC_FOLDER)
-    config_dict = dict([(k, getattr(config_obj, k)) for k in dir(config_obj) if not k.startswith('_')])
+    config_dict = {k: getattr(config_obj, k) for k in dir(config_obj) if not k.startswith('_')}
     app.config.update(config_dict)
 
     # Import DB models. Flask-SQLAlchemy doesn't do this automatically like Celery does.
@@ -81,11 +81,11 @@ def create_app(config_obj: Config, no_sql: bool=False) -> Flask:
         app.register_blueprint(bp)
 
     class FloatJSONEncoder(flask.json.JSONEncoder):
-        def default(self, obj):
-            if isinstance(obj, decimal.Decimal):
+        def default(self, o: Any) -> Any:
+            if isinstance(o, decimal.Decimal):
                 # Convert decimal instances to float.
-                return float(obj)
-            return super(FloatJSONEncoder, self).default(obj)
+                return float(o)
+            return super().default(o)
 
     app.json_encoder = FloatJSONEncoder
 
@@ -94,7 +94,7 @@ def create_app(config_obj: Config, no_sql: bool=False) -> Flask:
         args['page'] = page
         return url_for(request.endpoint, **args)
 
-    app.jinja_env.globals['url_for_other_page'] = url_for_other_page
+    app.jinja_env.globals['url_for_other_page'] = url_for_other_page  # pylint: disable=no-member
 
     if not no_sql:
         db.init_app(app)

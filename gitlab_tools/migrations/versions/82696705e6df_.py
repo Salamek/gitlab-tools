@@ -51,7 +51,7 @@ def downgrade():
     op.add_column('pull_mirror', sa.Column('is_public', sa.BOOLEAN(), autoincrement=False, nullable=True))
     # Set is_public correctly
     for pull_mirror in session.query(PullMirror):
-        pull_mirror.is_public = True if pull_mirror.visibility == 'public' else False
+        pull_mirror.is_public = pull_mirror.visibility == 'public'
         session.add(pull_mirror)
     session.commit()
     op.drop_column('pull_mirror', 'visibility')

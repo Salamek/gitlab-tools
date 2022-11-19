@@ -3,10 +3,8 @@ import pwd
 import grp
 import errno
 import paramiko
-import unicodedata
-import re
 from gitlab_tools.models.gitlab_tools import User, PullMirror, Mirror
-from gitlab_tools.tools.GitRemote import GitRemote
+from gitlab_tools.tools.GitUri import GitUri
 
 
 def get_home_dir(user_name: str) -> str:
@@ -23,22 +21,22 @@ def get_namespace_path(mirror: Mirror, user_name: str) -> str:
     Returns path to repository group
     :param mirror: Mirror
     :param user_name: system username
-    :return: 
+    :return: str
     """
     repository_storage_path = get_repository_storage(user_name)
 
     if isinstance(mirror, PullMirror):
         return os.path.join(repository_storage_path, str(mirror.user.id), 'pull', str(mirror.group.id))
-    else:
-        return os.path.join(repository_storage_path, str(mirror.user.id), 'push', str(mirror.id))
+
+    return os.path.join(repository_storage_path, str(mirror.user.id), 'push', str(mirror.id))
 
 
-def get_repository_path(namespace: str, mirror: Mirror):
+def get_repository_path(namespace: str, mirror: Mirror) -> str:
     """
     Get repository path
     :param namespace: namespace path
     :param mirror: Mirror
-    :return: 
+    :return: str
     """
     # Check if project clone exists
     return os.path.join(namespace, str(mirror.id))
@@ -83,7 +81,7 @@ def get_group_name(group_id: int) -> str:
 def get_user_id(user_name: str) -> int:
     """
     Returns user ID
-    :param user_name: User name 
+    :param user_name: User name
     :return: User ID
     """
     return pwd.getpwnam(user_name).pw_uid
@@ -94,7 +92,7 @@ def get_user_public_key_path(user: User, user_name: str) -> str:
     Returns path for user public key
     :param user: gitlab tools user
     :param user_name: system user name
-    :return: 
+    :return: str
     """
     ssh_storage = get_ssh_storage(user_name)
     return os.path.join(ssh_storage, 'id_rsa_{}.pub'.format(user.id))
@@ -105,7 +103,7 @@ def get_user_private_key_path(user: User, user_name: str) -> str:
     Returns path for user private key
     :param user: gitlab tools user
     :param user_name: system user name
-    :return: 
+    :return: str
     """
     ssh_storage = get_ssh_storage(user_name)
     return os.path.join(ssh_storage, 'id_rsa_{}'.format(user.id))
@@ -116,7 +114,7 @@ def get_user_known_hosts_path(user: User, user_name: str) -> str:
     Returns path for user known_hosts
     :param user: gitlab tools user
     :param user_name: system user name
-    :return: 
+    :return: str
     """
     ssh_storage = get_ssh_storage(user_name)
     return os.path.join(ssh_storage, 'known_hosts_{}'.format(user.id))
@@ -126,7 +124,7 @@ def get_known_hosts_path(user_name: str) -> str:
     """
     Returns path for user known_hosts
     :param user_name: system user name
-    :return: 
+    :return: str
     """
     ssh_storage = get_ssh_storage(user_name)
     return os.path.join(ssh_storage, 'known_hosts')
@@ -135,8 +133,8 @@ def get_known_hosts_path(user_name: str) -> str:
 def get_ssh_config_path(user_name: str) -> str:
     """
     Returns path to ssh config
-    :param user_name: 
-    :return: 
+    :param user_name: str
+    :return: str
     """
     ssh_storage = get_ssh_storage(user_name)
     return os.path.join(ssh_storage, 'config')
@@ -145,20 +143,20 @@ def get_ssh_config_path(user_name: str) -> str:
 def convert_url_for_user(url: str, user: User) -> str:
     """
     Converts url hostname of url to user identified type for SSH config
-    :param url: Url to 
+    :param url: Url to convert
     :param user: User to use
     :return: Returns modified URL
     """
-    hostname = GitRemote.get_url_hostname(url)
+    git_remote = GitUri(url)
 
-    return url.replace(hostname, '{}_{}'.format(hostname, user.id), 1)
+    return url.replace(git_remote.hostname, '{}_{}'.format(git_remote.hostname, user.id), 1)
 
 
-def mkdir_p(path):
+def mkdir_p(path: str) -> None:
     """
     Create path recursive
-    :param path: 
-    :return: 
+    :param path: Path to create
+    :return: None
     """
     try:
         os.makedirs(path)
@@ -169,14 +167,14 @@ def mkdir_p(path):
             raise
 
 
-def add_ssh_config(user: User, user_name: str, host: str, hostname: str) -> None:
+def add_ssh_config(user: User, user_name: str, identifier: str, host_info: GitUri) -> None:
     """
     Adds new SSH config host
-    :param user: 
-    :param user_name: 
-    :param host: 
-    :param hostname: 
-    :return: 
+    :param user: User
+    :param user_name: str
+    :param identifier: str
+    :param host_info: GitUri
+    :return: None
     """
     ssh_config_path = get_ssh_config_path(user_name)
     user_known_hosts_path = get_user_known_hosts_path(user, user_name)
@@ -186,10 +184,11 @@ def add_ssh_config(user: User, user_name: str, host: str, hostname: str) -> None
     if os.path.isfile(ssh_config_path):
         with open(ssh_config_path, 'r') as f:
             ssh_config.parse(f)
-    if host not in ssh_config.get_hostnames():
+    if identifier not in ssh_config.get_hostnames():
         rows = [
-            "Host {}".format(host),
-            "   HostName {}".format(hostname),
+            "Host {}".format(identifier),
+            "   HostName {}".format(host_info.hostname),
+            "   Port {}".format(host_info.port),
             "   UserKnownHostsFile {}".format(user_known_hosts_path),
             "   IdentitiesOnly yes",
             "   IdentityFile {}".format(user_private_key_path),
@@ -198,13 +197,3 @@ def add_ssh_config(user: User, user_name: str, host: str, hostname: str) -> None
 
         with open(ssh_config_path, 'a') as f:
             f.write('\n'.join(rows))
-
-
-def slugify(value):
-    """
-    Normalizes string, converts to lowercase, removes non-alpha characters,
-    and converts spaces to hyphens.
-    """
-    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = re.sub('[^\w\s-]', '', value).strip().lower()
-    return re.sub('[-\s]+', '-', value)

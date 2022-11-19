@@ -1,10 +1,9 @@
 
 # -*- coding: utf-8 -*-
-
-import flask
+import urllib.parse
 import os
 import datetime
-import urllib.parse
+import flask
 import gitlab
 import requests
 from flask_login import login_user, logout_user, login_required
@@ -21,12 +20,12 @@ __date__ = "$26.7.2017 19:33:05$"
 
 
 @sign_index.route('/in', methods=['GET'])
-def login():
+def login() -> str:
     return flask.render_template('sign.index.login.html')
 
 
 @sign_index.route('/in/request', methods=['GET'])
-def request_login():
+def request_login() -> flask.Response:
     state = random_password()
 
     new_oauth_state = OAuth2State()
@@ -53,7 +52,7 @@ def do_login():
     code = flask.request.args.get('code')
 
     if not state or not code:
-        flask.abort(400)
+        return 'Invalid arguments', 400
 
     # Lets find out if we issued that state, and if so, delete it to prevent replay
 
@@ -110,7 +109,7 @@ def do_login():
     except requests.exceptions.HTTPError as e:
         db.session.rollback()
         flask.flash('Login failed: {}'.format(str(e)), 'danger')
-        flask.abort(500)
+        return 'Login failed: {}'.format(str(e)), 500
 
 
 @sign_index.route("/out")

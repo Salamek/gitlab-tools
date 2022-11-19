@@ -15,7 +15,12 @@ def check_project_visibility_in_group(project_visibility: str, group_id: int) ->
     }
     group = get_group(group_id)
     if visibility_to_int.get(project_visibility) > visibility_to_int.get(group.visibility):
-        raise VisibilityError('Project visibility is less restrictive than its group {} > {}'.format(project_visibility, group.visibility))
+        raise VisibilityError(
+            'Project visibility is less restrictive than its group {} > {}'.format(
+                project_visibility,
+                group.visibility
+            )
+        )
 
 
 def check_project_exists(project_name: str, group_id: int, ignore_project_id: int=None):

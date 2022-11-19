@@ -1,6 +1,5 @@
-
+from typing import Callable, Optional
 from sqlalchemy.exc import IntegrityError
-from typing import Callable
 from celery.result import AsyncResult
 from gitlab_tools.models.gitlab_tools import Mirror, PullMirror, PushMirror, TaskResult
 from gitlab_tools.extensions import db
@@ -11,9 +10,9 @@ from gitlab_tools.enums.InvokedByEnum import InvokedByEnum
 def log_task_pending(
         task: AsyncResult,
         mirror: Mirror,
-        task_callable: Callable=None,
-        invoked_by: int=InvokedByEnum.UNKNOWN,
-        parent: TaskResult=None
+        task_callable: Optional[Callable] = None,
+        invoked_by: int = InvokedByEnum.UNKNOWN,
+        parent: Optional[TaskResult] = None
 ) -> TaskResult:
 
     try:

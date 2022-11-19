@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import Tuple
+import flask
 from flask import jsonify, request, url_for
 from flask_login import login_required
 from gitlab_tools.blueprints import api_index
@@ -15,7 +17,7 @@ __date__ = "$26.7.2017 19:33:05$"
 
 
 @api_index.route('/pull/sync/<int:mirror_id>', methods=['POST', 'GET'])
-def schedule_sync_pull_mirror(mirror_id: int):
+def schedule_sync_pull_mirror(mirror_id: int) -> Tuple[flask.Response, int]:
     hook_token = request.args.get('token')
     if not hook_token:
         return jsonify({'message': 'Token was not provided'}), 400
@@ -37,7 +39,7 @@ def schedule_sync_pull_mirror(mirror_id: int):
 
 
 @api_index.route('/push/sync/<int:mirror_id>', methods=['POST', 'GET'])
-def schedule_sync_push_mirror(mirror_id: int):
+def schedule_sync_push_mirror(mirror_id: int) -> Tuple[flask.Response, int]:
     hook_token = request.args.get('token')
     if not hook_token:
         return jsonify({'message': 'Token was not provided'}), 400
@@ -66,7 +68,7 @@ def group_fix_avatar(group: dict) -> dict:
 
 @api_index.route('/groups/search', methods=['GET'])
 @login_required
-def search_group():
+def search_group() -> Tuple[flask.Response, int]:
     q = request.args.get('q')
     per_page = request.args.get('per_page')
     page = request.args.get('page')
@@ -101,7 +103,7 @@ def search_group():
 
 @api_index.route('/groups/<int:group_id>', methods=['GET'])
 @login_required
-def get_gitlab_group(group_id: int):
+def get_gitlab_group(group_id: int) -> Tuple[flask.Response, int]:
     group = get_group(group_id)
 
     return jsonify(group_fix_avatar(group.attributes)), 200
@@ -109,7 +111,7 @@ def get_gitlab_group(group_id: int):
 
 @api_index.route('/projects/search', methods=['GET'])
 @login_required
-def search_project():
+def search_project() -> Tuple[flask.Response, int]:
     q = request.args.get('q')
     per_page = request.args.get('per_page')
     page = request.args.get('page')
@@ -144,7 +146,7 @@ def search_project():
 
 @api_index.route('/projects/<int:project_id>', methods=['GET'])
 @login_required
-def get_gitlab_project(project_id: int):
+def get_gitlab_project(project_id: int) -> Tuple[flask.Response, int]:
     project = get_project(project_id)
 
     return jsonify(project.attributes), 200
@@ -152,6 +154,6 @@ def get_gitlab_project(project_id: int):
 
 @api_index.route('/task/<string:task_id>/traceback', methods=['GET'])
 @login_required
-def get_task_traceback(task_id: str):
+def get_task_traceback(task_id: str) -> Tuple[flask.Response, int]:
     task_meta = TaskMeta.query.filter_by(task_id=task_id).first_or_404()
     return jsonify({'traceback': task_meta.traceback}), 200

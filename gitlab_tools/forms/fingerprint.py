@@ -4,7 +4,7 @@ __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
 
 
-class NewForm(Form):
+class NewForm(Form):  # type: ignore
     hostname = StringField(None, [validators.Length(min=1, max=255)])
 
     def validate(self) -> bool:

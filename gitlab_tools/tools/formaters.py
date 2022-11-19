@@ -1,19 +1,20 @@
-from gitlab_tools.enums.VcsEnum import VcsEnum
 import base64
+from gitlab_tools.enums.VcsEnum import VcsEnum
 
 
-def format_bytes(num: int, suffix: str='B') -> str:
+def format_bytes(num: int, suffix: str = 'B') -> str:
     """
     Format bytes to human readable string
     @param num:
     @param suffix:
     @return:
     """
+    temp_num = float(num)
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-        if abs(num) < 1024.0:
-            return "%3.1f %s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
+        if abs(temp_num) < 1024:
+            return "%3.1f %s%s" % (temp_num, unit, suffix)
+        temp_num /= 1024
+    return "%.1f%s%s" % (temp_num, 'Yi', suffix)
 
 
 def fix_url(url: str) -> str:
@@ -35,15 +36,15 @@ def format_boolean(bool_to_format: bool) -> str:
     """
     if bool_to_format:
         return '<div class="label label-success">Yes</div>'
-    else:
-        return '<div class="label label-danger">No</div>'
+
+    return '<div class="label label-danger">No</div>'
 
 
 def format_vcs(vcs_id: int) -> str:
     """
     Formats vcs enum to string representation
     :param vcs_id: VcsEnum
-    :return: 
+    :return: str
     """
     return {
         VcsEnum.GIT: 'Git',
@@ -56,7 +57,7 @@ def format_vcs(vcs_id: int) -> str:
 def format_md5_fingerprint(fingerprint: bytes) -> str:
     """
     Formats md5 fingerprint
-    :param fingerprint: fingerprint to format 
+    :param fingerprint: fingerprint to format
     :return: formated fingerprint
     """
     fingerprint_hex = fingerprint.hex()
@@ -66,7 +67,7 @@ def format_md5_fingerprint(fingerprint: bytes) -> str:
 def format_sha256_fingerprint(fingerprint: bytes) -> str:
     """
     Formats sha256 fingerprint
-    :param fingerprint: fingerprint to format 
+    :param fingerprint: fingerprint to format
     :return: formated fingerprint
     """
     return base64.b64encode(fingerprint).decode().rstrip('=')

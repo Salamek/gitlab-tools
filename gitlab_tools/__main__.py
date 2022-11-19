@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 
-def main():
+def main() -> None:
     """Entrypoint to the ``celery`` umbrella command."""
-    from gitlab_tools.bin.gitlab_tools import main as _main
+    from gitlab_tools.bin.gitlab_tools import main as _main  # pylint: disable=import-outside-toplevel
     _main()
 
 

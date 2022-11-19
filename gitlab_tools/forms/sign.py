@@ -1,13 +1,13 @@
 from flask_babel import gettext
 from wtforms import Form, StringField, PasswordField, validators
-
-from gitlab_tools.models.gitlab_tools import db, User
+from gitlab_tools.extensions import db
+from gitlab_tools.models.gitlab_tools import User
 
 __author__ = "Adam Schubert"
 __date__ = "$26.7.2017 19:33:05$"
 
 
-class InForm(Form):
+class InForm(Form):   # type: ignore
     username = StringField(None, [validators.Length(min=5, max=35)])
     password = PasswordField(None, [validators.Length(min=5, max=35)])
 

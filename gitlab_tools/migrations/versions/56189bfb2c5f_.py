@@ -1,7 +1,7 @@
 """empty message
 
 Revision ID: 56189bfb2c5f
-Revises: 
+Revises:
 Create Date: 2018-04-04 05:16:24.055254
 
 """
