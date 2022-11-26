@@ -1,4 +1,5 @@
 from flask_babel import gettext
+from flask_login import current_user
 from wtforms import Form, StringField, validators, HiddenField, TextAreaField, BooleanField
 from gitlab_tools.forms.custom_fields import NonValidatingSelectField
 from gitlab_tools.models.gitlab_tools import PushMirror
@@ -21,7 +22,7 @@ class NewForm(Form):
         if not rv:
             return False
 
-        project_mirror_exists = PushMirror.query.filter_by(project_mirror=self.project_mirror.data).first()
+        project_mirror_exists = PushMirror.query.filter_by(project_mirror=self.project_mirror.data, user=current_user).first()
         if project_mirror_exists:
             self.project_mirror.errors.append(
                 gettext('Project mirror %(project_mirror)s already exists.', project_mirror=self.project_mirror.data)
@@ -47,7 +48,8 @@ class EditForm(NewForm):
 
         project_mirror_exists = PushMirror.query.filter(
             PushMirror.project_mirror == self.project_mirror.data,
-            PushMirror.id != self.id.data
+            PushMirror.id != self.id.data,
+            PushMirror.user == current_user
         ).first()
         if project_mirror_exists:
             self.project_mirror.errors.append(

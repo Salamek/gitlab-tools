@@ -1,5 +1,6 @@
 
 from flask_babel import gettext
+from flask_login import current_user
 from wtforms import Form, StringField, validators, HiddenField, TextAreaField, BooleanField, SelectField
 from cron_descriptor import ExpressionDescriptor, MissingFieldException, FormatException
 from gitlab_tools.models.gitlab_tools import PullMirror
@@ -48,14 +49,14 @@ class NewForm(Form):
         if not rv:
             return False
 
-        project_name_exists = PullMirror.query.filter_by(project_name=self.project_name.data).first()
+        project_name_exists = PullMirror.query.filter_by(project_name=self.project_name.data, user=current_user).first()
         if project_name_exists:
             self.project_name.errors.append(
                 gettext('Project name %(project_name)s already exists.', project_name=self.project_name.data)
             )
             return False
 
-        project_mirror_exists = PullMirror.query.filter_by(project_mirror=self.project_mirror.data).first()
+        project_mirror_exists = PullMirror.query.filter_by(project_mirror=self.project_mirror.data, user=current_user).first()
         if project_mirror_exists:
             self.project_mirror.errors.append(
                 gettext('Project mirror %(project_mirror)s already exists.', project_mirror=self.project_mirror.data)
@@ -112,11 +113,15 @@ class EditForm(NewForm):
         if not rv:
             return False
 
-        current_pull_mirror = PullMirror.query.filter(PullMirror.id == self.id.data).first()
+        current_pull_mirror = PullMirror.query.filter(PullMirror.id == self.id.data, PullMirror.user == current_user).first()
+        if not current_pull_mirror:
+            self.project_name.errors.append('Incorrect project ID')
+            return False
 
         project_name_exists = PullMirror.query.filter(
             PullMirror.project_name == self.project_name.data,
-            PullMirror.id != current_pull_mirror.id
+            PullMirror.id != current_pull_mirror.id,
+            PullMirror.user == current_user
         ).first()
         if project_name_exists:
             self.project_name.errors.append(
@@ -126,7 +131,8 @@ class EditForm(NewForm):
 
         project_mirror_exists = PullMirror.query.filter(
             PullMirror.project_mirror == self.project_mirror.data,
-            PullMirror.id != current_pull_mirror.id
+            PullMirror.id != current_pull_mirror.id,
+            PullMirror.user == current_user
         ).first()
         if project_mirror_exists:
             self.project_mirror.errors.append(

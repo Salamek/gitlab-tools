@@ -18,8 +18,8 @@ __date__ = "$26.7.2017 19:33:05$"
 @home_index.route('/', methods=['GET'])
 @login_required
 def get_home() -> Tuple[str, int]:
-    pull_mirrors_count = PullMirror.query.filter_by(is_deleted=False).count()
-    push_mirrors_count = PushMirror.query.filter_by(is_deleted=False).count()
+    pull_mirrors_count = PullMirror.query.filter_by(is_deleted=False, user=current_user).count()
+    push_mirrors_count = PushMirror.query.filter_by(is_deleted=False, user=current_user).count()
     private_key_path = get_user_private_key_path(current_user, flask.current_app.config['USER'])
     if os.path.isfile(private_key_path):
 
