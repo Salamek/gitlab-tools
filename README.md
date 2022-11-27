@@ -1,9 +1,9 @@
 # GitLab Tools
 
+This application provides functionality not avaiable in GitLab (CE) Mainly useful for pull mirroring from GitHub
+
 > Please consider sponsoring if you're using this package commercially, my time is not free :) You can sponsor me by clicking on "Sponsor" button in top button row. Thank You.
 
-
-This application provides functionality not avaiable in GitLab (CE) Mainly useful for pull mirroring from GitHub
 
 [![Home](doc/img/home_thumb.png)](doc/img/home.png)
 
