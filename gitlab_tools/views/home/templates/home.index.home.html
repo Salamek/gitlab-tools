@@ -2,20 +2,42 @@
 {% from 'macros.html' import render_pagination %}
 {% block body %}
 
-<h1>{{ _('GitLab Tools') }}</h1>
 
-<h2>{{_('Your public key')}} <a href="{{url_for('home_index.get_new_rsa_key')}}" class="btn btn-xs btn-danger confirm" data-confirm-message="{{_("This action will make all services using a old key inoperable")}}">{{_("Request new key")}}</a></h2>
-{% if private_key %}
-    <pre>{{private_key.get_name()}} {{private_key.get_base64()}}</pre>
-    <h3>{{_('MD5 Fingerprint')}}
+<div class="jumbotron">
+    <div class="container">
+        {% if private_key %}
+          <h1 class="display-3">{{ _('Your public key') }}</h1>
+          <p><pre>{{private_key.get_name()}} {{private_key.get_base64()}}</pre>
+          <h3>{{_('MD5 Fingerprint')}}
     <pre>{{fingerprint_md5}}</pre>
     <h3>{{_('SHA256 Fingerprint')}}
     <pre>{{fingerprint_sha256}}</pre>
-{% else %}
-        <div class="alert alert-info">Not yet generated... is celeryworker runnung ?</div>
-{% endif %}
+        </p>
+          <p><a href="{{url_for('home_index.get_new_rsa_key')}}" class="btn btn-xs btn-danger confirm" data-confirm-message="{{_("This action will make all services using a old key inoperable")}}">{{_("Request new key")}}</a></p>
+        {% else %}
+            <div class="alert alert-info">Not yet generated... is celeryworker runnung ?</div>
+        {% endif %}
+    </div>
+  </div>
 
-<h2>{{_('Pull mirrors : %(pull_mirrors_count)s', pull_mirrors_count=pull_mirrors_count)}}</h2>
-<h2>{{_('Push mirrors : %(push_mirrors_count)s', push_mirrors_count=push_mirrors_count)}}</h2>
+<div class="row">
+      <div class="col-md-4">
+        <h2>{{_('Pull mirrors: %(pull_mirrors_count)s', pull_mirrors_count=pull_mirrors_count)}}</h2>
+        <p>Pull mirrors allows you to pull code from other repositories to your gitlab installation.</p>
+        <p><a class="btn btn-secondary" href="{{url_for('pull_mirror_index.get_mirror')}}" role="button">View details &raquo;</a></p>
+      </div>
+      <div class="col-md-4">
+        <h2>{{_('Push mirrors: %(push_mirrors_count)s', push_mirrors_count=push_mirrors_count)}}</h2>
+        <p>Push mirrors allows you to push your code from gitlab to other VCS services.</p>
+        <p><a class="btn btn-secondary" href="{{url_for('push_mirror_index.get_mirror')}}" role="button">View details &raquo;</a></p>
+      </div>
+      <div class="col-md-4">
+        <h2>{{_('Fingerprints: %(fingerprint_count)s', fingerprint_count=fingerprint_count)}}</h2>
+        <p>Fingerprints keeps your code/traffic safe.</p>
+        <p><a class="btn btn-secondary" href="{{url_for('fingerprint_index.get_fingerprint')}}" role="button">View details &raquo;</a></p>
+      </div>
+    </div>
+
+
 
 {% endblock %}

@@ -56,6 +56,7 @@ class User(BaseTable):
     expires = db.Column(db.DateTime, default=func.now())
     pull_mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="user", lazy='dynamic')
     push_mirrors = relationship("PushMirror", order_by="PushMirror.id", backref="user", lazy='dynamic')
+    fingerprints = relationship("Fingerprint", order_by="Fingerprint.id", backref="user", lazy='dynamic')
 
     @property
     def is_active(self) -> bool:

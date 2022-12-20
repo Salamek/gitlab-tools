@@ -9,6 +9,10 @@ html, body
     width: 90%;
 }
 
+.container.login {
+    height: calc(100% - 104px);
+}
+
 .table > tbody > tr > td {
      vertical-align: middle;
 }
