@@ -8,7 +8,7 @@
     <meta name="description" content="{{_('GitLab Tools')}}">
     <meta name="keywors" content="{{_('GitLab Tools')}}">
     <meta name="author" content="Adam Schubert">
-    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}" />
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}"/>
 
     <title>{{_('GitLab Tools')}} {% block append_title %}{% endblock %}</title>
 
@@ -16,56 +16,49 @@
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='node_modules/font-awesome/css/font-awesome.min.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='node_modules/bootstrap/dist/css/bootstrap.min.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='node_modules/select2/dist/css/select2.min.css') }}">
-    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='node_modules/select2-bootstrap-theme/dist/select2-bootstrap.min.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
 
 <!-- Fixed navbar -->
-<nav class="navbar navbar-default" role="navigation">
-    <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
-                    aria-expanded="false" aria-controls="navbar">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="{{ url_for('home_index.get_home') }}">Gitlab Tools</a>
-        </div>
-        <div id="navbar" class="navbar-collapse collapse">
-            <ul class="nav navbar-nav">
-                {% if current_user.is_authenticated %}
-                    <li class="{{ 'active' if False else '' }}">
-                        <a href="{{url_for('home_index.get_home')}}">Home</a>
-                    </li>
-                    <li class="{{ 'active' if False else '' }}">
-                        <a href="{{url_for('pull_mirror_index.get_mirror')}}">Pull mirrors</a>
-                    </li>
-                    <li class="{{ 'active' if False else '' }}">
-                        <a href="{{url_for('push_mirror_index.get_mirror')}}">Push mirrors</a>
-                    </li>
-                    <li class="{{ 'active' if False else '' }}">
-                        <a href="{{url_for('fingerprint_index.get_fingerprint')}}">Fingerprints</a>
-                    </li>
-                {% endif %}
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                {% if current_user.is_authenticated %}
-                    <a href="{{url_for('sign_index.logout')}}" data-confirm-message="Are you sure you want to log out ?" class="confirm bg-danger"><img src="{{current_user.avatar_url}}" width="22" height="22" alt="{{current_user.name}}">Logged as {{current_user.name}} (Log out)</a>
-                {% else %}
-                    <a href="{{url_for('sign_index.login')}}">Log in</a>
-                {% endif %}
-                </li>
-            </ul>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('home_index.get_home') }}">Gitlab Tools</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+            aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
 
-        </div>
-        <!--/.nav-collapse -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            {% if current_user.is_authenticated %}
+            <li class="nav-item {{ 'active' if False else '' }}">
+                <a class="nav-link" href="{{url_for('home_index.get_home')}}">Home</a>
+            </li>
+            <li class="{{ 'active' if False else '' }}">
+                <a class="nav-link" href="{{url_for('pull_mirror_index.get_mirror')}}">Pull mirrors</a>
+            </li>
+            <li class="{{ 'active' if False else '' }}">
+                <a class="nav-link" href="{{url_for('push_mirror_index.get_mirror')}}">Push mirrors</a>
+            </li>
+            <li class="{{ 'active' if False else '' }}">
+                <a class="nav-link" href="{{url_for('fingerprint_index.get_fingerprint')}}">Fingerprints</a>
+            </li>
+            {% endif %}
+        </ul>
+        <ul class="navbar-nav">
+            <li>
+                {% if current_user.is_authenticated %}
+                <a href="{{url_for('sign_index.logout')}}" data-confirm-message="Are you sure you want to log out ?" class="nav-link confirm bg-danger"><img
+                        src="{{current_user.avatar_url}}" width="22" height="22" alt="{{current_user.name}}">Logged as {{current_user.name}} (Log out)</a>
+                {% else %}
+                <a class="nav-link" href="{{url_for('sign_index.login')}}">Log in</a>
+                {% endif %}
+            </li>
+        </ul>
     </div>
 </nav>
+
 
 <div class="container {{layout}}">
     <noscript>
@@ -81,27 +74,27 @@
 <!-- /container -->
 
 <footer class="footer">
-  <div class="container">
-      <div class="text-muted text-center">
-          <ul>
-              <li>
-                  © <a href="https://www.salamek.cz">www.salamek.cz</a>
-              </li>
-              <li>
-                  <a href="https://github.com/Salamek/gitlab-tools">
-                    GitHub
-                  </a>
-              </li>
-          </ul>
-      </div>
-  </div>
+    <div class="container">
+        <div class="text-muted text-center">
+            <ul>
+                <li>
+                    © <a href="https://www.salamek.cz">www.salamek.cz</a>
+                </li>
+                <li>
+                    <a href="https://github.com/Salamek/gitlab-tools">
+                        GitHub
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
 </footer>
 
 <!-- Bootstrap core JavaScript
   ================================================== -->
 <!-- Placed at the end of the document so the pages load faster -->
 <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js') }}"></script>
-<script src="{{ url_for('static', filename='node_modules/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='node_modules/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ url_for('static', filename='node_modules/select2/dist/js/select2.min.js') }}"></script>
 
 <script src="{{ url_for('static', filename='main.js') }}"></script>

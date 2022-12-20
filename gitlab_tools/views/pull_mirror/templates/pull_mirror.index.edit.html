@@ -1,14 +1,13 @@
 {% extends "base.html" %}
 {% block body %}
 {% from "_formhelpers.html" import render_field, render_checkbox %}
-<div class="row top-buffer">
-    <div class="col-xs-12 col-sm-8 col-md-8 col-sm-offset-2 col-md-offset-2">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">{{ _("Edit mirror %(project_name)s", project_name=mirror_detail.project_name)
-                    }}</h3>
+<div class="row top-buffer justify-content-md-center">
+    <div class="col-xs-12 col-sm-8 col-md-8">
+        <div class="card">
+            <div class="card-header">
+                {{ _("Edit mirror %(project_name)s", project_name=mirror_detail.project_name)}}
             </div>
-            <div class="panel-body">
+            <div class="card-body">
                 {% if form.errors %}
                 <div class="alert alert-danger">
                     {{_("There was some errors when proccesing a form.")}}

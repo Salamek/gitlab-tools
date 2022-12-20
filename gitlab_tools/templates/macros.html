@@ -1,15 +1,17 @@
 {% macro render_pagination(pagination) %}
 <nav aria-label="{{ _('Page navigation') }}">
-    <ul class="pagination">
+    <ul class="pagination justify-content-center">
         {% if pagination.has_prev %}
-            <li>
-                <a href="{{ url_for_other_page(pagination.page - 1) }}" aria-label="{{ _('Previous') }}">
+            <li class="page-item">
+                <a href="{{ url_for_other_page(pagination.page - 1) }}" class="page-link" aria-label="{{ _('Previous') }}">
                     <span aria-hidden="true">&laquo;</span>
                 </a>
             </li>
         {% else %}
-            <li class="disabled">
+            <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Previous">
                 <span aria-hidden="true">&laquo;</span>
+              </a>
             </li>
         {% endif %}
 
@@ -17,28 +19,35 @@
         {%- for page in pagination.iter_pages() %}
             {% if page %}
                 {% if page != pagination.page %}
-                    <li>
+                    <li class="page-item">
                 {% else %}
-                    <li class="active">
+                    <li class="page-item active">
                 {% endif %}
-                    <a href="{{ url_for_other_page(page) }}">{{ page }}</a>
+                    <a href="{{ url_for_other_page(page) }}" class="page-link">{{ page }}</a>
                 </li>
             {% else %}
-                <li class="disabled"><span aria-hidden="true">...</span></li>
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" aria-label="Next">
+                    <span aria-hidden="true">...</span>
+                  </a>
+                </li>
             {% endif %}
         {%- endfor %}
 
         {% if pagination.has_next %}
             <li>
-                <a href="{{ url_for_other_page(pagination.page + 1) }}" aria-label="{{ _('Next') }}">
+                <a href="{{ url_for_other_page(pagination.page + 1) }}" class="page-link" aria-label="{{ _('Next') }}">
                     <span aria-hidden="true">&raquo;</span>
                 </a>
             </li>
         {% else %}
-            <li class="disabled">
-                <span aria-hidden="true">&raquo;</span>
+            <li class="page-item disabled">
+                <a class="page-link" href="#" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                  </a>
             </li>
         {% endif %}
     </ul>
 </nav>
+
 {% endmacro %}
