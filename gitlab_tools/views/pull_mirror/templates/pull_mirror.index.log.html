@@ -18,7 +18,7 @@
     </thead>
     <tbody>
     {% for task_result in pagination.items %}
-    <tr class="{{task_result|format_task_status_class}}" title="{{ _('Task %(task_id)s', task_id=task_result.taskmeta.task_id) }}">
+    <tr class="bg-{{task_result|format_task_status_class}}" title="{{ _('Task %(task_id)s', task_id=task_result.taskmeta.task_id) }}">
         <th scope="row">{{task_result.taskmeta.task_id}}</th>
         <td>{{task_result.task_name}}</td>
         <td>{{task_result.invoked_by|format_task_invoked_by}}</td>
@@ -31,7 +31,7 @@
         </td>
     </tr>
     {% for task_result_children in task_result.children %}
-    <tr class="{{task_result_children|format_task_status_class}}" title="{{ _('Task %(task_id)s', task_id=task_result_children.taskmeta.task_id) }}">
+    <tr class="bg-{{task_result_children|format_task_status_class}}" title="{{ _('Task %(task_id)s', task_id=task_result_children.taskmeta.task_id) }}">
         <th scope="row"><i class="fa fa-arrow-right" title="{{_('Child of task %(parent_task_id)s', parent_task_id=task_result_children.parent.taskmeta.task_id)}}"></i> {{task_result_children.taskmeta.task_id}}</th>
         <td>{{task_result_children.task_name}}</td>
         <td>{{task_result_children.invoked_by|format_task_invoked_by}}</td>

@@ -23,7 +23,7 @@
     <tbody>
     {% for item in pagination.items %}
     {% set webhook_url = url_for('api_index.schedule_sync_pull_mirror', mirror_id=item.id, token=item.hook_token, _external=True) %}
-    <tr class="{{item.task_results.first()|format_task_status_class}}" title="{{item.note}}">
+    <tr class="bg-{{item.task_results.first()|format_task_status_class}}" title="{{item.note}}">
         <th scope="row">{{item.id}}</th>
         <td>{{item.foreign_vcs_type|format_vcs}}</td>
         <td>{{item.project_name}}</td>
