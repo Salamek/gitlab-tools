@@ -150,17 +150,27 @@ class PeriodicTasks(BaseTable):
 class PeriodicTask(BaseTable):
     __tablename__ = "periodic_task"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(length=120), unique=True)
-    task = db.Column(db.String(length=120))
+    name = db.Column(db.String(length=200), unique=True)
+    task = db.Column(db.String(length=200))
     crontab_id = db.Column(db.Integer, db.ForeignKey('crontab_schedule.id'))
     crontab = relationship("CrontabSchedule", back_populates="periodic_tasks")
     interval_id = db.Column(db.Integer, db.ForeignKey('interval_schedule.id'))
     interval = relationship("IntervalSchedule", back_populates="periodic_tasks")
-    args = db.Column(db.String(length=120))
-    kwargs = db.Column(db.String(length=120))
-    last_run_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    total_run_count = db.Column(db.Integer, default=0)
+    args = db.Column(db.Text, default='[]')
+    kwargs = db.Column(db.Text, default='{}')
+    queue = db.Column(db.String(length=200))
+    exchange = db.Column(db.String(length=200))
+    routing_key = db.Column(db.String(length=200))
+    headers = db.Column(db.Text, default='{}')
+    priority = db.Column(db.Integer)
+    expires = db.Column(db.DateTime)
+    expire_seconds = db.Column(db.Integer)
+    one_off = db.Column(db.Boolean, default=False)
+    start_time = db.Column(db.DateTime)
     enabled = db.Column(db.Boolean, default=True)
+    last_run_at = db.Column(db.DateTime)
+    total_run_count = db.Column(db.Integer, default=0)
+
     pull_mirrors = relationship("PullMirror", order_by="PullMirror.id", backref="periodic_task", lazy='dynamic')
     no_changes = False
 
