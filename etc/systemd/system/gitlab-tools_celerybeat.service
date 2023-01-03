@@ -5,10 +5,12 @@ Requires=network.target
 [Service]
 User=gitlab-tools
 Type=simple
+RuntimeDirectory=gitlab-tools
+RuntimeDirectoryMode=0775
 Restart=on-failure
 RemainAfterExit=yes
-ExecStart=/usr/bin/gitlab-tools celerybeat --config_prod --pid=/run/backuptron/celerybeat.pid
-PIDFile=/run/backuptron/celerybeat.pid
+ExecStart=/usr/bin/gitlab-tools celerybeat --config_prod --pid=/run/gitlab-tools/celerybeat.pid
+PIDFile=/run/gitlab-tools/celerybeat.pid
 
 [Install]
 WantedBy=multi-user.target
