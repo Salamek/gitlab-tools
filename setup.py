@@ -97,7 +97,7 @@ else:
 
 setup(
     name='gitlab-tools',
-    version='1.4.3',
+    version='1.4.4',
     python_requires='>=3.7',
     description='GitLab Tools',
     long_description=long_description,
