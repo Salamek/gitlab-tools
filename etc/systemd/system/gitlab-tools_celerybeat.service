@@ -7,7 +7,8 @@ User=gitlab-tools
 Type=simple
 Restart=on-failure
 RemainAfterExit=yes
-ExecStart=/usr/bin/gitlab-tools celerybeat --config_prod --pid=${HOME}/celerybeat.pid --schedule=${HOME}/celery_beat.db
+ExecStart=/usr/bin/gitlab-tools celerybeat --config_prod --pid=/run/backuptron/celerybeat.pid
+PIDFile=/run/backuptron/celerybeat.pid
 
 [Install]
 WantedBy=multi-user.target
