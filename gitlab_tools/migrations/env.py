@@ -1,9 +1,8 @@
 from __future__ import with_statement
-import logging
 from logging.config import fileConfig
+import logging
 from alembic import context
 from sqlalchemy import engine_from_config, pool
-
 from flask import current_app
 
 
@@ -24,7 +23,6 @@ logger = logging.getLogger('alembic.env')
 config.set_main_option('sqlalchemy.url',
                        current_app.config.get('SQLALCHEMY_DATABASE_URI'))
 target_metadata = current_app.extensions['migrate'].db.metadata
-
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
@@ -44,7 +42,7 @@ def run_migrations_offline():
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(url=url)
+    context.configure(url=url, compare_type=True)
 
     with context.begin_transaction():
         context.run_migrations()
@@ -61,7 +59,7 @@ def run_migrations_online():
     # this callback is used to prevent an auto-migration from being generated
     # when there are no changes to the schema
     # reference: http://alembic.zzzcomputing.com/en/latest/cookbook.html
-    def process_revision_directives(_context, revision, directives):  # pylint: disable=unused-argument
+    def process_revision_directives(_context, _revision, directives):
         if getattr(config.cmd_opts, 'autogenerate', False):
             script = directives[0]
             if script.upgrade_ops.is_empty():
@@ -75,6 +73,7 @@ def run_migrations_online():
     connection = engine.connect()
     context.configure(connection=connection,
                       target_metadata=target_metadata,
+                      compare_type=True,
                       process_revision_directives=process_revision_directives,
                       **current_app.extensions['migrate'].configure_args)
 
@@ -83,7 +82,6 @@ def run_migrations_online():
             context.run_migrations()
     finally:
         connection.close()
-
 
 if context.is_offline_mode():
     run_migrations_offline()
