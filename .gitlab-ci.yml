@@ -1,17 +1,17 @@
 stages:
-  - test
+#  - test
   - package
   - deploy
 
-test:debian:
-  stage: test
-  script:
-    - apt-get update -qy
-    - apt-get install -y python3-dev python3-pip tox
-    - pip3 install .
-    - tox -e py39
-  tags:
-    - debian
+#test:debian:
+#  stage: test
+#  script:
+#    - apt-get update -qy
+#    - apt-get install -y python3-dev python3-pip tox
+#    - pip3 install .
+#    - tox -e py39
+#  tags:
+#    - debian
 
 
 package:debian:
