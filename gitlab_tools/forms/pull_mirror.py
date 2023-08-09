@@ -96,7 +96,7 @@ class NewForm(Form):
 
         if self.periodic_sync.data:
             try:
-                ExpressionDescriptor(self.periodic_sync.data, throw_exception_on_parse_error=True)
+                ExpressionDescriptor(self.periodic_sync.data)
             except (MissingFieldException, FormatException):
                 self.periodic_sync.errors.append(
                     gettext('Wrong cron expression.')
@@ -167,7 +167,7 @@ class EditForm(NewForm):
 
         if self.periodic_sync.data:
             try:
-                ExpressionDescriptor(self.periodic_sync.data, throw_exception_on_parse_error=True)
+                ExpressionDescriptor(self.periodic_sync.data)
             except (MissingFieldException, FormatException):
                 self.periodic_sync.errors.append(
                     gettext('Wrong cron expression.')
