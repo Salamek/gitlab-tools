@@ -120,19 +120,20 @@ def format_cron_syntax_filter(cron_syntax: Union[str, None]) -> Union[str, None]
 
 @current_app.template_filter('format_task_status_class')
 def format_task_status_class_filter(task_result: TaskResult=None) -> str:
-    if task_result:
-        return {
-            states.SUCCESS: 'success',
-            states.FAILURE: 'danger',
-            states.REVOKED: 'danger',
-            states.REJECTED: 'danger',
-            states.RETRY: 'warning',
-            states.PENDING: 'info',
-            states.RECEIVED: 'info',
-            states.STARTED: 'info',
-        }.get(task_result.taskmeta.status, 'warning')
+    if not task_result or not task_result.taskmeta:
+        return 'warning'
+    return {
+        states.SUCCESS: 'success',
+        states.FAILURE: 'danger',
+        states.REVOKED: 'danger',
+        states.REJECTED: 'danger',
+        states.RETRY: 'warning',
+        states.PENDING: 'info',
+        states.RECEIVED: 'info',
+        states.STARTED: 'info',
+    }.get(task_result.taskmeta.status, 'warning')
 
-    return 'warning'
+    
 
 
 @current_app.template_filter('format_task_invoked_by')
