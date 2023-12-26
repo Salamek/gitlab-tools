@@ -59,7 +59,7 @@ extra_files.extend(package_files('gitlab_tools/static/node_modules/jquery/dist')
 
 setup(
     name='gitlab-tools',
-    version='1.5.0',
+    version='1.5.1',
     python_requires='>=3.7',
     description='GitLab Tools',
     long_description=long_description,
