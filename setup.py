@@ -92,7 +92,7 @@ setup(
         'blinker>=1.4.*,~=1.5',
         'Flask-Celery-Tools',
         'sentry-sdk>=1.4.3,~=1.9.10',
-        'flask>=2.0.*,~=2.2.2',
+        'flask>=2.0.0,~=2.2.2',
         'requests~=2.28.1',
         'Flask-Login>=0.5.*'
     ],
