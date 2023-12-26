@@ -112,7 +112,7 @@ def get_mirror(page: int) -> Tuple[str, int]:
     pagination = PullMirror.query.filter_by(
         is_deleted=False,
         user=current_user
-    ).order_by(PullMirror.created.desc()).paginate(page, PER_PAGE)
+    ).order_by(PullMirror.created.desc()).paginate(page=page, per_page=PER_PAGE)
     return flask.render_template('pull_mirror.index.pull_mirror.html', pagination=pagination), 200
 
 
@@ -330,7 +330,7 @@ def log(mirror_id: int, page: int) -> Tuple[str, int]:
     pull_mirror = PullMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
 
     pagination = TaskResult.query.filter_by(pull_mirror=pull_mirror, parent=None).order_by(
-        TaskResult.created.desc()).paginate(page, PER_PAGE)
+        TaskResult.created.desc()).paginate(page=page, per_page=PER_PAGE)
     return flask.render_template(
         'pull_mirror.index.log.html',
         pull_mirror=pull_mirror,

@@ -43,7 +43,7 @@ def get_mirror(page: int):
     pagination = PushMirror.query.filter_by(
         is_deleted=False,
         user=current_user
-    ).order_by(PushMirror.created.desc()).paginate(page, PER_PAGE)
+    ).order_by(PushMirror.created.desc()).paginate(page=page, per_page=PER_PAGE)
     return flask.render_template('push_mirror.index.push_mirror.html', pagination=pagination)
 
 
@@ -208,7 +208,7 @@ def log(mirror_id: int, page: int):
     push_mirror = PushMirror.query.filter_by(id=mirror_id, user=current_user).first_or_404()
 
     pagination = TaskResult.query.filter_by(push_mirror=push_mirror, parent=None).order_by(
-        TaskResult.created.desc()).paginate(page, PER_PAGE)
+        TaskResult.created.desc()).paginate(page=page, per_page=PER_PAGE)
     return flask.render_template(
         'push_mirror.index.log.html',
         push_mirror=push_mirror,

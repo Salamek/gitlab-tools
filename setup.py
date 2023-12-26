@@ -10,7 +10,6 @@ sys_conf_dir = os.getenv("SYSCONFDIR", "/etc")
 current_directory = os.path.dirname(os.path.abspath(__file__))
 
 here = pathlib.Path(__file__).parent.resolve()
-os_name = pathlib.Path('/etc/issue').read_text(encoding="utf-8")
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
 
@@ -58,43 +57,6 @@ extra_files.extend(package_files('gitlab_tools/static/node_modules/font-awesome/
 extra_files.extend(package_files('gitlab_tools/static/node_modules/jquery/dist'))
 
 
-install_requires = [
-    'redis==3.5.*',
-    'WTForms==2.2.1',
-    'psycopg2-binary==2.8.6',
-    'pycryptodomex>=3.9.7',
-    'python-gitlab>=0.18,<=1.5.*',
-    'GitPython>=3.1.14',
-    'paramiko>=2.7.2',
-    'cron-descriptor==1.2.24',
-    'python-dateutil~=2.8.1',
-    'markupsafe==2.0.1',
-
-    'Flask-Babel>=0.12.2',
-    'Flask-Script~=2.0.6',
-    'flask-migrate~=2.6.0',
-    'pyyaml~=5.3.1',
-    'docopt~=0.6.2',
-    'celery~=5.0.0',
-    'blinker~=1.4',
-    'Flask-Celery-Tools',
-    'raven',
-]
-
-if os_name.startswith('Debian'):
-    # Older versions for debian
-    install_requires.extend([
-        'flask~=1.1.2',
-        'requests~=2.25.1',
-        'Flask-Login==0.5.*',
-    ])
-else:
-    install_requires.extend([
-        'flask~=2.0.3',
-        'requests~=2.27.1',
-        'Flask-Login==0.6.*'
-    ])
-
 setup(
     name='gitlab-tools',
     version='1.4.7',
@@ -108,7 +70,32 @@ setup(
     license='GPL-3.0',
     classifiers=classifiers,
     packages=find_packages(exclude=['tests', 'tests.*']),
-    install_requires=install_requires,
+    install_requires=[
+        'redis==4.3.*',
+        'WTForms~=3.0.1',
+        'psycopg2-binary~=2.9.5',
+        'pycryptodomex>=3.11.7',
+        'python-gitlab>=0.18,<=1.5.*',
+        'GitPython>=3.1.14',
+        'paramiko>=2.12.2',
+        'cron-descriptor>=1.2.24',
+        'python-dateutil~=2.8.2',
+        'markupsafe>=2.1.1',
+
+        'Flask-Babel>=2.0.0',
+        'flask-sqlalchemy~=3.0.3',
+        'sqlalchemy~=1.4.46',
+        'flask-migrate~=4.0.0',
+        'pyyaml~=6.0.1',
+        'docopt~=0.6.2',
+        'celery~=5.2.0',
+        'blinker~=1.5',
+        'Flask-Celery-Tools',
+        'raven',
+        'flask~=2.2.2',
+        'requests~=2.28.1',
+        'Flask-Login==0.6.*'
+    ],
     test_suite="tests",
     tests_require=[
         'tox'

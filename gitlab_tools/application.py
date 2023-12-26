@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from typing import Any
-import decimal
 import os
 from importlib import import_module
 from yaml import load, SafeLoader
-import flask.json
-from flask import Flask, url_for, request
+from flask import Flask, url_for, request, json, g
 from flask_babel import gettext
 from gitlab_tools.blueprints import all_blueprints
 from gitlab_tools.config import Config
 
 import gitlab_tools as app_root
+from gitlab_tools.tools import jsonifier
 from gitlab_tools.extensions import db, sentry, babel, login_manager, migrate, celery
 
 APP_ROOT_FOLDER = os.path.abspath(os.path.dirname(app_root.__file__))
@@ -80,16 +78,16 @@ def create_app(config_obj: Config, no_sql: bool = False) -> Flask:
         import_module(bp.import_name)
         app.register_blueprint(bp)
 
-    class FloatJSONEncoder(flask.json.JSONEncoder):
-        def default(self, o: Any) -> Any:
-            if isinstance(o, decimal.Decimal):
-                # Convert decimal instances to float.
-                return float(o)
+    class FlaskJSONProvider(json.provider.DefaultJSONProvider):
+        """Custom JSONProvider which adds connexion defaults on top of Flask's"""
+
+        @jsonifier.wrap_default
+        def default(self, o):
             return super().default(o)
 
-    app.json_encoder = FloatJSONEncoder
+    app.json = FlaskJSONProvider(app)
 
-    def url_for_other_page(page: int):
+    def url_for_other_page(page: int) -> str:
         args = request.view_args.copy()
         args['page'] = page
         return url_for(request.endpoint, **args)
@@ -100,8 +98,27 @@ def create_app(config_obj: Config, no_sql: bool = False) -> Flask:
         db.init_app(app)
 
     migrate.init_app(app, db)
+
+    def get_locale() -> str:
+        # if a user is logged in, use the locale from the user settings
+        user = getattr(g, 'user', None)
+        if user is not None:
+            return user.locale
+        # otherwise try to guess the language from the user accept
+        # header the browser transmits.  We support de/fr/en in this
+        # example.  The best match wins.
+        if request:
+            return request.accept_languages.best_match(['cs', 'en'])
+        else:
+            return app.config.get('BABEL_DEFAULT_LOCALE', 'cs')
+
+    if hasattr(babel, "localeselector"):
+        babel.init_app(app)
+        babel.localeselector(get_locale)
+    else:
+        babel.init_app(app, locale_selector=get_locale)
+
     sentry.init_app(app)
-    babel.init_app(app)
     celery.init_app(app)
 
     login_manager.init_app(app)

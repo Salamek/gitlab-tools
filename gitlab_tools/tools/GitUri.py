@@ -62,7 +62,7 @@ class GitUri:
                 return value
 
     @property
-    def url(self):
+    def url(self) -> str:
         return self.build_url()
 
     def build_url(self, ignore_default_port: bool = False) -> str:

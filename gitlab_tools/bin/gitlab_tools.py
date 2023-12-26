@@ -543,7 +543,7 @@ def celeryworker():
     options = parse_options()
     setup_logging('celeryworker{}'.format(OPTIONS['--name']), logging.DEBUG if options.DEBUG else logging.WARNING)
     Logging._setup = True
-    app = create_app(options, no_sql=True)
+    app = create_app(options)
     with app.app_context():
         hostname = OPTIONS['--name'] if OPTIONS['--name'] else host_format(default_nodename(None))
         worker = celery.Worker(
