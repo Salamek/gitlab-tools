@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sentry_sdk
 from importlib import import_module
 from yaml import load, SafeLoader
 from flask import Flask, url_for, request, json, g
@@ -10,7 +11,7 @@ from gitlab_tools.config import Config
 
 import gitlab_tools as app_root
 from gitlab_tools.tools import jsonifier
-from gitlab_tools.extensions import db, sentry, babel, login_manager, migrate, celery
+from gitlab_tools.extensions import db, babel, login_manager, migrate, celery
 
 APP_ROOT_FOLDER = os.path.abspath(os.path.dirname(app_root.__file__))
 TEMPLATE_FOLDER = os.path.join(APP_ROOT_FOLDER, 'templates')
@@ -118,7 +119,10 @@ def create_app(config_obj: Config, no_sql: bool = False) -> Flask:
     else:
         babel.init_app(app, locale_selector=get_locale)
 
-    sentry.init_app(app)
+    sentry_sdk.init(
+        dsn=app.config.get('SENTRY_CONFIG', {}).get('dsn')
+    )
+
     celery.init_app(app)
 
     login_manager.init_app(app)
@@ -131,8 +135,6 @@ def create_app(config_obj: Config, no_sql: bool = False) -> Flask:
         u"To protect your account, please reauthenticate to access this page."
     )
     login_manager.needs_refresh_message_category = "info"
-
-    app.sentry = sentry
 
     with app.app_context():
         import_module('gitlab_tools.middleware')

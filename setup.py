@@ -91,7 +91,7 @@ setup(
         'celery~=5.2.0',
         'blinker~=1.5',
         'Flask-Celery-Tools',
-        'raven',
+        'sentry-sdk~=1.9.10',
         'flask~=2.2.2',
         'requests~=2.28.1',
         'Flask-Login==0.6.*'

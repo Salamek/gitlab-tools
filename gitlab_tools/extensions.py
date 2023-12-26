@@ -8,7 +8,6 @@ To avoid circular imports with views and create_app(), extensions are instantiat
 import os
 from logging import getLogger
 from flask_sqlalchemy import SQLAlchemy
-from raven.contrib.flask import Sentry
 from flask_babel import Babel
 from flask_celery import Celery
 from flask_login import LoginManager
@@ -21,7 +20,6 @@ MIGRATE_ROOT_FOLDER = os.path.abspath(os.path.join(APP_ROOT_FOLDER, 'migrations'
 
 
 db = SQLAlchemy()
-sentry = Sentry()
 babel = Babel()
 login_manager = LoginManager()
 celery = Celery()
