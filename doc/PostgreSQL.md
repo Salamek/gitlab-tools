@@ -79,6 +79,12 @@ systemctl restart gitlab-tools_celerybeat
 
 ### SqLite
 
+#### Install sqlite3
+
+```bash
+apt install sqlite3
+```
+
 #### Dump data from database
 
 ```bash
