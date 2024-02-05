@@ -45,6 +45,7 @@ ALTER DATABASE gitlab_tools OWNER TO gitlab_tools;
 ```
 
 ## Set gitlab-tools configuration to use PostgreSQL database
+
 Edit `/etc/gitlab-tools/config.yml`:
 
 ```bash
@@ -58,6 +59,14 @@ SQLALCHEMY_DATABASE_URI: 'postgresql://gitlab_tools:<YOUR_PASSWORD>@127.0.0.1/gi
 ```
 and save your changes using: <kbd>Ctrl</kbd> + <kbd>o</kbd>
 
+
+## Create empty database schema
+
+```bash
+gitlab-tools create_all
+```
+
+
 ## Restart services for gitlab-tools to use new configuration
 
 ```bash
@@ -65,5 +74,29 @@ systemctl restart gitlab-tools
 systemctl restart gitlab-tools_celeryworker
 systemctl restart gitlab-tools_celerybeat
 ```
+
+## Migrate data from old database to PostgreSQL
+
+### SqLite
+
+#### Dump data from database
+
+```bash
+sqlite3 gitlab_tools.db .schema > schema.sql
+sqlite3 gitlab_tools.db .dump > dump.sql
+grep -vx -f schema.sql dump.sql > data.sql
+```
+
+#### Insert data into PostgreSQL
+
+```
+su postgres
+psql gitlab_tools < /path/to/data.sql
+```
+
+
+
+
+
 
 
